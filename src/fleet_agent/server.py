@@ -27,6 +27,16 @@ from starlette.routing import Mount, Route
 
 from .config import settings
 
+
+async def _call_tool(tool: str, args: dict) -> dict:
+    """Call an MCP tool internally and return structuredContent."""
+    from .mcp.registry import mcp
+    result = await mcp.call_tool(tool, args)
+    if hasattr(result, "structuredContent") and result.structuredContent:
+        return result.structuredContent
+    return {}
+
+
 # ── REST Handlers ──────────────────────────────────────────────────────────
 
 async def api_status(request: Request) -> JSONResponse:
@@ -42,7 +52,7 @@ async def api_whoami(request: Request) -> JSONResponse:
 
 async def api_tools(request: Request) -> JSONResponse:
     return JSONResponse({
-        "total": 36,
+        "total": 37,
         "subsystems": [
             {"name": "flowforge", "count": 9, "annotation": "State machine"},
             {"name": "pulse", "count": 6, "annotation": "Task management"},
@@ -52,7 +62,7 @@ async def api_tools(request: Request) -> JSONResponse:
             {"name": "evolution", "count": 3, "annotation": "Correction log"},
             {"name": "heartbeat", "count": 2, "annotation": "Wake-up + health"},
             {"name": "fleet_bridge", "count": 3, "annotation": "Cross-server MCP client"},
-            {"name": "codegen", "count": 3, "annotation": "Code gen, file write, file edit (with backup + verify)"},
+            {"name": "codegen", "count": 3, "annotation": "Code gen, file write, file edit"},
             {"name": "github", "count": 9, "annotation": "Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status"},
             {"name": "contribute", "count": 1, "annotation": "Autonomous: inspect, issue, branch, fix, PR"},
         ],
@@ -162,6 +172,37 @@ async def api_evolution(request: Request) -> JSONResponse:
     return JSONResponse({"success": True, "entries": entries, "count": len(entries)})
 
 
+async def api_tasks_list(request: Request) -> JSONResponse:
+    r = await _call_tool("pulse_list", {
+        "group": request.query_params.get("group"),
+        "status": request.query_params.get("status"),
+    })
+    return JSONResponse(r)
+
+
+async def api_tasks_add(request: Request) -> JSONResponse:
+    body = await request.json()
+    r = await _call_tool("pulse_add", {
+        "task": body.get("task", ""),
+        "group": body.get("group", "self"),
+        "priority": body.get("priority", "medium"),
+        "recurrence": body.get("recurrence"),
+    })
+    return JSONResponse(r)
+
+
+async def api_tasks_complete(request: Request) -> JSONResponse:
+    body = await request.json()
+    r = await _call_tool("pulse_complete", {"task_id": body.get("task_id", "")})
+    return JSONResponse(r)
+
+
+async def api_tasks_delete(request: Request) -> JSONResponse:
+    body = await request.json()
+    r = await _call_tool("pulse_delete", {"task_id": body.get("task_id", "")})
+    return JSONResponse(r)
+
+
 # ── App Builder ────────────────────────────────────────────────────────────
 
 def build_app() -> Starlette:
@@ -186,7 +227,7 @@ def build_app() -> Starlette:
     logs.add("info", "fleet-agent server started", "system")
     wf_count = len(discover_workflows(settings.project_root))
     logs.add("info", f"{wf_count} workflows registered", "system")
-    logs.add("info", "36 MCP tools across 10 subsystems loaded", "system")
+    logs.add("info", "37 MCP tools across 11 subsystems loaded", "system")
 
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -205,6 +246,10 @@ def build_app() -> Starlette:
             Route("/api/log", endpoint=api_log_add, methods=["POST"]),
             Route("/api/memory", endpoint=api_memory),
             Route("/api/evolution", endpoint=api_evolution),
+            Route("/api/tasks", endpoint=api_tasks_list),
+            Route("/api/tasks", endpoint=api_tasks_add, methods=["POST"]),
+            Route("/api/tasks/complete", endpoint=api_tasks_complete, methods=["POST"]),
+            Route("/api/tasks/delete", endpoint=api_tasks_delete, methods=["POST"]),
         ],
         middleware=[cors],
         lifespan=mcp_asgi.lifespan,

@@ -9,6 +9,7 @@ import { LoggerPage } from "@/pages/logger";
 import { Status } from "@/pages/status";
 import { Memory } from "@/pages/memory";
 import { Evolution } from "@/pages/evolution";
+import { Tasks } from "@/pages/tasks";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/status" element={<Status />} />
           <Route path="/memory" element={<Memory />} />
           <Route path="/evolution" element={<Evolution />} />
+          <Route path="/tasks" element={<Tasks />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppLayout>

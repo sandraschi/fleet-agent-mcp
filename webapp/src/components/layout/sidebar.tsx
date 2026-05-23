@@ -10,6 +10,7 @@ import {
   Terminal,
   Brain,
   TrendingUp,
+  ListChecks,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -22,6 +23,7 @@ interface SidebarProps {
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/chat", label: "Chat", icon: Bot },
+  { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/memory", label: "Memory", icon: Brain },
   { href: "/evolution", label: "Evolution", icon: TrendingUp },
   { href: "/help", label: "Help", icon: HelpCircle },
