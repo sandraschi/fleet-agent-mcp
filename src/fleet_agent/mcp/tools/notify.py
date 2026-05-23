@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from pydantic import Field
@@ -65,7 +64,7 @@ async def _scheduler_loop():
         try:
             from ...engine.sqlite_store import get_store
             store = get_store()
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             tasks = store.todo_list(status="pending")
             for t in tasks:
                 rec = t.get("recurrence")

@@ -236,6 +236,16 @@ def build_app() -> Starlette:
     logs.add("info", f"{wf_count} workflows registered", "system")
     logs.add("info", "40 MCP tools across 12 subsystems loaded", "system")
 
+    # Auto-start heartbeat scheduler
+    try:
+        import asyncio
+
+        from .mcp.tools.notify import cron_start
+        asyncio.create_task(cron_start())
+        logs.add("info", "Heartbeat scheduler auto-started", "system")
+    except Exception as e:
+        logs.add("warning", f"Could not auto-start scheduler: {e}", "system")
+
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     return Starlette(

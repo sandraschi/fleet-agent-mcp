@@ -2,6 +2,8 @@
 
 import json
 import sqlite3
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -255,6 +257,53 @@ class SqliteStore:
     def todo_delete(self, item_id: str) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM todo_items WHERE id = ?", (item_id,))
+
+    def todo_add(
+        self,
+        task: str,
+        group: str = "self",
+        priority: str = "medium",
+        recurrence: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new pending task with a generated ID."""
+        now = datetime.now(UTC).isoformat()
+        item = {
+            "id": uuid.uuid4().hex[:8],
+            "task": task,
+            "group_name": group,
+            "group": group,
+            "priority": priority,
+            "status": "pending",
+            "created_at": now,
+            "updated_at": now,
+            "completed_at": None,
+            "recurrence": recurrence,
+            "metadata": {},
+        }
+        self.todo_upsert(item)
+        return item
+
+    def todo_complete(self, item_id: str) -> bool:
+        """Mark a task as completed."""
+        now = datetime.now(UTC).isoformat()
+        item = self.todo_get(item_id)
+        if not item:
+            return False
+        item["status"] = "done"
+        item["completed_at"] = now
+        item["updated_at"] = now
+        self.todo_upsert(item)
+        return True
+
+    def todo_update(self, item_id: str, updates: dict[str, Any]) -> bool:
+        """Partial update of a task's fields."""
+        item = self.todo_get(item_id)
+        if not item:
+            return False
+        item.update(updates)
+        item["updated_at"] = datetime.now(UTC).isoformat()
+        self.todo_upsert(item)
+        return True
 
     def todo_stale(self, days: int = 3) -> list[dict[str, Any]]:
         with self._connect() as conn:
