@@ -23,7 +23,7 @@ from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse, StreamingResponse
-from starlette.routing import Route
+from starlette.routing import Mount, Route
 
 from .config import settings
 
@@ -149,21 +149,6 @@ async def api_log_add(request: Request) -> JSONResponse:
 
 # ── App Builder ────────────────────────────────────────────────────────────
 
-def _make_mcp_handler(mcp_asgi):
-    """Return an ASGI handler that strips /mcp prefix (avoids Mount redirect)."""
-    prefix_len = 4  # len("/mcp")
-
-    async def handler(scope, receive, send):
-        if scope["type"] == "http":
-            path = scope.get("path", "")
-            if path.startswith("/mcp"):
-                scope["path"] = path[prefix_len:] or "/"
-                scope["root_path"] = "/mcp"
-        await mcp_asgi(scope, receive, send)
-
-    return handler
-
-
 def build_app() -> Starlette:
     from .mcp import tools as _tools  # noqa: F401 — triggers @mcp.tool registration
     from .mcp.registry import mcp
@@ -192,8 +177,7 @@ def build_app() -> Starlette:
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     return Starlette(
         routes=[
-            Route("/mcp", endpoint=_make_mcp_handler(mcp_asgi), methods=["GET", "POST"]),
-            Route("/mcp/{path:path}", endpoint=_make_mcp_handler(mcp_asgi), methods=["GET", "POST"]),
+            Mount("/mcp", app=mcp_asgi),
             Route("/api/status", endpoint=api_status),
             Route("/api/whoami", endpoint=api_whoami),
             Route("/api/tools", endpoint=api_tools),
