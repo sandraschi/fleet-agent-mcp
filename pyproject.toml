@@ -39,6 +39,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "src/fleet_agent/llm_client.py" = ["E501"]
 "src/fleet_agent/mcp/tools/contribute.py" = ["E501"]
 "src/fleet_agent/mcp/tools/notify.py" = ["E501"]
+"src/fleet_agent/mcp/tools/fleet_bridge.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

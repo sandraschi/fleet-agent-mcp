@@ -82,9 +82,21 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "arxiv": {
         "url": "http://127.0.0.1:10770/mcp",
-        "description": "arxiv-mcp — Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",  # noqa: E501
+        "description": "arxiv-mcp — Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",
         "category": "research",
-        "key_tools": ["search_papers", "get_paper_details", "find_connected_papers", "arxiv_agentic_assist"],  # noqa: E501
+        "key_tools": ["search_papers", "get_paper_details", "find_connected_papers", "arxiv_agentic_assist"],
+    },
+    "browser": {
+        "url": "http://127.0.0.1:10780/mcp",
+        "description": "browser-mcp — Browser automation: open URLs, screenshots, web scraping, bookmarks",
+        "category": "automation",
+        "key_tools": ["browser_open", "browser_screenshot", "browser_navigate", "browser_bookmarks"],
+    },
+    "pywinauto": {
+        "url": "http://127.0.0.1:10788/mcp",
+        "description": "pywinauto-mcp — Windows UI automation: windows, clicks, keyboard, OCR",
+        "category": "automation",
+        "key_tools": ["automation_windows", "automation_elements", "automation_keyboard", "automation_mouse"],
     },
 }
 

@@ -70,36 +70,81 @@ async def _scheduler_loop():
                 rec = t.get("recurrence")
                 if not rec:
                     continue
-                if rec.isdigit():
-                    interval = int(rec)
-                elif rec.endswith("h"):
-                    interval = int(rec[:-1]) * 3600
-                elif rec.endswith("m"):
-                    interval = int(rec[:-1]) * 60
-                else:
-                    continue
                 updated = t.get("updated_at") or t.get("created_at", "")
-                try:
+                should_fire = False
+
+                # Time-of-day recurrence: "09:00", "14:30" (fires daily at that time)
+                if ":" in rec and len(rec) <= 5:
+                    try:
+                        h, m = rec.split(":")
+                        target_min = int(h) * 60 + int(m)
+                        current_min = now.hour * 60 + now.minute
+                        last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                        # Fire if time matches and hasn't fired today
+                        if current_min >= target_min and last_dt.date() < now.date():
+                            should_fire = True
+                    except ValueError:
+                        pass
+
+                # Interval recurrence: "3600" (seconds), "1h", "30m"
+                elif rec.isdigit():
+                    interval = int(rec)
                     last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
                     if (now - last_dt).total_seconds() >= interval:
-                        logs.add("info", f"Firing: {t['task'][:60]}", "heartbeat")
-                        from ...settings_store import get_settings_store
-                        s = get_settings_store()
-                        to = s.get("heartbeat_email", "")
-                        if to:
-                            await _send_email_smtp(
-                                to=to,
-                                subject=f"Fritz Heartbeat - {now.strftime('%Y-%m-%d %H:%M')}",
-                                body=f"Fritz alive. Task: {t['task']}",
-                                smtp_host=s.get("smtp_host", ""),
-                                smtp_port=s.get("smtp_port", 587),
-                                smtp_user=s.get("smtp_user", ""),
-                                smtp_pass=s.get("smtp_pass", ""),
+                        should_fire = True
+                elif rec.endswith("h"):
+                    interval = int(rec[:-1]) * 3600
+                    last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                    if (now - last_dt).total_seconds() >= interval:
+                        should_fire = True
+                elif rec.endswith("m"):
+                    interval = int(rec[:-1]) * 60
+                    last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+                    if (now - last_dt).total_seconds() >= interval:
+                        should_fire = True
+
+                if should_fire:
+                    logs.add("info", f"Firing: {t['task'][:60]}", "heartbeat")
+
+                    # Try to execute the task via fleet tools
+                    task_lower = t["task"].lower()
+                    try:
+                        if "arxiv" in task_lower or "paper" in task_lower:
+                            from ...llm_client import chat_completion
+                            query = await chat_completion([
+                                {"role": "system", "content": "Extract a short arxiv search query from this task. Reply with ONLY the query, no quotes."},
+                                {"role": "user", "content": t["task"]},
+                            ])
+                            logs.add("info", f"  Searching arxiv for: {query}", "heartbeat")
+                            import httpx
+                            headers = {"Accept": "application/json, text/event-stream"}
+                            r = httpx.post(
+                                "http://127.0.0.1:10996/mcp/",
+                                json={"jsonrpc":"2.0","method":"tools/call","params":{"name":"fleet_call_tool","arguments":{"server":"arxiv","tool":"search_papers","arguments":{"query":query,"limit":5}}},"id":1},
+                                headers=headers, timeout=120,
                             )
-                        t["updated_at"] = now.isoformat()
-                        store.todo_upsert(t)
-                except Exception as e:
-                    logs.add("error", f"Scheduler: {e}", "heartbeat")
+                            logs.add("info", f"  Arxiv result: {r.text[:200]}", "heartbeat")
+                        elif "browser" in task_lower or "chrome" in task_lower or "website" in task_lower or "tab" in task_lower:
+                            logs.add("info", "  Browser task detected — pywinauto or browser-mcp needed", "heartbeat")
+                    except Exception as ex:
+                        logs.add("error", f"  Task executor: {ex}", "heartbeat")
+
+                    from ...settings_store import get_settings_store
+                    s = get_settings_store()
+                    to = s.get("heartbeat_email", "")
+                    if to:
+                        await _send_email_smtp(
+                            to=to,
+                            subject=f"Fritz Heartbeat - {now.strftime('%Y-%m-%d %H:%M')}",
+                            body=f"Fritz alive. Task: {t['task']}",
+                            smtp_host=s.get("smtp_host", ""),
+                            smtp_port=s.get("smtp_port", 587),
+                            smtp_user=s.get("smtp_user", ""),
+                            smtp_pass=s.get("smtp_pass", ""),
+                        )
+                    t["updated_at"] = now.isoformat()
+                    store.todo_upsert(t)
+
         except Exception as e:
             logs.add("error", f"Scheduler loop: {e}", "heartbeat")
         await asyncio.sleep(60)
