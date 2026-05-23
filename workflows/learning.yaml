@@ -1,0 +1,35 @@
+name: learning
+description: Structured learning workflow — research, synthesize, document, apply
+start: research
+
+nodes:
+  research:
+    task: |
+      Pick a topic to study. Search existing knowledge cards via memory_card_search().
+      Read relevant documentation, code, or papers. Take raw notes.
+    next: synthesize
+
+  synthesize:
+    task: |
+      Synthesize findings into structured knowledge cards.
+      Create cards for: core concepts, patterns, gotchas, architecture decisions.
+      Cross-reference related cards.
+    branches:
+      - condition: new insights found
+        next: document
+      - condition: nothing substantially new
+        next: apply
+
+  document:
+    task: |
+      Write polished knowledge cards via memory_card_create().
+      Ensure each card has: clear title, structured content, tags, cross-references.
+      Update any existing cards that need correction.
+    next: apply
+
+  apply:
+    task: |
+      Apply the knowledge — build something small to validate understanding.
+      Log the experiment via memory_project_note().
+      Record mistakes via evolution_record().
+    terminal: true

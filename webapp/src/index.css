@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-950 text-slate-200 antialiased;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-slate-900; }
+::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-slate-600; }
+
+.tab-active {
+  @apply text-fleet-400 border-b-2 border-fleet-400 bg-slate-800/50;
+}
+.tab-inactive {
+  @apply text-slate-400 border-b-2 border-transparent hover:text-slate-200 hover:border-slate-600;
+}

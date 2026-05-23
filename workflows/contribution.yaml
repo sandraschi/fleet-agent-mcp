@@ -1,0 +1,56 @@
+name: contribution
+description: Open source contribution workflow — study, implement, test, submit
+start: study
+
+nodes:
+  study:
+    task: |
+      Read project structure, contribution guidelines, and identify the issue or feature.
+      Check memory_project_notes() for prior knowledge about this project.
+      Document the approach before starting.
+      Then call github_create_branch() to create a feature branch.
+    next: implement
+
+  implement:
+    task: |
+      Write code changes using code_generate() or file_write().
+      Use github_status() to verify the diff.
+      Run linting and type checks before proceeding.
+    next: test
+
+  test:
+    task: |
+      Run tests and verify implementation works correctly.
+      Use fleet_inspect_repo() with aspect="tests" if available.
+    branches:
+      - condition: tests pass
+        next: submit
+      - condition: tests fail
+        next: implement
+
+  submit:
+    task: |
+      Call github_commit() with the changes and a descriptive message.
+      Call github_push() to push the branch.
+      Call github_create_pr() with title, body, owner, repo, head branch.
+      Log PR URL via memory_project_note().
+    next: verify
+
+  verify:
+    task: |
+      Monitor PR feedback. Address review comments.
+      If CI fails, return to implement node.
+      Log project notes via memory_project_note() with lessons learned.
+    branches:
+      - condition: merged
+        next: done
+      - condition: review changes requested
+        next: implement
+      - condition: CI failure
+        next: implement
+
+  done:
+    task: |
+      Record completion: evolution_record() any corrections, memory_project_note() any patterns.
+      Celebrate. Then find the next thing.
+    terminal: true

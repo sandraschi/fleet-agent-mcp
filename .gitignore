@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+.ruff_cache/
+.pytest_cache/
+*.bak
+*.spec
+*.tsbuildinfo
+.env
+webapp/node_modules/
+webapp/dist/

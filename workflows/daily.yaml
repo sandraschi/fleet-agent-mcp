@@ -1,0 +1,34 @@
+name: daily
+description: Daily agent routine — review, maintain, learn, contribute
+start: review
+
+nodes:
+  review:
+    task: |
+      Run heartbeat_wake() to check state. Review evolution log for recent corrections.
+      Run pulse_stale() to flag forgotten tasks. Run pulse_align() for priority order.
+      Check fleet health — any repos with issues or CI failures?
+    next: maintain
+
+  maintain:
+    task: |
+      Run memory_lint() to detect knowledge base issues (stale cards, broken refs, untagged).
+      Fix any issues found. Update outdated cards via memory_card_update().
+      Log any new project observations via memory_project_note().
+    next: learn
+
+  learn:
+    task: |
+      Pick one project/concept to study. Read the code or documentation.
+      Run memory_card_search() first to check what you already know.
+      Create new knowledge cards via memory_card_create() for new patterns discovered.
+      Cross-reference related cards.
+    next: act
+
+  act:
+    task: |
+      Execute the highest-priority task from pulse_align().
+      Use workflow_autodiscover() if new workflows were added.
+      Log work completed via pulse_complete() and any new observations.
+      If work involved corrections or discoveries, call evolution_record().
+    terminal: true
