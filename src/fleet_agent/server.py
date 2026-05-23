@@ -58,7 +58,7 @@ async def api_whoami(request: Request) -> JSONResponse:
 
 async def api_tools(request: Request) -> JSONResponse:
     return JSONResponse({
-        "total": 37,
+        "total": 40,
         "subsystems": [
             {"name": "flowforge", "count": 9, "annotation": "State machine"},
             {"name": "pulse", "count": 6, "annotation": "Task management"},
@@ -71,6 +71,7 @@ async def api_tools(request: Request) -> JSONResponse:
             {"name": "codegen", "count": 3, "annotation": "Code gen, file write, file edit"},
             {"name": "github", "count": 9, "annotation": "Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status"},
             {"name": "contribute", "count": 1, "annotation": "Autonomous: inspect, issue, branch, fix, PR"},
+            {"name": "notify", "count": 3, "annotation": "Email send, cron scheduler start/status"},
         ],
     })
 
@@ -233,7 +234,7 @@ def build_app() -> Starlette:
     logs.add("info", "fleet-agent server started", "system")
     wf_count = len(discover_workflows(settings.project_root))
     logs.add("info", f"{wf_count} workflows registered", "system")
-    logs.add("info", "37 MCP tools across 11 subsystems loaded", "system")
+    logs.add("info", "40 MCP tools across 12 subsystems loaded", "system")
 
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
