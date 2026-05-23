@@ -207,16 +207,19 @@ async def fritz_contribute(
     _sh(["git", "checkout", "-b", branch], cwd=str(work_dir))
     step("branch", branch)
 
-    # 7. Apply fix via file_edit
-    fix_result = _mcp("file_edit", {
-        "path": file_path.replace("\\", "/"),
-        "old_string": old_str,
-        "new_string": new_str,
-    })
-    step("fix", fix_result.get("verified", fix_result.get("success", False)))
-
-    if not fix_result.get("verified"):
-        return {"success": False, "steps": steps, "message": f"file_edit failed: {fix_result}"}
+    # 7. Apply fix directly (not via MCP — avoids self-call timeout)
+    fix_path = Path(file_path)
+    if not fix_path.exists():
+        return {"success": False, "steps": steps, "message": f"File not found: {file_path}"}
+    content = fix_path.read_text(encoding="utf-8")
+    if old_str not in content:
+        return {"success": False, "steps": steps, "message": f"old_string not found in {file_path}"}
+    bak_path = fix_path.with_suffix(fix_path.suffix + ".bak")
+    bak_path.write_text(content, encoding="utf-8")
+    new_content = content.replace(old_str, new_str)
+    fix_path.write_text(new_content, encoding="utf-8")
+    verified = old_str not in fix_path.read_text(encoding="utf-8") and new_str in fix_path.read_text(encoding="utf-8")
+    step("fix", verified)
 
     # 8. Commit
     _sh(["git", "add", "-A"], cwd=str(work_dir))
