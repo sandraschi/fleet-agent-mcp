@@ -17,6 +17,7 @@ Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childho
 
 import argparse
 import asyncio
+import json
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -29,11 +30,16 @@ from .config import settings
 
 
 async def _call_tool(tool: str, args: dict) -> dict:
-    """Call an MCP tool internally and return structuredContent."""
+    """Call an MCP tool internally and return the result content."""
     from .mcp.registry import mcp
     result = await mcp.call_tool(tool, args)
-    if hasattr(result, "structuredContent") and result.structuredContent:
-        return result.structuredContent
+    if hasattr(result, "content") and result.content:
+        for block in result.content:
+            if hasattr(block, "text") and block.text:
+                try:
+                    return json.loads(block.text)
+                except (json.JSONDecodeError, TypeError):
+                    return {"text": block.text}
     return {}
 
 
