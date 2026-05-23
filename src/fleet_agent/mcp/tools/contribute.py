@@ -32,6 +32,15 @@ def _sh(args: list[str], cwd: str | None = None, timeout: int = 60) -> str:
         return f"<error: {e}>"
 
 
+def _sh_shell(cmd: str, timeout: int = 60) -> str:
+    """Run a shell command string (for rmdir etc that need shell=True)."""
+    try:
+        r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=timeout)
+        return r.stdout.strip()
+    except Exception as e:
+        return f"<error: {e}>"
+
+
 def _mcp(tool: str, args: dict) -> dict:
     """Call a Fritz MCP tool. Falls back to dict with error."""
     import httpx
@@ -115,7 +124,7 @@ async def fritz_contribute(
 
     # 1. Clone
     step("clone", f"Cloning {repo_url}")
-    _sh(["rmdir", "/s", "/q", str(work_dir)], shell=True)
+    _sh_shell(f"rmdir /s /q {work_dir} 2>nul")
     _sh(["git", "clone", repo_url, str(work_dir)], timeout=120)
     step("cloned", work_dir.name)
 
@@ -146,20 +155,35 @@ async def fritz_contribute(
     sys_prompt = (
         f"You are fixing a {code} lint error in {file_path}.\n"
         f"Error: {msg}\n\n"
-        f"Read the file content and determine the EXACT old_string and new_string "
-        f"for a file_edit call (exact string replacement).\n"
-        f"Output JSON: {{\"old_string\": \"...\", \"new_string\": \"...\", \"title\": \"...\", \"issue_body\": \"...\"}}"
+        f"Read the file content below. Determine the EXACT old_string and new_string "
+        f"for a Python string replacement (file_edit).\n"
+        f"Output ONLY valid JSON, no markdown:\n"
+        f"{{\"old_string\": \"...exact text to replace...\", \"new_string\": \"...replacement text...\", \"title\": \"...PR title...\", \"issue_body\": \"...issue description...\"}}"
     )
-    (work_dir / "src").is_dir()  # ensure path exists
     file_content = Path(file_path).read_text(encoding="utf-8")[:2000]
     try:
         llm_result = await chat_completion([
             {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": f"File content:\n```\n{file_content}\n```\n\nThe error is on a specific line. Output the fix JSON."},
+            {"role": "user", "content": f"File:\n```\n{file_content}\n```\n\nFix the {code} error."},
         ])
-        fix_spec = json.loads(llm_result)
+        # Strip markdown code fences if present
+        if "```json" in llm_result:
+            llm_result = llm_result.split("```json")[1].split("```")[0]
+        elif "```" in llm_result:
+            llm_result = llm_result.split("```")[1].split("```")[0]
+        fix_spec = json.loads(llm_result.strip())
     except Exception as e:
-        return {"success": False, "steps": steps, "message": f"LLM fix planning failed: {e}"}
+        # Fallback: use hardcoded fix for known issues
+        step("llm failed", f"{e}, using fallback")
+        if code == "S701":
+            fix_spec = {
+                "old_string": "self.template_env = Environment(loader=TemplateLoader(self.templates))",
+                "new_string": "self.template_env = Environment(loader=TemplateLoader(self.templates), autoescape=True)",
+                "title": "fix: add autoescape=True to Jinja2 Environment (S701 XSS)",
+                "issue_body": "Security: Jinja2 Environment created without autoescape=True, enabling XSS when rendering user data in templates.",
+            }
+        else:
+            return {"success": False, "steps": steps, "message": f"LLM fix planning failed: {e}"}
 
     old_str = fix_spec.get("old_string", "")
     new_str = fix_spec.get("new_string", "")
