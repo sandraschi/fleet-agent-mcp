@@ -54,6 +54,7 @@ async def api_tools(request: Request) -> JSONResponse:
             {"name": "fleet_bridge", "count": 3, "annotation": "Cross-server MCP client"},
             {"name": "codegen", "count": 3, "annotation": "Code gen, file write, file edit (with backup + verify)"},
             {"name": "github", "count": 9, "annotation": "Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status"},
+            {"name": "contribute", "count": 1, "annotation": "Autonomous: inspect, issue, branch, fix, PR"},
         ],
     })
 

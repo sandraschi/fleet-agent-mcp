@@ -5,6 +5,7 @@ All tool modules must be imported here for FastMCP discovery during server boot.
 
 from . import (
     codegen,
+    contribute,
     evolution_log,
     fleet_bridge,
     flowforge,
@@ -18,5 +19,5 @@ from . import (
 
 __all__ = [
     "flowforge", "pulse", "memory", "identity", "teleport",
-    "heartbeat", "evolution_log", "fleet_bridge", "codegen", "github",
+    "heartbeat", "evolution_log", "fleet_bridge", "codegen", "github", "contribute",
 ]
