@@ -1,27 +1,33 @@
 name: contribution
-description: Open source contribution workflow — study, implement, test, submit
+description: Documented open source contribution workflow — every step logged
 start: study
 
 nodes:
   study:
     task: |
-      Read project structure, contribution guidelines, and identify the issue or feature.
-      Check memory_project_notes() for prior knowledge about this project.
-      Document the approach before starting.
-      Then call github_create_branch() to create a feature branch.
+      DOCUMENT: study node start
+      1. Read project structure, issue description, contribution guidelines
+      2. Run fleet_inspect_repo() for repo health
+      3. Run github_create_branch(repo_path, branch_name, base_branch)
+      4. LOG via memory_project_note(project, "Study: <summary of what needs to change>")
+      5. LOG via evolution_record(category="contribution", lesson="Study completed for <issue>")
     next: implement
 
   implement:
     task: |
-      Write code changes using code_generate() or file_write().
-      Use github_status() to verify the diff.
-      Run linting and type checks before proceeding.
+      DOCUMENT: implement node start
+      1. Call code_generate(spec, repo_path, file_path) or file_write() for each file
+      2. Run github_status(repo_path) to verify diff
+      3. Run linting if available
+      4. LOG via memory_project_note(project, "Implement: <what was changed>")
+      5. LOG via evolution_record(category="contribution", lesson="<files changed and why>")
     next: test
 
   test:
     task: |
-      Run tests and verify implementation works correctly.
-      Use fleet_inspect_repo() with aspect="tests" if available.
+      DOCUMENT: test node start
+      1. Run tests (pytest or fleet_inspect_repo with aspect="tests")
+      2. LOG via memory_project_note(project, "Test: <results>")
     branches:
       - condition: tests pass
         next: submit
@@ -30,17 +36,21 @@ nodes:
 
   submit:
     task: |
-      Call github_commit() with the changes and a descriptive message.
-      Call github_push() to push the branch.
-      Call github_create_pr() with title, body, owner, repo, head branch.
-      Log PR URL via memory_project_note().
+      DOCUMENT: submit node start
+      1. Call github_commit(repo_path, message, files)
+      2. Call github_push(repo_path, origin, branch)
+      3. Call github_create_pr(owner, repo, title, body, head, base)
+      4. LOG via memory_project_note(project, "PR created: <url>")
+      5. LOG via evolution_record(category="contribution", lesson="PR <number> submitted")
     next: verify
 
   verify:
     task: |
-      Monitor PR feedback. Address review comments.
-      If CI fails, return to implement node.
-      Log project notes via memory_project_note() with lessons learned.
+      DOCUMENT: verify node start
+      1. Call github_get_pr(owner, repo, number) to review
+      2. Call github_merge_pr(owner, repo, number) if approved
+      3. LOG via memory_project_note(project, "PR merged: <number>")
+      4. LOG via evolution_record(category="contribution", lesson="PR <number> merged")
     branches:
       - condition: merged
         next: done
@@ -51,6 +61,8 @@ nodes:
 
   done:
     task: |
-      Record completion: evolution_record() any corrections, memory_project_note() any patterns.
-      Celebrate. Then find the next thing.
+      DOCUMENT: done node start
+      1. Record completion: evolution_record() with final summary
+      2. memory_project_note(project, "Done: <full summary>")
+      3. Celebrate.
     terminal: true
