@@ -109,23 +109,59 @@ async def _scheduler_loop():
                     # Try to execute the task via fleet tools
                     task_lower = t["task"].lower()
                     try:
+                        import httpx
+                        hdrs = {"Accept": "application/json, text/event-stream"}
+                        mcp_url = "http://127.0.0.1:10996/mcp/"
+
+                        def _call(server, tool, args):
+                            return httpx.post(mcp_url, json={
+                                "jsonrpc":"2.0","method":"tools/call",
+                                "params":{"name":"fleet_call_tool","arguments":{"server":server,"tool":tool,"arguments":args}},
+                                "id":1}, headers=hdrs, timeout=httpx.Timeout(120))
+
                         if "arxiv" in task_lower or "paper" in task_lower:
                             from ...llm_client import chat_completion
                             query = await chat_completion([
-                                {"role": "system", "content": "Extract a short arxiv search query from this task. Reply with ONLY the query, no quotes."},
-                                {"role": "user", "content": t["task"]},
+                                {"role":"system","content":"Extract a short arxiv search query. Reply with ONLY the query."},
+                                {"role":"user","content":t["task"]},
                             ])
-                            logs.add("info", f"  Searching arxiv for: {query}", "heartbeat")
-                            import httpx
-                            headers = {"Accept": "application/json, text/event-stream"}
-                            r = httpx.post(
-                                "http://127.0.0.1:10996/mcp/",
-                                json={"jsonrpc":"2.0","method":"tools/call","params":{"name":"fleet_call_tool","arguments":{"server":"arxiv","tool":"search_papers","arguments":{"query":query,"limit":5}}},"id":1},
-                                headers=headers, timeout=120,
-                            )
-                            logs.add("info", f"  Arxiv result: {r.text[:200]}", "heartbeat")
+                            logs.add("info", f"  Searching arxiv: {query}", "heartbeat")
+                            _call("arxiv", "search_papers", {"query":query, "limit":3})
+                            logs.add("info", "  Arxiv done", "heartbeat")
+
+                        elif "speak" in task_lower or "sonnet" in task_lower or "say" in task_lower or "tts" in task_lower:
+                            from ...llm_client import chat_completion
+                            text = await chat_completion([
+                                {"role":"system","content":"Extract what text to speak from this task. If it mentions a sonnet or poem, include the full text. Reply with ONLY the text to speak."},
+                                {"role":"user","content":t["task"]},
+                            ])
+                            logs.add("info", f"  Speaking: {text[:60]}", "heartbeat")
+                            _call("speech", "speech_say", {"text":text})
+                            logs.add("info", "  Speech done", "heartbeat")
+
+                        elif "yahboom" in task_lower or "robot" in task_lower or "car" in task_lower or "patrol" in task_lower:
+                            logs.add("info", "  Starting Yahboom patrol", "heartbeat")
+                            _call("yahboom", "yahboom_patrol", {"enable":True})
+                            logs.add("info", "  Patrol done", "heartbeat")
+
                         elif "browser" in task_lower or "chrome" in task_lower or "website" in task_lower or "tab" in task_lower:
-                            logs.add("info", "  Browser task detected — pywinauto or browser-mcp needed", "heartbeat")
+                            logs.add("info", "  Opening browser", "heartbeat")
+                            _call("browser", "browser_open", {"urls":t.get("urls",[])})
+                            logs.add("info", "  Browser done", "heartbeat")
+
+                        else:
+                            # Generic LLM routing for unknown task types
+                            from ...llm_client import chat_completion
+                            route = await chat_completion([
+                                {"role":"system","content":(
+                                    "You are a task router. Given a task description, output the best fleet server and tool to handle it. "
+                                    "Options: arxiv(search_papers), speech(speech_say), yahboom(yahboom_patrol), browser(browser_open), "
+                                    "pywinauto(automation_windows), git(create_pr), email(notify_email). "
+                                    "Output JSON: {\"server\":\"...\",\"tool\":\"...\",\"args\":{...}}"
+                                )},
+                                {"role":"user","content":t["task"]},
+                            ])
+                            logs.add("info", f"  Router: {route[:100]}", "heartbeat")
                     except Exception as ex:
                         logs.add("error", f"  Task executor: {ex}", "heartbeat")
 

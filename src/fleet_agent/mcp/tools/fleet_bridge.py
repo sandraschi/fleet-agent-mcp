@@ -98,6 +98,18 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "category": "automation",
         "key_tools": ["automation_windows", "automation_elements", "automation_keyboard", "automation_mouse"],
     },
+    "speech": {
+        "url": "http://127.0.0.1:10908/mcp",
+        "description": "speech-mcp — Text-to-speech, voice synthesis, audio playback",
+        "category": "media",
+        "key_tools": ["speech_say", "speech_tts", "speech_list_voices"],
+    },
+    "yahboom": {
+        "url": "http://127.0.0.1:10892/mcp",
+        "description": "yahboom-mcp — Yahboom robot car: motors, patrol, sensors, camera",
+        "category": "robotics",
+        "key_tools": ["yahboom_patrol", "yahboom_move", "yahboom_status"],
+    },
 }
 
 
