@@ -35,6 +35,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.ruff.lint.per-file-ignores]
 "src/fleet_agent/mcp/tools/codegen.py" = ["E501"]
 "src/fleet_agent/mcp/tools/github.py" = ["E501"]
+"src/fleet_agent/server.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

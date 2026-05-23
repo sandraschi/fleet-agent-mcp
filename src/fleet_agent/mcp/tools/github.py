@@ -6,6 +6,7 @@ falls back to subprocess git for local operations.
 
 from __future__ import annotations
 
+import json
 import logging
 import subprocess
 from typing import Annotated, Any
@@ -192,6 +193,149 @@ async def github_create_pr(
     except FileNotFoundError:
         msg = "gh CLI not installed. Install it or ensure git-github-mcp is running."
         return {"success": False, "message": msg}
+
+
+@mcp.tool(version="0.1.0")
+async def github_list_prs(
+    owner: Annotated[str, Field(description="Repository owner")],
+    repo: Annotated[str, Field(description="Repository name")],
+    state: Annotated[str, Field(description="PR state: open, closed, all")] = "open",
+    limit: Annotated[int, Field(description="Max PRs to return")] = 10,
+) -> dict[str, Any]:
+    """List pull requests with title, author, status, and mergeable state.
+
+    ## Return Format
+    {"success": bool, "prs": [...], "total": int}
+
+    ## Examples
+    github_list_prs(owner="sandraschi", repo="fritz-test")
+    """
+    # Try gh CLI
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "list", "--repo", f"{owner}/{repo}", "--state", state,
+             "--json", "number,title,author,state,mergeable,headRefName,baseRefName,createdAt",
+             "--limit", str(limit)],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            prs = json.loads(result.stdout)
+            return {"success": True, "prs": prs, "total": len(prs)}
+    except Exception:
+        pass
+    return {"success": False, "message": "gh CLI not available"}
+
+
+@mcp.tool(version="0.1.0")
+async def github_get_pr(
+    owner: Annotated[str, Field(description="Repository owner")],
+    repo: Annotated[str, Field(description="Repository name")],
+    number: Annotated[int, Field(description="PR number")],
+) -> dict[str, Any]:
+    """Get detailed PR info: title, body, files changed, status checks, diff.
+
+    ## Return Format
+    {"success": bool, "pr": dict, "files": [...], "diff": str, "message": str}
+
+    ## Examples
+    github_get_pr(owner="sandraschi", repo="fritz-test", number=1)
+    """
+    try:
+        # Get PR info
+        r = subprocess.run(
+            ["gh", "pr", "view", str(number), "--repo", f"{owner}/{repo}",
+             "--json", "number,title,body,state,mergeable,headRefName,baseRefName,author,createdAt,mergedBy,reviews"],
+            capture_output=True, text=True, timeout=15,
+        )
+        if r.returncode != 0:
+            return {"success": False, "message": f"gh CLI: {r.stderr.strip()}"}
+        pr_info = json.loads(r.stdout)
+
+        # Get changed files
+        r2 = subprocess.run(
+            ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}", "--name-only"],
+            capture_output=True, text=True, timeout=15,
+        )
+        files = [f for f in r2.stdout.strip().splitlines() if f.strip()] if r2.returncode == 0 else []
+
+        # Get full diff
+        r3 = subprocess.run(
+            ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}"],
+            capture_output=True, text=True, timeout=15,
+        )
+        diff = r3.stdout[:5000] if r3.returncode == 0 else ""
+
+        return {
+            "success": True,
+            "pr": pr_info,
+            "files": files,
+            "diff": diff,
+            "message": f"PR #{number}: {pr_info.get('title', '')}",
+        }
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@mcp.tool(version="0.1.0")
+async def github_review_pr(
+    owner: Annotated[str, Field(description="Repository owner")],
+    repo: Annotated[str, Field(description="Repository name")],
+    number: Annotated[int, Field(description="PR number")],
+    action: Annotated[str, Field(description="Review action: approve, request-changes, comment")],
+    body: Annotated[str, Field(description="Review comment body")] = "",
+) -> dict[str, Any]:
+    """Review a pull request: approve, request changes, or comment.
+
+    ## Return Format
+    {"success": bool, "message": str}
+
+    ## Examples
+    github_review_pr(owner="sandraschi", repo="fritz-test", number=1, action="approve", body="LGTM")
+    github_review_pr(owner="sandraschi", repo="fritz-test", number=1, action="request-changes", body="Fix formatting")
+    """
+    try:
+        cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--approve"]
+        if action == "request-changes":
+            cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--request-changes"]
+        elif action == "comment":
+            cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--comment"]
+        if body:
+            cmd.extend(["--body", body])
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            return {"success": False, "message": f"Review failed: {r.stderr.strip()}"}
+        return {"success": True, "message": f"Review '{action}' submitted on PR #{number}"}
+    except FileNotFoundError:
+        return {"success": False, "message": "gh CLI not installed"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+@mcp.tool(version="0.1.0")
+async def github_merge_pr(
+    owner: Annotated[str, Field(description="Repository owner")],
+    repo: Annotated[str, Field(description="Repository name")],
+    number: Annotated[int, Field(description="PR number")],
+    method: Annotated[str, Field(description="Merge method: merge, squash, rebase")] = "squash",
+) -> dict[str, Any]:
+    """Merge a pull request.
+
+    ## Return Format
+    {"success": bool, "message": str}
+
+    ## Examples
+    github_merge_pr(owner="sandraschi", repo="fritz-test", number=1)
+    """
+    try:
+        cmd = ["gh", "pr", "merge", str(number), "--repo", f"{owner}/{repo}", f"--{method}"]
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        if r.returncode != 0:
+            return {"success": False, "message": f"Merge failed: {r.stderr.strip()}"}
+        return {"success": True, "message": f"PR #{number} merged ({method})"}
+    except FileNotFoundError:
+        return {"success": False, "message": "gh CLI not installed"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
     except Exception as e:
         return {"success": False, "message": str(e)}
 

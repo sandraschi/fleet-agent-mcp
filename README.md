@@ -162,7 +162,7 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | Cron | OpenClaw built-in | External → heartbeat_wake() |
 | Cross-server | OpenClaw skills | fleet_bridge (MCP client, 9 servers) |
 | Core language | TypeScript | Python |
-| GitHub PRs | 887+ across 52 repos | **Yes — 5 tools: branch, commit, push, PR, status** |
+| GitHub PRs | 887+ across 52 repos | **Yes — 9 tools: list, view, approve, merge, branch, commit, push, PR, status** |
 | Code generation | Built-in (LLM → file) | **Yes — 2 tools: code_generate, file_write** |
 | Sub-agent delegation | OpenClaw skill graph | fleet_bridge → 9 MCP servers |
 
