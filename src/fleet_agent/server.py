@@ -278,17 +278,11 @@ def main() -> None:
         import uvicorn
 
         async def run():
-            from .mcp.tools.notify import _scheduler_loop
+            from .mcp.tools.notify import start_scheduler
             config = uvicorn.Config(app, host=args.host, port=args.port, log_level="info")
             server = uvicorn.Server(config)
-            sched = asyncio.create_task(_scheduler_loop())
-            print("  Heartbeat scheduler auto-started")
+            start_scheduler()
             await server.serve()
-            sched.cancel()
-            try:
-                await sched
-            except asyncio.CancelledError:
-                pass
 
         asyncio.run(run())
     else:

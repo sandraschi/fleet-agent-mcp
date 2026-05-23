@@ -122,6 +122,16 @@ async def cron_start() -> dict[str, Any]:
     return {"success": True, "message": "Heartbeat scheduler started"}
 
 
+def start_scheduler() -> None:
+    """Start the scheduler and track it in the module variable.
+
+    Called from server.main() on boot to auto-start the heartbeat loop.
+    """
+    global _SCHEDULER_TASK
+    if _SCHEDULER_TASK is None or _SCHEDULER_TASK.done():
+        _SCHEDULER_TASK = asyncio.create_task(_scheduler_loop())
+
+
 @mcp.tool(version="0.1.0")
 async def cron_status() -> dict[str, Any]:
     """Check if the heartbeat scheduler is running.
