@@ -219,6 +219,7 @@ async def fritz_contribute(
     new_content = content.replace(old_str, new_str)
     fix_path.write_text(new_content, encoding="utf-8")
     verified = old_str not in fix_path.read_text(encoding="utf-8") and new_str in fix_path.read_text(encoding="utf-8")
+    bak_path.unlink()  # remove backup before commit — only the fix should ship
     step("fix", verified)
 
     # 8. Commit
