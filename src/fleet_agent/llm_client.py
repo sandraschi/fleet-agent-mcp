@@ -17,18 +17,53 @@ def _build_payload(messages: list[dict], model: str, stream: bool = True) -> dic
     }
 
 
-def _get_config() -> tuple[str, str, int]:
+def _get_config() -> tuple[str, str, int, str]:
     store = get_settings_store()
-    return store.get("base_url"), store.get("model", ""), store.get("timeout", 120)
+    return store.get("base_url"), store.get("model", ""), store.get("timeout", 120), store.get("provider", "ollama")
+
+
+def _api_path(provider: str, endpoint: str) -> str:
+    """Return the API path for the given provider and endpoint.
+
+    Ollama: /api/chat, /api/tags
+    LM Studio / OpenAI: /v1/chat/completions, /v1/models
+    """
+    if provider == "lmstudio" or provider == "openai":
+        paths = {"chat": "/v1/chat/completions", "models": "/v1/models"}
+    else:
+        paths = {"chat": "/api/chat", "models": "/api/tags"}
+    return paths.get(endpoint, f"/api/{endpoint}")
+
+
+def _build_payload(
+    messages: list[dict], model: str, stream: bool = True, provider: str = "ollama"
+) -> dict:
+    if provider in ("lmstudio", "openai"):
+        return {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            "temperature": 0.7,
+        }
+    return {
+        "model": model,
+        "messages": messages,
+        "stream": stream,
+        "options": {"temperature": 0.7},
+    }
 
 
 async def list_models() -> list[dict]:
-    base_url, _, _ = _get_config()
+    base_url, _, _, provider = _get_config()
+    models_path = _api_path(provider, "models")
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.get(f"{base_url}/api/tags")
+            resp = await client.get(f"{base_url}{models_path}")
             resp.raise_for_status()
-            return resp.json().get("models", [])
+            data = resp.json()
+            if provider in ("lmstudio", "openai"):
+                return data.get("data", [])
+            return data.get("models", [])
     except Exception as e:
         raise RuntimeError(f"Failed to list models: {e}")
 
@@ -39,19 +74,21 @@ async def chat_completion(
 ) -> str:
     """Non-streaming chat completion. Returns the full response text.
 
-    Use for code generation and tool-calling where you need the complete
-    output before proceeding.
+    Supports Ollama (/api/chat) and LM Studio/OpenAI (/v1/chat/completions).
     """
-    base_url, default_model, timeout = _get_config()
+    base_url, default_model, timeout, provider = _get_config()
     model = model or default_model
     if not model:
         raise RuntimeError("No model configured. Set model in settings.")
-    payload = _build_payload(messages, model, stream=False)
+    chat_path = _api_path(provider, "chat")
+    payload = _build_payload(messages, model, stream=False, provider=provider)
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            resp = await client.post(f"{base_url}/api/chat", json=payload)
+            resp = await client.post(f"{base_url}{chat_path}", json=payload)
             resp.raise_for_status()
             data = resp.json()
+            if provider in ("lmstudio", "openai"):
+                return data.get("choices", [{}])[0].get("message", {}).get("content", "")
             return data.get("message", {}).get("content", "")
     except Exception as e:
         raise RuntimeError(f"Chat completion failed: {e}")

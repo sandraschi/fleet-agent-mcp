@@ -173,7 +173,7 @@ def build_app() -> Starlette:
     logs.add("info", f"{wf_count} workflows registered", "system")
     logs.add("info", "35 MCP tools across 10 subsystems loaded", "system")
 
-    mcp_asgi = mcp.http_app(path="/", transport="streamable-http")
+    mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     return Starlette(
         routes=[
