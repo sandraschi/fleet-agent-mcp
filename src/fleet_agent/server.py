@@ -148,10 +148,9 @@ async def api_log_add(request: Request) -> JSONResponse:
 
 
 async def api_memory(request: Request) -> JSONResponse:
-    from .memory.wiki import Wiki
-    from .config import settings
-    wiki = Wiki(settings.data_dir)
-    cards = wiki.search(request.query_params.get("query", "")) if request.query_params.get("query") else wiki.list_cards()
+    from .engine.sqlite_store import get_store
+    store = get_store()
+    cards = store.cards_list()
     return JSONResponse({"success": True, "cards": cards, "count": len(cards)})
 
 
