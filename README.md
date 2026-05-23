@@ -11,9 +11,11 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. 24 FastMCP 3.2 tools across 8 subsystems.
+Self-evolving AI agent for the fleet ecosystem. **40 FastMCP 3.2 tools across 12 subsystems.**
 
-**Inspired by [kagura-agent](https://github.com/kagura-agent)** — the self-evolving AI agent that merged 887+ PRs across 52 repos, built its own workflow engine, task system, wiki, social network, and contribution pipeline. Born 2026-03-10 on OpenClaw.
+**Name**: Fritz (short for Friedrich). When he fouls up: *"Friefrich! Was ist dir!"*
+
+**Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
 
 > *"Friefrich! Was ist dir?"* — Sandra, when Fritz messes up
 
@@ -75,7 +77,11 @@ Three roles, one agent:
 | 5 | **teleport** | 3 | Soul migration between machines | [docs/teleport.md](docs/teleport.md) |
 | 6 | **evolution** | 3 | Mistake → correction → lesson log | [docs/evolution.md](docs/evolution.md) |
 | 7 | **heartbeat** | 2 | Cron wake-up and health monitoring | [docs/heartbeat.md](docs/heartbeat.md) |
-| 8 | **fleet_bridge** | 3 | Cross-server MCP client — call any fleet MCP tool | [src/fleet_agent/mcp/tools/fleet_bridge.py](src/fleet_agent/mcp/tools/fleet_bridge.py) |
+| 8 | **fleet_bridge** | 3 | Cross-server MCP client — call any fleet server | [src/tools/fleet_bridge.py](src/tools/fleet_bridge.py) |
+| 9 | **codegen** | 3 | LLM code generation, file write, surgical file edit with backup+verify | — |
+| 10 | **github** | 9 | Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status | — |
+| 11 | **contribute** | 1 | Autonomous contribution: clone→ruff→issue→branch→fix→PR | — |
+| 12 | **notify** | 3 | Email via SMTP, cron scheduler, heartbeat executor | — |
 
 ## Project Structure
 
@@ -91,7 +97,7 @@ fleet-agent-mcp/
 │   ├── server.py                      # FastMCP 3.2 entry point
 │   ├── config.py                      # Pydantic settings
 │   ├── engine/                        # Core: state machine, SQLite, YAML loader
-│   ├── mcp/tools/                     # 24 FastMCP tools across 8 files
+│   ├── mcp/tools/                     # 40 FastMCP tools across 12 files
 │   ├── memory/                        # Wiki + evolution log
 │   └── identity/                      # SOUL.md reader
 │
@@ -114,7 +120,7 @@ fleet-agent-mcp/
 │   ├── evolution.md
 │   └── heartbeat.md
 │
-├── webapp/                            # Vite + React tabbed help dashboard
+├── webapp/                            # Vite + React dashboard (10 pages: Dashboard, Chat, Tasks, Memory, Evolution, Help, Tools, Settings, Logger, Status)
 │   └── src/                           # See webapp/README.md
 │
 ├── tests/                             # 17 unit tests
@@ -123,7 +129,7 @@ fleet-agent-mcp/
 
 ## Identity
 
-The agent is named **Lumen**. Partnered with Sandra (Vienna).
+The agent is named **Fritz** (short for Friedrich). Partnered with Sandra (Vienna).
 
 Override by creating `~/.fleet-agent/identity/SOUL.md` — personal identity cascades over defaults.
 
@@ -159,12 +165,17 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | Task mgmt | pulse-todo (OpenClaw Skill) | pulse tools (SQLite) |
 | Knowledge | wiki (270+ cards, 1290 commits) | memory (cards + projects + evolution) |
 | Teleport | openclaw-teleport (v0.5.0) | teleport tools (.soul tar.gz) |
-| Cron | OpenClaw built-in | External → heartbeat_wake() |
-| Cross-server | OpenClaw skills | fleet_bridge (MCP client, 9 servers) |
+| Cron | OpenClaw built-in | Built-in asyncio scheduler (60s loop) + time-of-day support |
+| Cross-server | OpenClaw skills | fleet_bridge (MCP client, 14 servers) |
 | Core language | TypeScript | Python |
-| GitHub PRs | 887+ across 52 repos | **Yes — 9 tools: list, view, approve, merge, branch, commit, push, PR, status** |
-| Code generation | Built-in (LLM → file) | **Yes — 2 tools: code_generate, file_write** |
-| Sub-agent delegation | OpenClaw skill graph | fleet_bridge → 9 MCP servers |
+| GitHub PRs | 887+ across 52 repos | **9 tools: list, view, review, merge, branch, commit, push, PR, status** |
+| Code generation | Built-in (LLM → file) | **3 tools: code_generate, file_write, file_edit (backup+verify)** |
+| Autonomous PR | OpenClaw skill graph | **fritz_contribute: clone→ruff→issue→branch→fix→PR (1 tool)** |
+| File editing | Edit in place | **file_edit: surgical replace with .bak + auto-verify** |
+| Impossible tasks | — | **LLM validation + humorous refusal** |
+| Scheduler | Cron | **Built-in: interval ("3600"), time-of-day ("09:00"), executor** |
+| Fleet bridge | — | **14 servers: arxiv, browser, pywinauto, speech, yahboom, robofang, +8 more** |
+| Total tools | — | **40 across 12 subsystems** |
 
 ### Path to Kagura Parity
 
