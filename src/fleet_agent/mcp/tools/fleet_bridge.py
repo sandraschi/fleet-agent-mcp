@@ -33,7 +33,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "key_tools": ["opencode_run_agent", "opencode_list_sessions", "opencode_get_project"],
     },
     "fleet-agent": {
-        "url": "http://127.0.0.1:10996/mcp",
+        "url": "http://127.0.0.1:10996/mcp/",
         "description": "fleet-agent-mcp (Lumen) — state machine, tasks, memory, identity",
         "category": "orchestration",
         "key_tools": ["heartbeat_status", "pulse_list", "memory_card_search"],
