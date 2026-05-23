@@ -147,6 +147,21 @@ async def api_log_add(request: Request) -> JSONResponse:
     return JSONResponse(entry)
 
 
+async def api_memory(request: Request) -> JSONResponse:
+    from .memory.wiki import Wiki
+    from .config import settings
+    wiki = Wiki(settings.data_dir)
+    cards = wiki.search(request.query_params.get("query", "")) if request.query_params.get("query") else wiki.list_cards()
+    return JSONResponse({"success": True, "cards": cards, "count": len(cards)})
+
+
+async def api_evolution(request: Request) -> JSONResponse:
+    from .engine.sqlite_store import get_store
+    store = get_store()
+    entries = store.evolution_list(limit=int(request.query_params.get("limit", 50)))
+    return JSONResponse({"success": True, "entries": entries, "count": len(entries)})
+
+
 # ── App Builder ────────────────────────────────────────────────────────────
 
 def build_app() -> Starlette:
@@ -188,6 +203,8 @@ def build_app() -> Starlette:
             Route("/api/logs", endpoint=api_logs),
             Route("/api/logs/stream", endpoint=api_logs_stream),
             Route("/api/log", endpoint=api_log_add, methods=["POST"]),
+            Route("/api/memory", endpoint=api_memory),
+            Route("/api/evolution", endpoint=api_evolution),
         ],
         middleware=[cors],
         lifespan=mcp_asgi.lifespan,

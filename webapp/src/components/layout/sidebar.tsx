@@ -8,6 +8,8 @@ import {
   Bot,
   Settings2,
   Terminal,
+  Brain,
+  TrendingUp,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -20,6 +22,8 @@ interface SidebarProps {
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/chat", label: "Chat", icon: Bot },
+  { href: "/memory", label: "Memory", icon: Brain },
+  { href: "/evolution", label: "Evolution", icon: TrendingUp },
   { href: "/help", label: "Help", icon: HelpCircle },
   { href: "/tools", label: "Tools", icon: GitBranch },
   { href: "/settings", label: "Settings", icon: Settings2 },

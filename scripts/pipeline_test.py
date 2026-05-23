@@ -74,8 +74,8 @@ log("  OK: grt fixed.")
 
 # Log via Fritz
 log("Step 2: Logging to Fritz memory...")
-fritz("memory_project_note", {"project": REPO, "note": "Fixed greeter.py NameError"})
-fritz("evolution_record", {"category": "contribution", "lesson": f"Fixed {REPO} greeter.py"})
+fritz("memory_project_note", {"project": REPO, "content": f"Pipeline: Fixed greeter.py NameError via LLM codegen, PR merged on {REPO}"})
+fritz("evolution_record", {"correction": "greeter.py had undefined variable grt", "lesson": "Code generation via LLM needs clear variable name specs", "context": f"Pipeline test on {REPO}"})
 log("  Logged.")
 
 # Commit and push
@@ -103,8 +103,8 @@ if pr_num:
     log(f"  State: {state}")
 
 # Log completion
-fritz("evolution_record", {"category":"contribution","lesson":f"Pipeline complete for {REPO}"})
-fritz("memory_project_note", {"project":REPO,"note":"Done: Full pipeline completed"})
+fritz("evolution_record", {"correction":"Pipeline completed","lesson":"Full contribution pipeline works end-to-end","context":f"Pipeline test on {REPO}"})
+fritz("memory_project_note", {"project":REPO,"content":f"Pipeline complete on {REPO}: issue -> codegen -> PR -> merge"})
 
 log("=" * 50)
 log("PIPELINE RESULT: PASS" if pr_num else "PIPELINE RESULT: FAILED")

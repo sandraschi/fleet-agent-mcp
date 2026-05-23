@@ -7,6 +7,8 @@ import { Tools } from "@/pages/tools";
 import { SettingsPage } from "@/pages/settings";
 import { LoggerPage } from "@/pages/logger";
 import { Status } from "@/pages/status";
+import { Memory } from "@/pages/memory";
+import { Evolution } from "@/pages/evolution";
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/logs" element={<LoggerPage />} />
           <Route path="/status" element={<Status />} />
+          <Route path="/memory" element={<Memory />} />
+          <Route path="/evolution" element={<Evolution />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppLayout>

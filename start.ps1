@@ -7,7 +7,6 @@ if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
 }
 # ------------------------------
 
-$ErrorActionPreference = "Stop"
 $WebPort = 10997
 $BackendPort = 10996
 $Root = $PSScriptRoot
