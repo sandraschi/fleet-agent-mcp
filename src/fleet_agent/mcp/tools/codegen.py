@@ -123,3 +123,59 @@ async def file_write(
         "lines": lines,
         "message": f"Wrote {lines} lines to {path}",
     }
+
+
+@mcp.tool(version="0.1.1")
+async def file_edit(
+    path: Annotated[str, Field(description="Absolute path to the file to edit")],
+    old_string: Annotated[str, Field(description="The exact text to replace. Must match exactly, including whitespace.")],
+    new_string: Annotated[str, Field(description="The replacement text.")],
+) -> dict[str, Any]:
+    """Edit a file by replacing an exact string. Creates a .bak backup first.
+
+    Use for surgical edits on existing files (unlike code_generate which
+    writes entire new files). After the edit, immediately verifies the
+    old_string no longer appears in the file.
+
+    ## Return Format
+    {"success": bool, "path": str, "backup": str, "replaced": int, "verified": bool, "message": str}
+
+    ## Examples
+    file_edit(
+        path="D:/Dev/repos/myproject/src/main.py",
+        old_string='host="0.0.0.0"',
+        new_string='host="127.0.0.1"',
+    )
+    """
+    target = Path(path)
+    if not target.exists():
+        return {"success": False, "message": f"File not found: {path}"}
+
+    content = target.read_text(encoding="utf-8")
+    if old_string not in content:
+        return {"success": False, "message": f"old_string not found in {path}. Nothing to replace."}
+
+    count = content.count(old_string)
+    new_content = content.replace(old_string, new_string)
+
+    # Create .bak backup
+    bak_path = target.with_suffix(target.suffix + ".bak")
+    bak_path.write_text(content, encoding="utf-8")
+
+    # Write edit
+    target.write_text(new_content, encoding="utf-8")
+
+    # Verify edit landed
+    final = target.read_text(encoding="utf-8")
+    verified = old_string not in final and new_string in final
+
+    msg = f"Replaced {count} occurrence(s) in {path}. Backup at {bak_path.name}."
+    logger.info(msg)
+    return {
+        "success": True,
+        "path": str(target),
+        "backup": str(bak_path),
+        "replaced": count,
+        "verified": verified,
+        "message": msg + (" Verified OK." if verified else " WARNING: verification failed!"),
+    }
