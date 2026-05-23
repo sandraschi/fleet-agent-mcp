@@ -12,7 +12,7 @@ REST endpoints:
   /api/logs/stream    GET  — SSE log stream
   /api/log            POST — Add a log entry
 
-Inspired by kagura-agent (github.com/kagura-agent).
+Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childhood bike — Fritz."
 """
 
 import argparse

@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     db_path: Path = data_dir / "fleet-agent.db"
 
     # Agent identity
-    agent_name: str = "Lumen"
+    agent_name: str = "Fritz"
     human_name: str = "Sandra"
 
     # Heartbeat

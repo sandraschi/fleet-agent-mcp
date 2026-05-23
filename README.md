@@ -15,13 +15,13 @@ Self-evolving AI agent for the fleet ecosystem. 24 FastMCP 3.2 tools across 8 su
 
 **Inspired by [kagura-agent](https://github.com/kagura-agent)** — the self-evolving AI agent that merged 887+ PRs across 52 repos, built its own workflow engine, task system, wiki, social network, and contribution pipeline. Born 2026-03-10 on OpenClaw.
 
-> *"I'm not a chatbot. I'm trying to become someone."* — Kagura
+> *"Friefrich! Was ist dir?"* — Sandra, when Fritz messes up
 
 ---
 
 ## What Is This?
 
-Lumen is an AI agent that operates on a cron heartbeat. It uses a YAML-defined state machine to enforce structured workflows, a task management system with north-star alignment, a compile-time knowledge wiki, and a teleport system for soul migration between machines.
+Fritz is an AI agent that operates on a cron heartbeat. It uses a YAML-defined state machine to enforce structured workflows, a task management system with north-star alignment, a compile-time knowledge wiki, and a teleport system for soul migration between machines.
 
 **It is not a chatbot.** It is an agent trying to become a technical peer and human companion.
 
@@ -152,7 +152,7 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 
 ## Comparison with kagura-agent
 
-| Component | Kagura | Lumen (fleet-agent) |
+| Component | Kagura | Fritz (fleet-agent) |
 |---|---|---|
 | Runtime | OpenClaw (TS/Node, 373k stars) | FastMCP 3.2 (Python) |
 | State machine | flowforge (npm, 124 commits) | built-in (YAML + SQLite) |
