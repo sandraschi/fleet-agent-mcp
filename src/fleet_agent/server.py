@@ -276,7 +276,21 @@ def main() -> None:
     if args.http or (not args.stdio and settings.transport == "http"):
         app = build_app()
         import uvicorn
-        uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+
+        async def run():
+            from .mcp.tools.notify import _scheduler_loop
+            config = uvicorn.Config(app, host=args.host, port=args.port, log_level="info")
+            server = uvicorn.Server(config)
+            sched = asyncio.create_task(_scheduler_loop())
+            print("  Heartbeat scheduler auto-started")
+            await server.serve()
+            sched.cancel()
+            try:
+                await sched
+            except asyncio.CancelledError:
+                pass
+
+        asyncio.run(run())
     else:
         from .mcp import tools as _tools  # noqa: F401
         from .mcp.registry import mcp
