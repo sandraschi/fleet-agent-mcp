@@ -37,6 +37,9 @@ async def pulse_add(
     Tasks are grouped by dependency: 'self' (do it yourself), 'human' (waiting on human),
     or 'external' (blocked on external system).
 
+    Tasks are validated for feasibility before being stored. Impossible tasks
+    (perpetual motion, squaring the circle, etc.) are refused with humor.
+
     ## Return Format
     {"success": bool, "task": dict, "message": str}
 
@@ -45,6 +48,28 @@ async def pulse_add(
     pulse_add("Wait for review", group="human")
     pulse_add("Sync failures? Run sync every 4h", group="self", recurrence="0 */4 * * *")
     """
+    # Validate task feasibility via LLM
+    try:
+        from ...llm_client import chat_completion
+        validation = await chat_completion([
+            {"role": "system", "content": (
+                "You check if a task is physically or logically possible. "
+                "If possible, reply ONLY with 'OK'. "
+                "If impossible (perpetual motion, squaring the circle, time travel, "
+                "making 1+1=3, etc.), reply with a SHORT humorous refusal "
+                "(max 100 chars), referencing what they asked. "
+                "Be witty but not mean."
+            )},
+            {"role": "user", "content": f"Is this task possible? '{task}'"},
+        ])
+        if validation.strip() != "OK":
+            return {
+                "success": False,
+                "message": f"🤨 {validation.strip()} I'm a good agent, not a miracle worker.",
+            }
+    except Exception:
+        pass  # LLM unavailable — skip validation
+
     store = get_store()
     now = datetime.now(UTC).isoformat()
     item = {

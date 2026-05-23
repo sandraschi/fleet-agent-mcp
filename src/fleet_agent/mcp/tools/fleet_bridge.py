@@ -62,6 +62,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "category": "communication",
         "key_tools": ["discord_send", "discord_read", "discord_list_channels"],
     },
+    "robofang": {
+        "url": "http://127.0.0.1:10871/mcp",
+        "description": "robofang — AI fleet command center, robotics orchestration, alerting",
+        "category": "orchestration",
+        "key_tools": ["robofang_status", "robofang_trigger", "robofang_agents"],
+    },
     "plex": {
         "url": "http://127.0.0.1:10740/mcp",
         "description": "plex-mcp — Plex media: libraries, streaming, users, playlists, RAG (22 tools)",  # noqa: E501
