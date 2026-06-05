@@ -37,6 +37,7 @@ class Settings(BaseSettings):
         self.data_dir.joinpath("cards").mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("projects").mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("evolution").mkdir(parents=True, exist_ok=True)
+        self.data_dir.joinpath("artifacts").mkdir(parents=True, exist_ok=True)
 
 
 settings = Settings()

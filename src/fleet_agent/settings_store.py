@@ -11,6 +11,18 @@ DEFAULT_SETTINGS = {
     "model": "",
     "api_key": "",
     "timeout": 60,
+    "coworker_timezone": "Europe/Vienna",
+    "fleet_pulse_time": "07:00",
+    "fleet_repos_root": "D:/Dev/repos",
+    "fleet_pulse_repos": ["fleet-agent-mcp", "mcp-central-docs"],
+    "heartbeat_email": "",
+    "fleet_pulse_email": "",
+    "smtp_host": "",
+    "smtp_port": 587,
+    "smtp_user": "",
+    "smtp_pass": "",
+    "artifact_pack_glob": "*.md",
+    "artifact_pack_max_files": 20,
 }
 
 PROVIDER_PRESETS = {

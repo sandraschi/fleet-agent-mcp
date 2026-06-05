@@ -216,6 +216,7 @@ class SqliteStore:
     # ── Todo Items ─────────────────────────────────────────
 
     def todo_upsert(self, item: dict[str, Any]) -> None:
+        group = item.get("group") or item.get("group_name") or "self"
         with self._connect() as conn:
             conn.execute(
                 """INSERT OR REPLACE INTO todo_items
@@ -225,7 +226,7 @@ class SqliteStore:
                 (
                     item["id"],
                     item["task"],
-                    item.get("group", "self"),
+                    group,
                     item.get("priority", "medium"),
                     item.get("status", "pending"),
                     item.get("created_at", ""),

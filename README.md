@@ -11,7 +11,7 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. **40 FastMCP 3.2 tools across 12 subsystems.**
+Self-evolving AI agent for the fleet ecosystem. **42 FastMCP 3.2 tools across 13 subsystems** (v0.2.0-pre coworker pilot).
 
 **Name**: Fritz (short for Friedrich). When he fouls up: *"Friefrich! Was ist dir!"*
 
@@ -82,6 +82,9 @@ Three roles, one agent:
 | 10 | **github** | 9 | Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status | — |
 | 11 | **contribute** | 1 | Autonomous contribution: clone→ruff→issue→branch→fix→PR | — |
 | 12 | **notify** | 3 | Email via SMTP, cron scheduler, heartbeat executor | — |
+| 13 | **coworker** | 9 | Scheduled Viktor-style flows: pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack | [docs/coworker-plan.md](docs/coworker-plan.md) |
+
+Coworker pilot: [docs/coworker-plan.md](docs/coworker-plan.md) — Poor Man's Viktor on fleet MCP. Hermes learning-loop map: [docs/hermes-borrowings.md](docs/hermes-borrowings.md). Central index: [mcp-central-docs/projects/fritz-coworker](https://github.com/sandraschi/mcp-central-docs/blob/main/projects/fritz-coworker/README.md).
 
 ## Project Structure
 
@@ -97,7 +100,7 @@ fleet-agent-mcp/
 │   ├── server.py                      # FastMCP 3.2 entry point
 │   ├── config.py                      # Pydantic settings
 │   ├── engine/                        # Core: state machine, SQLite, YAML loader
-│   ├── mcp/tools/                     # 40 FastMCP tools across 12 files
+│   ├── mcp/tools/                     # 42 FastMCP tools across 13 files
 │   ├── memory/                        # Wiki + evolution log
 │   └── identity/                      # SOUL.md reader
 │
@@ -109,6 +112,7 @@ fleet-agent-mcp/
 ├── workflows/                         # YAML workflow definitions
 │   ├── daily.yaml                     # Review → maintain → learn → act
 │   ├── contribution.yaml              # Study → implement → test → submit → verify
+│   ├── coworker.yaml                  # intake → gather → execute → deliver → record
 │   └── learning.yaml                  # Research → synthesize → document → apply
 │
 ├── docs/                              # Subsystem documentation
@@ -118,12 +122,14 @@ fleet-agent-mcp/
 │   ├── identity.md
 │   ├── teleport.md
 │   ├── evolution.md
-│   └── heartbeat.md
+│   ├── heartbeat.md
+│   ├── coworker-plan.md               # Coworker pilot: Viktor parity on fleet MCP
+│   └── hermes-borrowings.md           # Hermes self-improve → Fritz tool map (preliminary)
 │
 ├── webapp/                            # Vite + React dashboard (10 pages: Dashboard, Chat, Tasks, Memory, Evolution, Help, Tools, Settings, Logger, Status)
 │   └── src/                           # See webapp/README.md
 │
-├── tests/                             # 17 unit tests
+├── tests/                             # 45 unit tests
 └── memory/                            # Markdown knowledge mirror (cards, projects, evolution)
 ```
 
@@ -166,7 +172,7 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | Knowledge | wiki (270+ cards, 1290 commits) | memory (cards + projects + evolution) |
 | Teleport | openclaw-teleport (v0.5.0) | teleport tools (.soul tar.gz) |
 | Cron | OpenClaw built-in | Built-in asyncio scheduler (60s loop) + time-of-day support |
-| Cross-server | OpenClaw skills | fleet_bridge (MCP client, 14 servers) |
+| Cross-server | OpenClaw skills | fleet_bridge (MCP client, 19 servers) |
 | Core language | TypeScript | Python |
 | GitHub PRs | 887+ across 52 repos | **9 tools: list, view, review, merge, branch, commit, push, PR, status** |
 | Code generation | Built-in (LLM → file) | **3 tools: code_generate, file_write, file_edit (backup+verify)** |
@@ -174,8 +180,9 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | File editing | Edit in place | **file_edit: surgical replace with .bak + auto-verify** |
 | Impossible tasks | — | **LLM validation + humorous refusal** |
 | Scheduler | Cron | **Built-in: interval ("3600"), time-of-day ("09:00"), executor** |
-| Fleet bridge | — | **14 servers: arxiv, browser, pywinauto, speech, yahboom, robofang, +8 more** |
-| Total tools | — | **40 across 12 subsystems** |
+| Fleet bridge | — | **19 servers: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, +11 more** |
+| Coworker | — | **9 tools: fleet pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack, list_flows, bootstrap** |
+| Total tools | — | **42 across 13 subsystems** |
 
 ### Path to Kagura Parity
 

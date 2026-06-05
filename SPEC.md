@@ -210,7 +210,7 @@ The agent's wake-up routine:
 
 ## 8. Roadmap
 
-### v0.1.0 (current)
+### v0.1.0
 - [x] State machine engine with 3 default workflows
 - [x] Task management with groups and priorities
 - [x] Knowledge cards with search, lint, query-writeback
@@ -220,7 +220,9 @@ The agent's wake-up routine:
 - [x] Heartbeat wake-up routine
 - [x] MCP Central Docs project page
 
-### v0.2.0 (planned)
+### v0.2.0-pre (current)
+- [x] **Coworker mode (pilot)** — 9 MCP tools, 7 scheduled flows, libreoffice-mcp PDF/ODT deliverables — see `docs/coworker-plan.md` and mcp-central-docs `projects/fritz-coworker`
+- [ ] **Hermes borrowings (P0)** — `run_log_*`, skill cards, `memory_card_record_run` — see `docs/hermes-borrowings.md`
 - [ ] Tauri 2.0 native desktop wrapper
 - [ ] React dashboard (workflow visualizer, task kanban, card browser)
 - [ ] System tray icon with heartbeat indicator

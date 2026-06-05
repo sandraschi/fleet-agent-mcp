@@ -29,6 +29,9 @@ test:
     Set-Location '{{justfile_directory()}}'
     & "$env:USERPROFILE\.local\bin\uv.exe" run pytest tests/ -v
 
+e2e:
+    pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\playwright-audit.ps1" -RepoPath "{{justfile_directory()}}"
+
 # Lint
 lint:
     Set-Location '{{justfile_directory()}}'

@@ -65,6 +65,26 @@ async def heartbeat_status(
     }
 
 
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def pipeline_liveness_check(
+    stale_hours: int = 48,
+    ctx: Context = None,
+) -> dict[str, Any]:
+    """Probe arxiv-mcp + aiwatcher-mcp open-weight pipeline liveness."""
+    from ...coworker.pipeline_liveness import check_pipeline_liveness
+
+    result = await check_pipeline_liveness(stale_hours=stale_hours)
+    n = result.get("critical_count", 0)
+    return {
+        **result,
+        "message": (
+            "Pipeline healthy."
+            if result.get("healthy")
+            else f"Pipeline degraded: {n} critical alert(s)."
+        ),
+    }
+
+
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def heartbeat_wake(
     ctx: Context = None,
@@ -141,6 +161,7 @@ async def heartbeat_wake(
             "memory_lint() to check knowledge base health",
             "pulse_stale() to find forgotten tasks",
             "workflow_start('daily') to begin a daily routine",
+            "workflow_start('morning_brief') for WF-001 (ViLife + glance + aiwatcher)",
         ],
         "message": "No active workflow or pending tasks. Agent is idle.",
     }

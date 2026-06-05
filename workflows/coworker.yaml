@@ -1,0 +1,52 @@
+name: coworker
+description: |
+  PRELIMINARY — Viktor-style "do the work" pipeline on fleet MCP.
+  One natural-language ask → multi-tool gather → artifact → deliver → remember.
+start: intake
+
+nodes:
+  intake:
+    task: |
+      PRELIMINARY coworker workflow — intake node.
+      1. Clarify the ask if ambiguous (one follow-up max).
+      2. memory_card_search() for existing skills matching the domain.
+      3. memory_project_notes() for prior work on same project.
+      4. Classify: report | fix | research | automate | other.
+      5. LOG via memory_project_note(project, "Intake: <classification + scope>").
+    next: gather
+
+  gather:
+    task: |
+      PRELIMINARY — gather node.
+      1. List required fleet_bridge servers from intake classification.
+      2. fleet_call() each server (max 5 parallel calls — cost guardrail).
+      3. Collect structured results; do not synthesize yet.
+      4. If a required integration is missing, pulse_add(..., group="human") and stop.
+      5. LOG raw gather summary via memory_project_note.
+    next: execute
+
+  execute:
+    task: |
+      PRELIMINARY — execute node.
+      1. Synthesize gathered data OR code_generate/file_write for fixes.
+      2. For code paths: run tests if repo available.
+      3. Produce deliverable: markdown report, HTML, or PR branch.
+      4. High-stakes actions (email send, PR merge, deploy): STOP and pulse_add group=human.
+      5. LOG via evolution_record if corrections were needed.
+    next: deliver
+
+  deliver:
+    task: |
+      PRELIMINARY — deliver node.
+      1. Route output: notify_email | fleet_call discord | write artifact to ~/.fleet-agent/artifacts/.
+      2. Include links, diffs, or attachment paths in delivery body.
+      3. pulse_complete() on the originating pulse task if applicable.
+    next: record
+
+  record:
+    task: |
+      PRELIMINARY — record node.
+      1. memory_project_note(project, "Delivered: <summary + artifact path>").
+      2. If reusable pattern found, memory_card_create(type=skill, tags=[coworker, ...]).
+      3. evolution_record() if anything surprising was learned.
+    terminal: true

@@ -21,6 +21,11 @@ from ..registry import mcp
 
 logger = logging.getLogger("fleet_agent.tools.fleet_bridge")
 
+# Legacy aliases — bare "vla" means vla-mcp (robotics), NOT vienna-life-assistant.
+FLEET_SERVER_ALIASES: dict[str, str] = {
+    "vla": "vla-robotics",
+}
+
 # ── Fleet MCP Server Registry ────────────────────────────────────────────────
 # Each entry maps a server alias to its streamable HTTP MCP endpoint.
 # Ports from WEBAPP_PORTS.md — all servers use /mcp path for Streamable HTTP.
@@ -86,6 +91,18 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "category": "research",
         "key_tools": ["search_papers", "get_paper_details", "find_connected_papers", "arxiv_agentic_assist"],
     },
+    "aiwatcher": {
+        "url": "http://127.0.0.1:10946/mcp",
+        "description": "aiwatcher-mcp — AI news distillation, urgency scoring, top items, search, digest history",
+        "category": "intelligence",
+        "key_tools": [
+            "get_top_items",
+            "search_items",
+            "generate_digest",
+            "check_alerts",
+            "get_bundle_health",
+        ],
+    },
     "browser": {
         "url": "http://127.0.0.1:10780/mcp",
         "description": "browser-mcp — Browser automation: open URLs, screenshots, web scraping, bookmarks",
@@ -94,21 +111,96 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "pywinauto": {
         "url": "http://127.0.0.1:10788/mcp",
-        "description": "pywinauto-mcp — Windows UI automation: windows, clicks, keyboard, OCR",
+        "description": "pywinauto-mcp — Windows UI automation: windows, clicks, keyboard, OCR, Cua-shaped window snapshots",
         "category": "automation",
-        "key_tools": ["automation_windows", "automation_elements", "automation_keyboard", "automation_mouse"],
+        "key_tools": [
+            "get_window_state",
+            "automation_windows",
+            "automation_elements",
+            "automation_keyboard",
+            "automation_mouse",
+        ],
     },
     "speech": {
-        "url": "http://127.0.0.1:10908/mcp",
-        "description": "speech-mcp — Text-to-speech, voice synthesis, audio playback",
+        "url": "http://127.0.0.1:10909/mcp",
+        "description": "speech-mcp — TTS/STT, wake word, voice command bus ingress",
         "category": "media",
-        "key_tools": ["speech_say", "speech_tts", "speech_list_voices"],
+        "key_tools": ["configure_local_wake_word", "transcribe_audio_file", "speech_say"],
+    },
+    "alexa": {
+        "url": "http://127.0.0.1:10801/mcp",
+        "description": "alexa-mcp — Acoustic bridge: TTS to Echo, STT of Alexa reply (interact)",
+        "category": "smart_home",
+        "key_tools": ["interact", "speak_command", "listen_for_response"],
     },
     "yahboom": {
         "url": "http://127.0.0.1:10892/mcp",
         "description": "yahboom-mcp — Yahboom robot car: motors, patrol, sensors, camera",
         "category": "robotics",
-        "key_tools": ["yahboom_patrol", "yahboom_move", "yahboom_status"],
+        "key_tools": ["yahboom_agent_mission", "yahboom_patrol", "yahboom_status"],
+    },
+    "vla-robotics": {
+        "url": "http://127.0.0.1:11024/mcp",
+        "description": (
+            "vla-mcp (video-language-action) — X Square Wall-OSS, WALL-WM, DMuon; "
+            "NOT vienna-life-assistant — use alias vienna-life for life admin"
+        ),
+        "category": "robotics",
+        "key_tools": [
+            "vla_pipeline",
+            "vla_weights",
+            "vla_wall",
+            "vla_fleet",
+            "vla_agentic_workflow",
+        ],
+    },
+    "email": {
+        "url": "http://127.0.0.1:10813/mcp",
+        "description": "email-mcp — SMTP/IMAP inbox, send, search, mailing lists, auto-respond",
+        "category": "office",
+        "key_tools": ["check_inbox", "send_email", "email_status", "search_emails"],
+    },
+    "notion": {
+        "url": "http://127.0.0.1:10811/mcp",
+        "description": "notion-mcp — pages, databases, search, workspace automation",
+        "category": "office",
+        "key_tools": ["create_page", "search_pages", "query_database"],
+    },
+    "onenote": {
+        "url": "http://127.0.0.1:10907/mcp",
+        "description": "onenote-mcp — notebooks, sections, pages via Graph",
+        "category": "office",
+        "key_tools": ["listNotebooks", "listPages", "createPage", "searchPages"],
+    },
+    "libreoffice": {
+        "url": "http://127.0.0.1:10981/mcp",
+        "description": "libreoffice-mcp — headless convert + bridge to LO extension MCP",
+        "category": "office",
+        "key_tools": ["libreoffice", "convert", "bridge_discover"],
+    },
+    "libreoffice-ext": {
+        "url": "http://127.0.0.1:8765/mcp",
+        "description": "LibreOffice extension MCP (WriterAgent / mcp-libre / Nelson) — live GUI edit",
+        "category": "office",
+        "key_tools": ["convert_document", "read_document_text", "create_document"],
+    },
+    "glance": {
+        "url": "http://127.0.0.1:10776/mcp",
+        "description": "glance-mcp — RSS, weather, fleet probes, OPML feeds",
+        "category": "intelligence",
+        "key_tools": ["glance_ops", "glance_health"],
+    },
+    "vienna-life": {
+        "url": "http://127.0.0.1:10922/mcp",
+        "description": "vienna-life-assistant (ViLife) — calendar, todos, expenses; NOT vla-mcp robotics",
+        "category": "life",
+        "key_tools": ["vienna_life", "fleet_overview"],
+    },
+    "secrets": {
+        "url": "http://127.0.0.1:11026/mcp",
+        "description": "secrets-mcp — Bitwarden CLI, audit_fleet, fingerprint resolve",
+        "category": "infra",
+        "key_tools": ["secrets_ops", "audit_fleet"],
     },
 }
 
@@ -173,7 +265,7 @@ async def fleet_discover() -> dict[str, Any]:
 
 @mcp.tool(version="0.1.0")
 async def fleet_call_tool(
-    server: Annotated[str, Field(description="Server alias or URL. Aliases: opencode, git-github, docs, memory, discord, fleet-agent, plex, calibre, arxiv")],  # noqa: E501
+    server: Annotated[str, Field(description="Server alias or URL. Aliases: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, ...")],  # noqa: E501
     tool: Annotated[str, Field(description="Tool name to call on the target server")],
     arguments: Annotated[dict[str, Any] | None, Field(description="Tool arguments as key-value dict")] = None,  # noqa: E501
 ) -> dict[str, Any]:
@@ -191,15 +283,17 @@ async def fleet_call_tool(
     # Resolve server alias to URL
     server_url = server
     if not server.startswith("http"):
-        info = FLEET_SERVERS.get(server)
+        canonical = FLEET_SERVER_ALIASES.get(server, server)
+        info = FLEET_SERVERS.get(canonical)
         if not info:
-            aliases = ", ".join(FLEET_SERVERS.keys())
+            known = sorted(set(FLEET_SERVERS.keys()) | set(FLEET_SERVER_ALIASES.keys()))
             return {
                 "success": False,
-                "message": f"Unknown server alias '{server}'. Known: {aliases}",
+                "message": f"Unknown server alias '{server}'. Known: {', '.join(known)}",
                 "data": {},
             }
         server_url = info["url"]
+        server = canonical
 
     args = arguments or {}
 

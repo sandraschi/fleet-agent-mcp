@@ -77,6 +77,17 @@ def test_load_nonexistent():
         load_workflow("/nonexistent/path.yaml")
 
 
+def test_morning_brief_workflow_loads():
+    """WF-001 shipped workflow must parse and register."""
+    root = Path(__file__).resolve().parents[1]
+    path = root / "workflows" / "morning_brief.yaml"
+    wf = load_workflow(str(path))
+    assert wf.name == "morning_brief"
+    assert wf.start == "glance"
+    assert wf.nodes["memops"].terminal is True
+    assert "glance" in wf.nodes["glance"].task
+
+
 def test_workflow_to_dict(temp_workflows_dir: Path):
     paths = discover_workflows(temp_workflows_dir)
     daily_path = [p for p in paths if "daily" in p][0]

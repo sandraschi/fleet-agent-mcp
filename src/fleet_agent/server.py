@@ -58,7 +58,7 @@ async def api_whoami(request: Request) -> JSONResponse:
 
 async def api_tools(request: Request) -> JSONResponse:
     return JSONResponse({
-        "total": 40,
+        "total": 49,
         "subsystems": [
             {"name": "flowforge", "count": 9, "annotation": "State machine"},
             {"name": "pulse", "count": 6, "annotation": "Task management"},
@@ -72,6 +72,7 @@ async def api_tools(request: Request) -> JSONResponse:
             {"name": "github", "count": 9, "annotation": "Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status"},
             {"name": "contribute", "count": 1, "annotation": "Autonomous: inspect, issue, branch, fix, PR"},
             {"name": "notify", "count": 3, "annotation": "Email send, cron scheduler start/status"},
+            {"name": "coworker", "count": 9, "annotation": "Office flows, PDF/board/artifact pack, bootstrap"},
         ],
     })
 
@@ -210,6 +211,21 @@ async def api_tasks_delete(request: Request) -> JSONResponse:
     return JSONResponse(r)
 
 
+async def api_voice_intent(request: Request) -> JSONResponse:
+    """Voice Command Bus ingress (speech-mcp POSTs here after wake + STT)."""
+    from .voice_router import route_voice_intent
+
+    body = await request.json()
+    result = await route_voice_intent(
+        wake=str(body.get("wake", "")),
+        transcript=str(body.get("transcript", "")),
+        source=str(body.get("source", "speech-mcp")),
+        timestamp=body.get("timestamp"),
+    )
+    status = 200 if result.get("success") else 422
+    return JSONResponse(result, status_code=status)
+
+
 # ── App Builder ────────────────────────────────────────────────────────────
 
 def build_app() -> Starlette:
@@ -234,7 +250,11 @@ def build_app() -> Starlette:
     logs.add("info", "fleet-agent server started", "system")
     wf_count = len(discover_workflows(settings.project_root))
     logs.add("info", f"{wf_count} workflows registered", "system")
-    logs.add("info", "40 MCP tools across 12 subsystems loaded", "system")
+    logs.add("info", "42 MCP tools across 13 subsystems loaded", "system")
+
+    from .coworker.bootstrap import ensure_coworker_tasks
+    boot = ensure_coworker_tasks()
+    logs.add("info", boot.get("message", "coworker bootstrap"), "system")
 
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -257,6 +277,7 @@ def build_app() -> Starlette:
             Route("/api/tasks", endpoint=api_tasks_add, methods=["POST"]),
             Route("/api/tasks/complete", endpoint=api_tasks_complete, methods=["POST"]),
             Route("/api/tasks/delete", endpoint=api_tasks_delete, methods=["POST"]),
+            Route("/api/voice/intent", endpoint=api_voice_intent, methods=["POST"]),
         ],
         middleware=[cors],
         lifespan=mcp_asgi.lifespan,

@@ -1,0 +1,35 @@
+name: morning_brief
+description: WF-001 — Morning brief — glance, aiwatcher, vienna life, memops
+start: glance
+
+nodes:
+  glance:
+    task: |
+      fleet_call_tool(server="glance", tool="glance_ops", arguments={"operation": "health"})
+      fleet_call_tool(server="glance", tool="glance_ops", arguments={"operation": "weather", "location": "Vienna"})
+      fleet_discover() — note how many fleet servers are online.
+    next: intel
+
+  intel:
+    task: |
+      fleet_call_tool(server="aiwatcher", tool="get_top_items", arguments={"limit": 5})
+      If urgency items exist, summarize headlines for Sandra (no full article paste).
+    next: life
+
+  life:
+    task: |
+      fleet_call_tool(server="vienna-life", tool="vienna_life", arguments={"operation": "life_brief"})
+      pulse_add(title="Morning brief compiled", priority="normal", tags=["morning_brief"])
+    next: memops
+
+  memops:
+    task: |
+      fleet_call_tool(server="memory", tool="adn_notes", arguments={
+        "operation": "write",
+        "title": "morning-brief-{date}",
+        "folder": "fleet",
+        "tags": "morning_brief,fritz,workflow",
+        "content": "Summary of glance + aiwatcher + vienna_life from this workflow run."
+      })
+      evolution_record(event="workflow_complete", detail="morning_brief finished")
+    terminal: true

@@ -21,14 +21,18 @@ class TestFleetServerRegistry:
 
     def test_all_servers_have_category(self):
         from fleet_agent.mcp.tools.fleet_bridge import FLEET_SERVERS
-        valid = {"code", "orchestration", "knowledge", "communication", "media", "research"}
+        valid = {
+            "code", "orchestration", "knowledge", "communication", "media",
+            "research", "automation", "robotics", "office", "smart_home",
+            "intelligence", "life", "security", "infra",
+        }
         for alias, info in FLEET_SERVERS.items():
             assert "category" in info, f"{alias} missing category"
             assert info["category"] in valid, f"{alias} invalid category: {info['category']}"
 
     def test_server_count(self):
         from fleet_agent.mcp.tools.fleet_bridge import FLEET_SERVERS
-        assert len(FLEET_SERVERS) == 9
+        assert len(FLEET_SERVERS) >= 9
 
     def test_key_tools_are_lists(self):
         from fleet_agent.mcp.tools.fleet_bridge import FLEET_SERVERS
@@ -49,12 +53,12 @@ class TestFleetServerRegistry:
 class TestFleetDiscover:
     @pytest.mark.asyncio
     async def test_fleet_discover_structure(self):
-        from fleet_agent.mcp.tools.fleet_bridge import fleet_discover
+        from fleet_agent.mcp.tools.fleet_bridge import FLEET_SERVERS, fleet_discover
         result = await fleet_discover()
         assert "success" in result
         assert "data" in result
         assert "servers" in result["data"]
-        assert len(result["data"]["servers"]) == 9
+        assert len(result["data"]["servers"]) == len(FLEET_SERVERS)
         for server in result["data"]["servers"]:
             assert "alias" in server
             assert "url" in server
@@ -63,6 +67,16 @@ class TestFleetDiscover:
 
 
 class TestFleetCallTool:
+    def test_vla_legacy_alias_maps_to_robotics(self):
+        from fleet_agent.mcp.tools.fleet_bridge import (
+            FLEET_SERVER_ALIASES,
+            FLEET_SERVERS,
+        )
+        assert FLEET_SERVER_ALIASES.get("vla") == "vla-robotics"
+        assert "vla-robotics" in FLEET_SERVERS
+        assert "vienna-life" in FLEET_SERVERS
+        assert FLEET_SERVERS["vla-robotics"]["url"] != FLEET_SERVERS["vienna-life"]["url"]
+
     @pytest.mark.asyncio
     async def test_unknown_alias_returns_error(self):
         from fleet_agent.mcp.tools.fleet_bridge import fleet_call_tool

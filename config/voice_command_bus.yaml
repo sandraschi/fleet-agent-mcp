@@ -1,0 +1,56 @@
+# Bundled fallback — canonical copy: mcp-central-docs/config/voice_command_bus.yaml
+version: "1"
+
+wake_words:
+  wakeywakey:
+    openwakeword_model: hey_jarvis
+    sensitivity: 0.55
+  hey_jarvis:
+    openwakeword_model: hey_jarvis
+    sensitivity: 0.5
+
+capture:
+  command_seconds: 6
+  sample_rate: 16000
+  cooldown_seconds: 2
+
+router:
+  default_url: "http://127.0.0.1:10996/api/voice/intent"
+
+entities:
+  boomy:
+    server: yahboom
+    aliases: [boomy, boomy, raspbot, yahboom, robocar]
+  alexa:
+    server: alexa
+    aliases: [alexa, echo]
+  fritz:
+    server: fleet-agent
+    aliases: [fritz, lumen]
+
+handlers:
+  boomy:
+    - keywords: [patrol, report, mission, find, search, recon, scan]
+      tool: yahboom_agent_mission
+      args:
+        goal: "{remainder}"
+        speak: true
+        publish_to_ros: true
+    - keywords: [move, forward, back, stop]
+      tool: yahboom_patrol
+      args:
+        enable: true
+  alexa:
+    - default:
+      tool: interact
+      args:
+        command: "{remainder}"
+        wait_for_response: true
+        timeout: 20
+  fritz:
+    - default:
+      tool: pulse_add
+      args:
+        task: "{transcript}"
+        group: voice
+        priority: medium

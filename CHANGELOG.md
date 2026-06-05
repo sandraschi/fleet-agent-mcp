@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.2.0-pre (2026-05-30) — Coworker / Poor Man's Viktor
+
+Pilot implementation of scheduled office + fleet flows on owned MCP (no Viktor SaaS).
+
+### Added — Coworker subsystem (9 MCP tools)
+
+| Tool | Schedule (default, Europe/Vienna) |
+|------|-----------------------------------|
+| `coworker_fleet_pulse` | Daily `07:00` |
+| `coworker_inbox_briefing` | Weekdays `wd:08:00` |
+| `coworker_day_prep` | Weekdays `wd:08:30` |
+| `coworker_docs_drift` | Sunday `sun:10:00` |
+| `coworker_weekly_report_pdf` | Friday `fri:17:00` |
+| `coworker_board_pack` | Monthly `d1:09:00` |
+| `coworker_artifact_pack` | Sunday `sun:18:00` |
+| `coworker_list_flows` | — |
+| `coworker_bootstrap` | Seeds pulse tasks on boot |
+
+- **`src/fleet_agent/coworker/`** — flow registry, Vienna TZ recurrence, SMTP delivery with PDF attachments
+- **Monthly recurrence** — `d1:09:00`, `0 9 1 * *` (day-of-month)
+- **`ensure_coworker_tasks()`** — idempotent scheduler seeding; auto-starts with server
+- **Office fleet_bridge aliases** — `email`, `libreoffice`, `libreoffice-ext`, `notion`, `onenote` (19 servers total)
+
+### Integration
+
+- [libreoffice-mcp](../libreoffice-mcp) — MD→PDF, ODT template merge, board pack, artifact pack
+- MCD: [projects/fritz-coworker](https://github.com/sandraschi/mcp-central-docs/blob/main/projects/fritz-coworker/README.md), [projects/libreoffice-mcp](https://github.com/sandraschi/mcp-central-docs/blob/main/projects/libreoffice-mcp/README.md)
+
+### Tests
+
+- 45 pytest tests (coworker recurrence, weekly PDF, board pack, artifact pack)
+
+---
+
 ## 0.1.0 (2026-05-23) — Inception Day
 
 First full day of Fritz. Built from scratch in one session.

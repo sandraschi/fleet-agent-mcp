@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import logging
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import Field
@@ -15,11 +16,59 @@ logger = logging.getLogger("fleet_agent.tools.notify")
 _SCHEDULER_TASK: asyncio.Task | None = None
 
 
-async def _send_email_smtp(to, subject, body, smtp_host, smtp_port, smtp_user, smtp_pass):
+async def _send_email_smtp(
+    to,
+    subject,
+    body,
+    smtp_host,
+    smtp_port,
+    smtp_user,
+    smtp_pass,
+    attachment_paths: list[str] | None = None,
+):
+    return await send_email_message(
+        to=to,
+        subject=subject,
+        body=body,
+        attachment_paths=attachment_paths,
+        smtp_host=smtp_host,
+        smtp_port=smtp_port,
+        smtp_user=smtp_user,
+        smtp_pass=smtp_pass,
+    )
+
+
+async def send_email_message(
+    *,
+    to: str,
+    subject: str,
+    body: str,
+    smtp_host: str,
+    smtp_port: int,
+    smtp_user: str,
+    smtp_pass: str,
+    attachment_paths: list[str] | None = None,
+) -> dict[str, Any]:
     import smtplib
+    from email import encoders
+    from email.mime.base import MIMEBase
+    from email.mime.multipart import MIMEMultipart
     from email.mime.text import MIMEText
+
     try:
-        msg = MIMEText(body, "plain", "utf-8")
+        files = [Path(p) for p in (attachment_paths or []) if Path(p).is_file()]
+        if files:
+            msg = MIMEMultipart()
+            msg.attach(MIMEText(body, "plain", "utf-8"))
+            for path in files:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(path.read_bytes())
+                encoders.encode_base64(part)
+                part.add_header("Content-Disposition", f'attachment; filename="{path.name}"')
+                msg.attach(part)
+        else:
+            msg = MIMEText(body, "plain", "utf-8")
+
         msg["Subject"] = subject
         msg["To"] = to
         msg["From"] = smtp_user
@@ -27,7 +76,8 @@ async def _send_email_smtp(to, subject, body, smtp_host, smtp_port, smtp_user, s
             s.starttls()
             s.login(smtp_user, smtp_pass)
             s.send_message(msg)
-            return {"success": True, "message": f"Email sent to {to}"}
+            attach_note = f" (+{len(files)} attachment(s))" if files else ""
+            return {"success": True, "message": f"Email sent to {to}{attach_note}"}
     except Exception as e:
         return {"success": False, "message": f"SMTP failed: {e}"}
 
@@ -57,129 +107,56 @@ async def notify_email(
 
 
 async def _scheduler_loop():
+    from ...coworker.recurrence import recurrence_due
+    from ...coworker.tasks import coworker_sends_own_email, execute_recurring_task, touch_recurring_task
     from ...log_store import get_log_store
+    from ...settings_store import get_settings_store
+
     logs = get_log_store()
     logs.add("info", "Heartbeat scheduler started (60s interval)", "system")
     while True:
         try:
             from ...engine.sqlite_store import get_store
             store = get_store()
+            settings = get_settings_store()
+            tz_name = settings.get("coworker_timezone", "Europe/Vienna")
             now = datetime.now(UTC)
             tasks = store.todo_list(status="pending")
+
             for t in tasks:
                 rec = t.get("recurrence")
                 if not rec:
                     continue
                 updated = t.get("updated_at") or t.get("created_at", "")
-                should_fire = False
+                if not recurrence_due(rec, updated, tz_name=tz_name):
+                    continue
 
-                # Time-of-day recurrence: "09:00", "14:30" (fires daily at that time)
-                if ":" in rec and len(rec) <= 5:
-                    try:
-                        h, m = rec.split(":")
-                        target_min = int(h) * 60 + int(m)
-                        current_min = now.hour * 60 + now.minute
-                        last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-                        # Fire if time matches and hasn't fired today
-                        if current_min >= target_min and last_dt.date() < now.date():
-                            should_fire = True
-                    except ValueError:
-                        pass
+                logs.add("info", f"Firing: {t['task'][:60]}", "heartbeat")
+                try:
+                    result = await execute_recurring_task(t)
+                    logs.add(
+                        "info",
+                        f"  {result.get('handler', '?')}: {result.get('message', '')[:120]}",
+                        "heartbeat",
+                    )
+                except Exception as ex:
+                    logs.add("error", f"  Task executor: {ex}", "heartbeat")
+                    result = {"success": False}
 
-                # Interval recurrence: "3600" (seconds), "1h", "30m"
-                elif rec.isdigit():
-                    interval = int(rec)
-                    last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-                    if (now - last_dt).total_seconds() >= interval:
-                        should_fire = True
-                elif rec.endswith("h"):
-                    interval = int(rec[:-1]) * 3600
-                    last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-                    if (now - last_dt).total_seconds() >= interval:
-                        should_fire = True
-                elif rec.endswith("m"):
-                    interval = int(rec[:-1]) * 60
-                    last_dt = datetime.fromisoformat(updated.replace("Z", "+00:00"))
-                    if (now - last_dt).total_seconds() >= interval:
-                        should_fire = True
-
-                if should_fire:
-                    logs.add("info", f"Firing: {t['task'][:60]}", "heartbeat")
-
-                    # Try to execute the task via fleet tools
-                    task_lower = t["task"].lower()
-                    try:
-                        import httpx
-                        hdrs = {"Accept": "application/json, text/event-stream"}
-                        mcp_url = "http://127.0.0.1:10996/mcp/"
-
-                        def _call(server, tool, args):
-                            return httpx.post(mcp_url, json={
-                                "jsonrpc":"2.0","method":"tools/call",
-                                "params":{"name":"fleet_call_tool","arguments":{"server":server,"tool":tool,"arguments":args}},
-                                "id":1}, headers=hdrs, timeout=httpx.Timeout(120))
-
-                        if "arxiv" in task_lower or "paper" in task_lower:
-                            from ...llm_client import chat_completion
-                            query = await chat_completion([
-                                {"role":"system","content":"Extract a short arxiv search query. Reply with ONLY the query."},
-                                {"role":"user","content":t["task"]},
-                            ])
-                            logs.add("info", f"  Searching arxiv: {query}", "heartbeat")
-                            _call("arxiv", "search_papers", {"query":query, "limit":3})
-                            logs.add("info", "  Arxiv done", "heartbeat")
-
-                        elif "speak" in task_lower or "sonnet" in task_lower or "say" in task_lower or "tts" in task_lower:
-                            from ...llm_client import chat_completion
-                            text = await chat_completion([
-                                {"role":"system","content":"Extract what text to speak from this task. If it mentions a sonnet or poem, include the full text. Reply with ONLY the text to speak."},
-                                {"role":"user","content":t["task"]},
-                            ])
-                            logs.add("info", f"  Speaking: {text[:60]}", "heartbeat")
-                            _call("speech", "speech_say", {"text":text})
-                            logs.add("info", "  Speech done", "heartbeat")
-
-                        elif "yahboom" in task_lower or "robot" in task_lower or "car" in task_lower or "patrol" in task_lower:
-                            logs.add("info", "  Starting Yahboom patrol", "heartbeat")
-                            _call("yahboom", "yahboom_patrol", {"enable":True})
-                            logs.add("info", "  Patrol done", "heartbeat")
-
-                        elif "browser" in task_lower or "chrome" in task_lower or "website" in task_lower or "tab" in task_lower:
-                            logs.add("info", "  Opening browser", "heartbeat")
-                            _call("browser", "browser_open", {"urls":t.get("urls",[])})
-                            logs.add("info", "  Browser done", "heartbeat")
-
-                        else:
-                            # Generic LLM routing for unknown task types
-                            from ...llm_client import chat_completion
-                            route = await chat_completion([
-                                {"role":"system","content":(
-                                    "You are a task router. Given a task description, output the best fleet server and tool to handle it. "
-                                    "Options: arxiv(search_papers), speech(speech_say), yahboom(yahboom_patrol), browser(browser_open), "
-                                    "pywinauto(automation_windows), git(create_pr), email(notify_email). "
-                                    "Output JSON: {\"server\":\"...\",\"tool\":\"...\",\"args\":{...}}"
-                                )},
-                                {"role":"user","content":t["task"]},
-                            ])
-                            logs.add("info", f"  Router: {route[:100]}", "heartbeat")
-                    except Exception as ex:
-                        logs.add("error", f"  Task executor: {ex}", "heartbeat")
-
-                    from ...settings_store import get_settings_store
-                    s = get_settings_store()
-                    to = s.get("heartbeat_email", "")
-                    if to:
+                if not coworker_sends_own_email(result):
+                    to = settings.get("heartbeat_email", "")
+                    if to and settings.get("smtp_host") and settings.get("smtp_user"):
                         await _send_email_smtp(
                             to=to,
                             subject=f"Fritz Heartbeat - {now.strftime('%Y-%m-%d %H:%M')}",
-                            body=f"Fritz alive. Task: {t['task']}",
-                            smtp_host=s.get("smtp_host", ""),
-                            smtp_port=s.get("smtp_port", 587),
-                            smtp_user=s.get("smtp_user", ""),
-                            smtp_pass=s.get("smtp_pass", ""),
+                            body=f"Fritz alive. Task: {t['task']}\n\n{result.get('message', '')}",
+                            smtp_host=settings.get("smtp_host", ""),
+                            smtp_port=int(settings.get("smtp_port", 587)),
+                            smtp_user=settings.get("smtp_user", ""),
+                            smtp_pass=settings.get("smtp_pass", ""),
                         )
-                    t["updated_at"] = now.isoformat()
-                    store.todo_upsert(t)
+
+                touch_recurring_task(store, t)
 
         except Exception as e:
             logs.add("error", f"Scheduler loop: {e}", "heartbeat")
