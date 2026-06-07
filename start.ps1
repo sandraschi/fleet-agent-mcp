@@ -19,6 +19,8 @@ if (-not (Test-Path -LiteralPath $FleetStartPath)) {
 . $FleetStartPath
 Stop-FleetPortSquatters -Ports @($BackendPort, $WebPort) -Label "fleet-agent-mcp"
 
+if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $WebPort) -Label "fleet-agent-mcp")) { exit 1 }
+
 Set-Location $Root
 & "$env:USERPROFILE\.local\bin\uv.exe" sync
 
@@ -72,4 +74,5 @@ if ($Headless) {
         Remove-Job -Name "fleet-agent-webapp" -Force -ErrorAction SilentlyContinue
     }
 }
+
 
