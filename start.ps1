@@ -1,4 +1,4 @@
-param([switch]$Headless)
+﻿param([switch]$Headless)
 
 # --- SOTA Headless Standard ---
 if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
@@ -11,21 +11,13 @@ $WebPort = 10997
 $BackendPort = 10996
 $Root = $PSScriptRoot
 
-# Kill zombies on backend port (netstat works cross-user)
-$zombiePids = netstat -ano | Select-String ":${BackendPort} " | Select-String "LISTENING" | ForEach-Object { ($_ -split '\s+')[-1] }
-foreach ($zp in $zombiePids) {
-    Stop-Process -Id $zp -Force -ErrorAction SilentlyContinue
-    taskkill /F /PID $zp 2>$null
+$FleetStartPath = Join-Path $Root "scripts\FleetStartMode.ps1"
+if (-not (Test-Path -LiteralPath $FleetStartPath)) {
+    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+    exit 1
 }
-
-if (-not $Headless) {
-    $zombiePids = netstat -ano | Select-String ":${WebPort} " | Select-String "LISTENING" | ForEach-Object { ($_ -split '\s+')[-1] }
-    foreach ($zp in $zombiePids) {
-        Stop-Process -Id $zp -Force -ErrorAction SilentlyContinue
-        taskkill /F /PID $zp 2>$null
-    }
-}
-Start-Sleep 1
+. $FleetStartPath
+Stop-FleetPortSquatters -Ports @($BackendPort, $WebPort) -Label "fleet-agent-mcp"
 
 Set-Location $Root
 & "$env:USERPROFILE\.local\bin\uv.exe" sync
@@ -80,3 +72,4 @@ if ($Headless) {
         Remove-Job -Name "fleet-agent-webapp" -Force -ErrorAction SilentlyContinue
     }
 }
+

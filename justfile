@@ -1,8 +1,8 @@
-# fleet-agent-mcp justfile
+﻿# fleet-agent-mcp justfile
 
 # Open the interactive recipe dashboard in the browser
 default:
-    @pwsh.exe -NoProfile -ExecutionPolicy Bypass -File ../mcp-central-docs/scripts/just-dashboard.ps1 -Path .
+    @just --list
 
 # Start the agent server + webapp
 start:
@@ -41,3 +41,4 @@ lint:
 start-stdio:
     Set-Location '{{justfile_directory()}}'
     & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --stdio
+
