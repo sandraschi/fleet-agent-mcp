@@ -46,7 +46,11 @@ def _pick_handler(
             spec = entry["default"]
             if isinstance(spec, dict):
                 tool = str(spec.get("tool", ""))
-                args = _format_args(spec.get("args") or {}, remainder=remainder, transcript=transcript)
+                args = _format_args(
+                    spec.get("args") or {},
+                    remainder=remainder,
+                    transcript=transcript,
+                )
                 return tool, args
     return None
 

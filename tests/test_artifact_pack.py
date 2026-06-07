@@ -1,6 +1,5 @@
 """Tests for artifact pack flow."""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -45,7 +44,12 @@ async def test_artifact_pack_merge(tmp_path, monkeypatch):
         return_value=settings_mock,
     ), patch(
         "fleet_agent.coworker.artifact_pack.fleet_call",
-        AsyncMock(return_value={"success": True, "data": {"content": [__import__("json").dumps(merge_payload)]}}),
+        AsyncMock(
+            return_value={
+                "success": True,
+                "data": {"content": [__import__("json").dumps(merge_payload)]},
+            },
+        ),
     ) as mock_call, patch(
         "fleet_agent.mcp.tools.notify.send_email_message",
         AsyncMock(return_value={"success": True, "message": "sent"}),

@@ -6,8 +6,8 @@ from typing import Any
 
 from ..engine.sqlite_store import get_store
 from ..settings_store import get_settings_store
-from .common import deliver_report, log_project_note, now_label, save_artifact
-from .inbox_briefing import format_inbox_briefing, run_inbox_briefing
+from .common import deliver_report, log_project_note, now_label, publish_intel_report, save_artifact
+from .inbox_briefing import run_inbox_briefing
 from .intel_briefing import _is_readly_longform, fetch_intel_briefing
 
 DAY_PREP_PROJECT = "office-day-prep"
@@ -99,12 +99,66 @@ async def run_day_prep(*, deliver: bool = True) -> dict[str, Any]:
     subject = f"Office Day Prep — {pulse_date.split()[0]}"
     delivery = {"email": await deliver_report(report, subject, deliver=deliver)}
 
+    hub_result: dict[str, Any] = {}
+    ingest_result: dict[str, Any] = {}
+    urgent_result: dict[str, Any] = {}
+    try:
+        from .aiwatcher_ingest import push_fritz_report_event
+        from .urgent_notify import deliver_urgent_alert, urgent_threshold
+
+        hub_result = await publish_intel_report(
+            title=subject,
+            markdown=report,
+            source="fritz",
+            tags=["day-prep", "coworker"],
+        )
+        hot_items = intel_result.get("hot_items") or []
+        hot = len(hot_items)
+        max_urgency = max(
+            (float(it.get("urgency") or 0) for it in hot_items),
+            default=0.0,
+        )
+        ingest_result = await push_fritz_report_event(
+            flow="day_prep",
+            title=subject,
+            summary=(
+                f"{len(pending)} pending tasks, {len(human)} human waits, "
+                f"{intel_result.get('count', 0)} intel items ({hot} hot). "
+                f"Hub: {hub_result.get('url_path', '/')}"
+            ),
+            urgency_hint=max(max_urgency, 8.0 if hot else 5.5),
+        )
+
+        hub_link = ""
+        if hub_result.get("success"):
+            from ..intel_hub.client import hub_base_url
+
+            hub_link = f"{hub_base_url()}{hub_result.get('url_path', '/')}"
+
+        if hot and max_urgency >= urgent_threshold():
+            headlines = [
+                f"- [{it.get('urgency', '?')}] {(it.get('title') or '?')[:100]}"
+                for it in hot_items[:5]
+            ]
+            urgent_result = await deliver_urgent_alert(
+                subject=subject,
+                body="Breaking intel:\n" + "\n".join(headlines),
+                reason="day prep hot intel",
+                urgency=max_urgency,
+                hub_url=hub_link,
+            )
+    except Exception:
+        pass
+
     return {
         "success": True,
         "message": f"Office Day Prep: {min(len(pending), 5)} focus items, {len(human)} human waits",
         "report": report,
         "artifact_path": artifact_path,
         "delivery": delivery,
+        "intel_hub": hub_result,
+        "aiwatcher_ingest": ingest_result,
+        "urgent_alert": urgent_result,
         "stats": {
             "pending_tasks": len(pending),
             "human_tasks": len(human),

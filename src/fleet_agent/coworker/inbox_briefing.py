@@ -33,7 +33,10 @@ def format_inbox_briefing(
         err = inbox.get("error") or inbox.get("message") or "email-mcp unreachable"
         lines.append(f"- **Status:** failed — {err}")
         lines.append("")
-        lines.append("Start email-mcp on port 10813 or check `/api/settings` → `inbox_briefing_service`.")
+        lines.append(
+            "Start email-mcp on port 10813 or check "
+            "`/api/settings` → `inbox_briefing_service`."
+        )
         return "\n".join(lines)
 
     emails = inbox.get("emails") or []
@@ -41,7 +44,8 @@ def format_inbox_briefing(
     lines.append(f"- **Service:** {inbox.get('service', '?')} / {inbox.get('folder', 'INBOX')}")
     if email_status and email_status.get("success"):
         services = email_status.get("services") or email_status.get("data") or email_status
-        lines.append(f"- **Configured services:** {services if isinstance(services, str) else len(services)}")
+        svc_label = services if isinstance(services, str) else len(services)
+        lines.append(f"- **Configured services:** {svc_label}")
     lines.extend(["", "## Messages", ""])
 
     if not emails:
@@ -108,7 +112,11 @@ async def run_inbox_briefing(*, deliver: bool = True) -> dict[str, Any]:
 
     return {
         "success": ok,
-        "message": f"Inbox Briefing: {count} unread messages" if ok else "Inbox Briefing failed (is email-mcp up?)",
+        "message": (
+            f"Inbox Briefing: {count} unread messages"
+            if ok
+            else "Inbox Briefing failed (is email-mcp up?)"
+        ),
         "report": report,
         "artifact_path": artifact_path,
         "delivery": delivery,

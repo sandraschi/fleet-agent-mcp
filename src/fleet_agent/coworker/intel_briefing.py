@@ -105,7 +105,8 @@ async def fetch_intel_briefing(
         "count": len(items),
         "message": (
             f"{len(items)} items, {len(hot)} pulse-worthy "
-            f"(urgency ≥ {urgency_task_threshold} or readly relevance ≥ {readly_relevance_threshold}; "
+            f"(urgency ≥ {urgency_task_threshold} "
+            f"or readly relevance ≥ {readly_relevance_threshold}; "
             f"{readly_hot} readly)"
         ),
     }

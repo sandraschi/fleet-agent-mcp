@@ -6,13 +6,15 @@ from typing import Annotated
 
 from pydantic import Field
 
-from ..registry import mcp
 from ...voice_router import route_voice_intent
+from ..registry import mcp
 
 
 @mcp.tool(version="0.1.0")
 async def route_voice_command(
-    transcript: Annotated[str, Field(description="Full spoken command after wake word (STT text).")],
+    transcript: Annotated[
+        str, Field(description="Full spoken command after wake word (STT text).")
+    ],
     wake: Annotated[str, Field(description="Wake word model/id that fired.")] = "wakeywakey",
     source: Annotated[str, Field(description="Ingress component, usually speech-mcp.")] = "api",
 ) -> dict:

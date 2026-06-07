@@ -1,6 +1,5 @@
 """Tests for weekly report PDF coworker flow."""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -46,7 +45,12 @@ async def test_weekly_report_pdf_happy_path(tmp_path, monkeypatch):
         return_value=settings_mock,
     ), patch(
         "fleet_agent.coworker.weekly_report_pdf.fleet_call",
-        AsyncMock(return_value={"success": True, "data": {"content": [__import__("json").dumps(convert_payload)]}}),
+        AsyncMock(
+            return_value={
+                "success": True,
+                "data": {"content": [__import__("json").dumps(convert_payload)]},
+            },
+        ),
     ), patch(
         "fleet_agent.mcp.tools.notify.send_email_message",
         AsyncMock(return_value={"success": True, "message": "sent"}),
@@ -62,8 +66,9 @@ async def test_weekly_report_pdf_happy_path(tmp_path, monkeypatch):
 
 
 def test_extract_libreoffice_output_nested():
-    from fleet_agent.coworker.common import extract_libreoffice_output
     import json
+
+    from fleet_agent.coworker.common import extract_libreoffice_output
 
     result = {
         "success": True,

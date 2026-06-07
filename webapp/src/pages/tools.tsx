@@ -1,4 +1,4 @@
-import { GitBranch, ListChecks, Brain, User, Package, TrendingUp, Activity, ExternalLink, X } from "lucide-react";
+import { GitBranch, ListChecks, Brain, User, Package, TrendingUp, Activity, ExternalLink, X, Briefcase, Newspaper } from "lucide-react";
 import { useState } from "react";
 
 interface Param {
@@ -230,6 +230,50 @@ const SUBSYSTEMS: Subsystem[] = [
         params: [],
         returns: '{"success": bool, "action": dict, "message": str}',
         examples: ["heartbeat_wake()"] },
+    ],
+  },
+  {
+    id: "coworker", icon: Briefcase, label: "Coworker", count: 11, color: "text-orange-400",
+    tools: [
+      { name: "coworker_fleet_pulse", type: "W", description: "Morning Fleet Pulse — MCP health, git snapshot, hub publish.",
+        params: [{ name: "deliver", type: "bool", description: "Email report when SMTP configured.", required: false, default: "true" }],
+        returns: '{"success": bool, "report": str, "artifact_path": str, "message": str}',
+        examples: ["coworker_fleet_pulse()", "coworker_fleet_pulse(deliver=False)"] },
+      { name: "coworker_devices_watch", type: "W", description: "Poll devices-mcp /api/fleet/priority — kitchen temp, CO, smoke, Ring.",
+        params: [{ name: "deliver", type: "bool", description: "Hub + urgent email on new critical.", required: false, default: "true" }],
+        returns: '{"success": bool, "critical_new": list, "message": str}',
+        examples: ["coworker_devices_watch()"] },
+      { name: "coworker_day_prep", type: "W", description: "Office Day Prep — inbox + pulse tasks + AIWatcher hot items.",
+        params: [{ name: "deliver", type: "bool", description: "Email combined report.", required: false, default: "true" }],
+        returns: '{"success": bool, "report": str, "message": str}',
+        examples: ["coworker_day_prep()"] },
+      { name: "coworker_bootstrap", type: "W", description: "Seed default coworker recurring tasks (idempotent).",
+        params: [],
+        returns: '{"success": bool, "created": int, "message": str}',
+        examples: ["coworker_bootstrap()"] },
+    ],
+  },
+  {
+    id: "intel_hub", icon: Newspaper, label: "Intel Hub", count: 3, color: "text-violet-400",
+    tools: [
+      { name: "intel_reports_publish", type: "W", description: "Publish markdown/HTML report to Intel Hub (port 11027).",
+        params: [
+          { name: "title", type: "str", description: "Report title.", required: true },
+          { name: "markdown", type: "str", description: "Markdown body.", required: true },
+        ],
+        returns: '{"success": bool, "id": str, "url_path": str, "hub_url": str}',
+        examples: ['intel_reports_publish(title="Test", markdown="# Hello")'] },
+      { name: "intel_reports_list", type: "R", description: "List published intel reports from hub catalog.",
+        params: [{ name: "limit", type: "int", description: "Max reports.", required: false, default: "20" }],
+        returns: '{"success": bool, "reports": list, "hub_url": str, "count": int}',
+        examples: ["intel_reports_list()", "intel_reports_list(limit=5)"] },
+      { name: "aiwatcher_push_event", type: "W", description: "Push structured event into AIWatcher Fleet Events feed.",
+        params: [
+          { name: "title", type: "str", description: "Event title.", required: true },
+          { name: "urgency_hint", type: "float", description: "0–10 pre-score.", required: false },
+        ],
+        returns: '{"success": bool, "message": str}',
+        examples: ['aiwatcher_push_event(title="Pulse", urgency_hint=7.5)'] },
     ],
   },
 ];

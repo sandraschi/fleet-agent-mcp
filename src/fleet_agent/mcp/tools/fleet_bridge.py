@@ -101,6 +101,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
             "generate_digest",
             "check_alerts",
             "get_bundle_health",
+            "ingest_fleet_event",
         ],
     },
     "browser": {
@@ -108,6 +109,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "description": "browser-mcp — Browser automation: open URLs, screenshots, web scraping, bookmarks",
         "category": "automation",
         "key_tools": ["browser_open", "browser_screenshot", "browser_navigate", "browser_bookmarks"],
+    },
+    "cursor": {
+        "url": "http://127.0.0.1:11000/mcp",
+        "description": "cursor-mcp — Cursor platform API: usage/spend guardrails, cloud agent monitor",
+        "category": "orchestration",
+        "key_tools": ["cursor_usage", "cursor_cloud", "cursor_docs", "cursor_sdk", "cursor_help"],
     },
     "pywinauto": {
         "url": "http://127.0.0.1:10788/mcp",
@@ -183,6 +190,17 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "description": "LibreOffice extension MCP (WriterAgent / mcp-libre / Nelson) — live GUI edit",
         "category": "office",
         "key_tools": ["convert_document", "read_document_text", "create_document"],
+    },
+    "devices": {
+        "url": "http://127.0.0.1:10716/mcp",
+        "description": "devices-mcp — home IoT: cameras, Shelly temps, Nest CO/smoke, Ring alarm",
+        "category": "smart_home",
+        "key_tools": [
+            "security_management",
+            "shelly_management",
+            "ring_management",
+            "home_assistant_management",
+        ],
     },
     "glance": {
         "url": "http://127.0.0.1:10776/mcp",

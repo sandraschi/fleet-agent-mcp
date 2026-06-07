@@ -7,7 +7,14 @@ from pathlib import Path
 from typing import Any
 
 from ..settings_store import get_settings_store
-from .common import deliver_report, fleet_call, log_project_note, now_label, parse_fleet_payload, save_artifact
+from .common import (
+    deliver_report,
+    fleet_call,
+    log_project_note,
+    now_label,
+    parse_fleet_payload,
+    save_artifact,
+)
 
 DOCS_DRIFT_PROJECT = "docs-drift"
 
@@ -127,7 +134,12 @@ async def run_docs_drift(*, deliver: bool = True) -> dict[str, Any]:
     docs_payload = parse_fleet_payload(docs_raw)
     hits: list[dict[str, Any]] = []
     if isinstance(docs_payload, dict):
-        hits = docs_payload.get("results") or docs_payload.get("documents") or docs_payload.get("hits") or []
+        hits = (
+            docs_payload.get("results")
+            or docs_payload.get("documents")
+            or docs_payload.get("hits")
+            or []
+        )
         if isinstance(docs_payload.get("data"), dict):
             hits = docs_payload["data"].get("results") or hits
 

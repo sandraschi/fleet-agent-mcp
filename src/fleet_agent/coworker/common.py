@@ -49,6 +49,10 @@ def coworker_type(task: dict[str, Any]) -> str | None:
         return "board_pack"
     if "artifact pack" in text:
         return "artifact_pack"
+    if "cursor spend" in text:
+        return "cursor_spend_watch"
+    if "devices watch" in text or "devices priority" in text:
+        return "devices_watch"
     return None
 
 
@@ -77,7 +81,9 @@ def markdown_to_plain(md: str, *, max_chars: int = 8000) -> str:
     return text
 
 
-async def fleet_call(server: str, tool: str, arguments: dict[str, Any] | None = None) -> dict[str, Any]:
+async def fleet_call(
+    server: str, tool: str, arguments: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     from ..mcp.tools.fleet_bridge import fleet_call_tool
 
     return await fleet_call_tool(server=server, tool=tool, arguments=arguments or {})
@@ -149,6 +155,26 @@ def log_project_note(project: str, title: str, body: str, tags: list[str] | None
         })
 
 
+async def publish_intel_report(
+    *,
+    title: str,
+    markdown: str,
+    source: str = "fritz",
+    summary: str = "",
+    tags: list[str] | None = None,
+) -> dict[str, Any]:
+    """Publish markdown report to Intel Hub (iPad / Tailscale)."""
+    from ..intel_hub.client import publish_to_hub
+
+    return await publish_to_hub(
+        title=title,
+        source=source,
+        markdown=markdown,
+        summary=summary or markdown[:280].replace("\n", " "),
+        tags=tags,
+    )
+
+
 async def deliver_report(
     report: str,
     subject: str,
@@ -164,7 +190,10 @@ async def deliver_report(
     host = store_settings.get("smtp_host", "")
     user = store_settings.get("smtp_user", "")
     if not (to and host and user):
-        return {"success": False, "message": "Email skipped (set heartbeat_email + SMTP in settings)"}
+        return {
+            "success": False,
+            "message": "Email skipped (set heartbeat_email + SMTP in settings)",
+        }
 
     from ..mcp.tools.notify import send_email_message
 

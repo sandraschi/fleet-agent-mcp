@@ -80,7 +80,11 @@ def recurrence_due(
     wd = _WEEKDAY_TIME.match(rec)
     if wd:
         return _time_of_day_due(
-            int(wd.group(1)), int(wd.group(2)), last_updated_iso, tz_name, allowed_weekdays=_WEEKDAYS
+            int(wd.group(1)),
+            int(wd.group(2)),
+            last_updated_iso,
+            tz_name,
+            allowed_weekdays=_WEEKDAYS,
         )
 
     named = _NAMED_DAY_TIME.match(rec)
@@ -106,7 +110,9 @@ def recurrence_due(
 
     cron_monthly = _CRON_MONTHLY.match(rec)
     if cron_monthly:
-        minute, hour, day = int(cron_monthly.group(1)), int(cron_monthly.group(2)), int(cron_monthly.group(3))
+        minute = int(cron_monthly.group(1))
+        hour = int(cron_monthly.group(2))
+        day = int(cron_monthly.group(3))
         return _monthly_dom_due(day, hour, minute, last_updated_iso, tz_name)
 
     # Daily time: "07:00" in coworker timezone

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Awaitable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 FlowRunner = Callable[..., Awaitable[dict[str, Any]]]
 
@@ -84,6 +85,28 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "enabled_setting": "coworker_artifact_pack_enabled",
         "default_enabled": True,
         "description": "Weekly combined ~/.fleet-agent/artifacts → styled PDF",
+    },
+    "cursor_spend_watch": {
+        "id": "coworker-cursor-spend-watch",
+        "label": "Cursor Spend Watch",
+        "task": "Cursor Spend Watch — coworker:cursor_spend_watch",
+        "category": "fleet",
+        "recurrence_setting": "cursor_spend_watch_interval",
+        "default_recurrence": "2h",
+        "enabled_setting": "coworker_cursor_spend_watch_enabled",
+        "default_enabled": True,
+        "description": "cursor-mcp alert_check — hourly spend, on-demand, running cloud agents",
+    },
+    "devices_watch": {
+        "id": "coworker-devices-watch",
+        "label": "Devices Priority Watch",
+        "task": "Devices Priority Watch — coworker:devices_watch",
+        "category": "home",
+        "recurrence_setting": "devices_watch_interval",
+        "default_recurrence": "5m",
+        "enabled_setting": "coworker_devices_watch_enabled",
+        "default_enabled": True,
+        "description": "devices-mcp — kitchen temp, CO, smoke, Ring burglar → Fritz urgent",
     },
 }
 

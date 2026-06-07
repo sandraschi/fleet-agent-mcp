@@ -108,7 +108,11 @@ async def notify_email(
 
 async def _scheduler_loop():
     from ...coworker.recurrence import recurrence_due
-    from ...coworker.tasks import coworker_sends_own_email, execute_recurring_task, touch_recurring_task
+    from ...coworker.tasks import (
+        coworker_sends_own_email,
+        execute_recurring_task,
+        touch_recurring_task,
+    )
     from ...log_store import get_log_store
     from ...settings_store import get_settings_store
 

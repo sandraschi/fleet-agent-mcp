@@ -71,9 +71,18 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
     )
 
     inner = parse_fleet_payload(merge_result)
-    lo_data = inner.get("data") if isinstance(inner, dict) and isinstance(inner.get("data"), dict) else inner
+    lo_data = (
+        inner.get("data")
+        if isinstance(inner, dict) and isinstance(inner.get("data"), dict)
+        else inner
+    )
     pdf_path = None
-    if merge_result.get("success") and isinstance(lo_data, dict) and lo_data.get("success", inner.get("success") if isinstance(inner, dict) else False):
+    inner_ok = inner.get("success") if isinstance(inner, dict) else False
+    if (
+        merge_result.get("success")
+        and isinstance(lo_data, dict)
+        and lo_data.get("success", inner_ok)
+    ):
         pdf_path = extract_libreoffice_output(merge_result) or lo_data.get("output")
 
     if not pdf_path:
@@ -88,7 +97,11 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
         )
         inner = parse_fleet_payload(convert_result)
         if not convert_result.get("success") or not isinstance(inner, dict):
-            err = convert_result.get("message") or merge_result.get("message") or "libreoffice export failed"
+            err = (
+                convert_result.get("message")
+                or merge_result.get("message")
+                or "libreoffice export failed"
+            )
             return {
                 "success": False,
                 "message": err,

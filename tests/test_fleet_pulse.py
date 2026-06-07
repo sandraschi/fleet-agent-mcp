@@ -21,7 +21,12 @@ class TestFleetPulseReport:
                 "data": {
                     "servers": [
                         {"alias": "docs", "online": True, "tool_count": 4},
-                        {"alias": "arxiv", "online": False, "tool_count": 0, "error": "connection refused"},
+                        {
+                            "alias": "arxiv",
+                            "online": False,
+                            "tool_count": 0,
+                            "error": "connection refused",
+                        },
                     ]
                 }
             },
@@ -38,7 +43,10 @@ class TestFleetPulseReport:
         assert "Action items" in report
 
     def test_is_fleet_pulse_task_metadata(self):
-        assert is_fleet_pulse_task({"task": "anything", "metadata_json": '{"coworker": "fleet_pulse"}'})
+        assert is_fleet_pulse_task({
+            "task": "anything",
+            "metadata_json": '{"coworker": "fleet_pulse"}',
+        })
 
     def test_is_fleet_pulse_task_text(self):
         assert is_fleet_pulse_task({"task": "Morning Fleet Pulse please"})

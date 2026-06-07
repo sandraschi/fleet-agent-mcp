@@ -11,7 +11,7 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. **42 FastMCP 3.2 tools across 13 subsystems** (v0.2.0-pre coworker pilot).
+Self-evolving AI agent for the fleet ecosystem. **69 FastMCP 3.2 tools across 15 subsystems** (v0.2.1-pre — coworker + Intel Hub).
 
 **Name**: Fritz (short for Friedrich). When he fouls up: *"Friefrich! Was ist dir!"*
 
@@ -82,7 +82,11 @@ Three roles, one agent:
 | 10 | **github** | 9 | Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status | — |
 | 11 | **contribute** | 1 | Autonomous contribution: clone→ruff→issue→branch→fix→PR | — |
 | 12 | **notify** | 3 | Email via SMTP, cron scheduler, heartbeat executor | — |
-| 13 | **coworker** | 9 | Scheduled Viktor-style flows: pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack | [docs/coworker-plan.md](docs/coworker-plan.md) |
+| 13 | **coworker** | 11 | Scheduled Viktor-style flows: pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack, devices watch, cursor spend | [docs/coworker-plan.md](docs/coworker-plan.md) |
+| 14 | **intel_hub** | 3 | Intel Reports Hub publish/list + AIWatcher fleet event push | [docs/INTEL_REPORTS_HUB.md](docs/INTEL_REPORTS_HUB.md) |
+| 15 | **voice** | 1 | Wake-word voice command routing | — |
+
+**Intel & alerts:** Fleet Pulse / Day Prep publish HTML to the [Intel Reports Hub](docs/INTEL_REPORTS_HUB.md) (port **11027**, iPad via Tailscale). Fritz ingests summaries into AIWatcher and sends **urgent email + cursor inbox** on degradation or home-safety incidents (kitchen temp, CO, Ring).
 
 Coworker pilot: [docs/coworker-plan.md](docs/coworker-plan.md) — Poor Man's Viktor on fleet MCP. Hermes learning-loop map: [docs/hermes-borrowings.md](docs/hermes-borrowings.md). Central index: [mcp-central-docs/projects/fritz-coworker](https://github.com/sandraschi/mcp-central-docs/blob/main/projects/fritz-coworker/README.md).
 
@@ -124,12 +128,13 @@ fleet-agent-mcp/
 │   ├── evolution.md
 │   ├── heartbeat.md
 │   ├── coworker-plan.md               # Coworker pilot: Viktor parity on fleet MCP
+│   ├── INTEL_REPORTS_HUB.md           # Shared HTML reports (port 11027), urgent alerts
 │   └── hermes-borrowings.md           # Hermes self-improve → Fritz tool map (preliminary)
 │
 ├── webapp/                            # Vite + React dashboard (10 pages: Dashboard, Chat, Tasks, Memory, Evolution, Help, Tools, Settings, Logger, Status)
 │   └── src/                           # See webapp/README.md
 │
-├── tests/                             # 45 unit tests
+├── tests/                             # coworker + intel hub unit tests
 └── memory/                            # Markdown knowledge mirror (cards, projects, evolution)
 ```
 
@@ -147,6 +152,7 @@ See `identity/SOUL.md` for core personality, `identity/NORTH_STAR.md` for purpos
 |---|---|---|
 | Backend (FastMCP HTTP) | 10996 | HTTP + MCP Streamable HTTP |
 | Frontend (Vite dev) | 10997 | HTTP |
+| Intel Reports Hub | 11027 | HTML index + `POST /api/reports/publish` |
 
 ## Default Workflows
 
@@ -181,8 +187,9 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | Impossible tasks | — | **LLM validation + humorous refusal** |
 | Scheduler | Cron | **Built-in: interval ("3600"), time-of-day ("09:00"), executor** |
 | Fleet bridge | — | **19 servers: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, +11 more** |
-| Coworker | — | **9 tools: fleet pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack, list_flows, bootstrap** |
-| Total tools | — | **42 across 13 subsystems** |
+| Coworker | — | **11 tools** — pulse, inbox, day prep, docs drift, weekly PDF, board/artifact pack, devices watch, cursor spend |
+| Intel Hub | — | **3 tools** — `intel_reports_publish`, `intel_reports_list`, `aiwatcher_push_event` |
+| Total tools | — | **69 across 15 subsystems** |
 
 ### Path to Kagura Parity
 

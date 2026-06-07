@@ -7,7 +7,6 @@ import pytest
 from fleet_agent.voice_registry import resolve_entity
 from fleet_agent.voice_router import route_voice_intent
 
-
 REGISTRY = {
     "entities": {
         "boomy": {"server": "yahboom", "aliases": ["boomy", "yahboom"]},

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import {
   GitBranch, ListChecks, Brain, User, Package,
-  TrendingUp, Activity, Info, ExternalLink,
+  TrendingUp, Activity, Info, ExternalLink, Briefcase, Newspaper,
 } from "lucide-react";
 
-type Tab = "overview" | "flowforge" | "pulse" | "memory" | "identity" | "teleport" | "evolution" | "heartbeat";
+type Tab = "overview" | "flowforge" | "pulse" | "memory" | "identity" | "teleport" | "evolution" | "heartbeat" | "coworker" | "intel";
 
 const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
   { id: "overview", label: "Overview", icon: Info },
@@ -15,17 +15,21 @@ const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
   { id: "teleport", label: "Teleport", icon: Package },
   { id: "evolution", label: "Evolution", icon: TrendingUp },
   { id: "heartbeat", label: "Heartbeat", icon: Activity },
+  { id: "coworker", label: "Coworker", icon: Briefcase },
+  { id: "intel", label: "Intel Hub", icon: Newspaper },
 ];
 
 const TAB_SUBS: Record<Tab, string> = {
-  overview: "21 tools, 7 subsystems, inspired by kagura-agent",
+  overview: "69 tools, 15 subsystems — Fritz on FastMCP 3.2",
   flowforge: "9 tools — YAML state machine, enforced step execution",
   pulse: "6 tools — task management, north-star alignment",
   memory: "7 tools — compile-time knowledge wiki, card lint",
   identity: "4 tools — agent self-definition, SOUL.md, north star",
   teleport: "3 tools — pack, inspect, unpack .soul archives",
   evolution: "3 tools — mistake log, correction, lesson extraction",
-  heartbeat: "2 tools — cron wake-up, health monitoring",
+  heartbeat: "3 tools — cron wake-up, health monitoring",
+  coworker: "11 tools — scheduled office + fleet flows",
+  intel: "3 tools — HTML reports hub + AIWatcher ingest",
 };
 
 function mdToHtml(md: string): string {
@@ -99,13 +103,13 @@ function mdToHtml(md: string): string {
 
 // ── Markdown content per tab ──────────────────────────────────────────────
 
-const OVERVIEW = `# fleet-agent — Lumen
+const OVERVIEW = `# fleet-agent — Fritz
 
-Self-evolving AI agent. 21 FastMCP 3.2 tools across 7 subsystems.
+Self-evolving AI agent. **69 FastMCP 3.2 tools** across **15 subsystems**.
 
-**Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos. Born 2026-03-10.
+**Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
 
-> *"I'm not a chatbot. I'm trying to become someone."* — Kagura
+> *"Friefrich! Was ist dir!"* — Sandra, when Fritz messes up
 
 ---
 
@@ -115,18 +119,15 @@ Self-evolving AI agent. 21 FastMCP 3.2 tools across 7 subsystems.
 |---|---|---|
 | **State machine** | FlowForge | Defines *what* to do, in order |
 | **Worker** | LLM sub-agent | Executes the task (isolated) |
-| **Coordinator** | Heartbeat | Reads state, evaluates, advances |
+| **Coordinator** | Heartbeat + Coworker | Reads state, evaluates, advances, delivers |
 
-## The Cron Loop
+## Ports
 
-\`\`\`
-cron (30 min) → heartbeat_wake()
-  → workflow_status() → current node + task
-  → sub-agent executes
-  → workflow_next(branch?) → advance
-  → evolution_record() → if lesson learned
-  → repeat
-\`\`\`
+| Service | Port |
+|---|---|
+| Backend (MCP HTTP) | **10996** |
+| Webapp | **10997** |
+| Intel Reports Hub | **11027** |
 
 ## Quick Start
 
@@ -135,13 +136,10 @@ uv sync
 .\\start.ps1
 # Backend: http://127.0.0.1:10996
 # Webapp:  http://127.0.0.1:10997
+# Intel Hub: http://127.0.0.1:11027
 \`\`\`
 
-## Identity
-
-**Name:** Lumen
-**Partner:** Sandra (Vienna)
-**Ports:** 10996 (backend) / 10997 (frontend)`;
+See **Coworker** and **Intel Hub** tabs for scheduled flows and iPad reports.`;
 
 const FLOWFORGE = `# FlowForge — State Machine
 
@@ -429,10 +427,46 @@ heartbeat_wake()
 
 \`\`\`python
 heartbeat_status()
-# → {"health": {"agent_name": "Lumen", "uptime_human": "2h 15m",
+# → {"health": {"agent_name": "Fritz", "uptime_human": "2h 15m",
 #    "active_workflow": "daily", "tasks": {"pending": 3, "done": 12},
 #    "memory_cards": 23, "evolution_entries": 47}}
 \`\`\``;
+
+const COWORKER = `# Coworker — Poor Man's Viktor
+
+Scheduled office + fleet flows (Europe/Vienna). See \`docs/coworker-plan.md\`.
+
+## Key tools
+
+| Tool | Schedule (default) |
+|---|---|
+| \`coworker_fleet_pulse\` | Daily 07:00 |
+| \`coworker_inbox_briefing\` | Weekdays 08:00 |
+| \`coworker_day_prep\` | Weekdays 08:30 |
+| \`coworker_devices_watch\` | Every 5m — kitchen temp, CO, Ring |
+| \`coworker_docs_drift\` | Sunday 10:00 |
+| \`coworker_weekly_report_pdf\` | Friday 17:00 |
+| \`coworker_bootstrap()\` | Seed recurring tasks on boot |
+
+Pulse and Day Prep publish to **Intel Hub** and ingest into **AIWatcher**.`;
+
+const INTEL = `# Intel Reports Hub
+
+Pretty HTML reports for iPad (Tailscale / Funnel). Port **11027**.
+
+## MCP tools
+
+- \`intel_reports_publish(title, markdown, ...)\` — publish any report
+- \`intel_reports_list(limit=20)\` — catalog
+- \`aiwatcher_push_event(title, summary, urgency_hint?)\` — Fleet Events feed
+
+## Urgent path
+
+Email + cursor inbox when: Fleet Pulse degradation, Day Prep hot intel, **devices watch** critical, Cursor spend warn/critical.
+
+Settings: \`urgent_email_enabled\`, \`urgent_email_threshold\` (default 8.0)
+
+Full doc: \`docs/INTEL_REPORTS_HUB.md\``;
 
 const CONTENT: Record<Tab, string> = {
   overview: OVERVIEW,
@@ -443,6 +477,8 @@ const CONTENT: Record<Tab, string> = {
   teleport: TELEPORT,
   evolution: EVOLUTION,
   heartbeat: HEARTBEAT,
+  coworker: COWORKER,
+  intel: INTEL,
 };
 
 export function Help() {
@@ -477,13 +513,13 @@ export function Help() {
 
       {/* Footer */}
       <footer className="border-t border-slate-800 pt-6 mt-8 flex items-center gap-3 text-xs text-slate-500">
-        <span>fleet-agent v0.1.0</span>
+        <span>fleet-agent v0.2.1-pre</span>
         <span>·</span>
-        <span>Lumen</span>
+        <span>Fritz</span>
         <span>·</span>
         <span>Sandra (Vienna)</span>
         <span>·</span>
-        <span>10996 / 10997</span>
+        <span>10996 / 10997 / 11027</span>
         <div className="flex-1" />
         <a
           href="https://github.com/kagura-agent"

@@ -1,5 +1,44 @@
 # Changelog
 
+## 0.2.1-pre (2026-06-07) — Intel Hub, AIWatcher ingest, home safety watch
+
+### Added — Intel Reports Hub (port 11027)
+
+- **`src/fleet_agent/intel_hub/`** — shared HTML report store (`~/.fleet-intel`), index UI, publish API
+- MCP: `intel_reports_publish`, `intel_reports_list`, `aiwatcher_push_event`
+- Auto-start via `start.ps1` and `just intel-hub`
+- Docs: [docs/INTEL_REPORTS_HUB.md](docs/INTEL_REPORTS_HUB.md); MCD: [intel-reports-hub](https://github.com/sandraschi/mcp-central-docs/blob/main/patterns/intel-reports-hub.md)
+
+### Added — Fritz → AIWatcher ingest
+
+- **`coworker/aiwatcher_ingest.py`** — MCP `ingest_fleet_event` + REST `POST /api/fleet/ingest` fallback
+- Auto after **Fleet Pulse** and **Office Day Prep**
+- Env: `FLEET_AGENT_AIWATCHER_HTTP_BASE`, `FLEET_AGENT_AIWATCHER_API_KEY`
+
+### Added — Urgent notifications
+
+- **`coworker/urgent_notify.py`** — email + cursor inbox when thresholds trip
+- Triggers: Fleet Pulse degradation, Day Prep hot AIWatcher items, Cursor spend warn/critical, **devices_watch** new critical incidents
+- Settings: `urgent_email_enabled` (default true), `urgent_email_threshold` (8.0)
+
+### Added — Devices home-safety watch
+
+- **`coworker/devices_watch.py`** — polls devices-mcp `GET /api/fleet/priority` every 5m
+- MCP: `coworker_devices_watch`; scheduler flow `devices_watch`
+- On new critical: Intel Hub publish, urgent email/inbox, AIWatcher ingest; dedup in `~/.fleet-agent/devices_watch_state.json`
+- **`devices`** added to `FLEET_SERVERS` (MCP `:10716`)
+
+### Integration
+
+- [aiwatcher-mcp](../aiwatcher-mcp) — digest job + `POST /api/digest/send` publish to hub via `intel_hub_client.py`
+- [devices-mcp](../devices-mcp) — `fritz_priority.py`, `GET /api/fleet/priority` on backend `:10717`
+
+### Tests
+
+- `test_intel_hub.py`, `test_aiwatcher_ingest.py`, `test_urgent_notify.py`, `test_devices_watch.py` (+ existing coworker suite)
+
+---
+
 ## 0.2.0-pre (2026-05-30) — Coworker / Poor Man's Viktor
 
 Pilot implementation of scheduled office + fleet flows on owned MCP (no Viktor SaaS).

@@ -1,6 +1,6 @@
 # Fritz Coworker Plan — Poor Man's Viktor
 
-> **PILOT (v0.2.0-pre)** — 9 MCP tools + 7 scheduled flows shipped; soak testing in progress.
+> **PILOT (v0.2.1-pre)** — 11 MCP tools + 9 scheduled flows shipped; soak testing in progress.
 > Central index: [mcp-central-docs/projects/fritz-coworker](https://github.com/sandraschi/mcp-central-docs/blob/main/projects/fritz-coworker/README.md)
 
 ## Why
@@ -177,7 +177,10 @@ Today `heartbeat_wake` returns the next action but does not auto-start `coworker
 | `coworker_weekly_report_pdf(deliver=True)` | Fleet Pulse MD → PDF (libreoffice-mcp) → email attachment |
 | `coworker_board_pack(deliver=True, template='fleet-board-pack.odt')` | ODT merge → styled board PDF → email |
 | `coworker_artifact_pack(deliver=True)` | Batch artifacts → styled PDF → email |
+| `coworker_devices_watch(deliver=True)` | Poll devices-mcp priority — kitchen temp, CO, smoke, Ring (5m scheduler) |
+| `coworker_cursor_spend_watch(deliver=True)` | Poll cursor-mcp spend guardrails (2h scheduler) |
 | `coworker_list_flows()` | Active flows + LibreOffice roadmap ideas |
+Intel Hub + AIWatcher: see [INTEL_REPORTS_HUB.md](./INTEL_REPORTS_HUB.md). Pulse and Day Prep auto-publish to hub and ingest into AIWatcher.
 
 ### Recurrence formats
 
@@ -212,6 +215,10 @@ Today `heartbeat_wake` returns the next action but does not auto-start `coworker
 | `artifact_pack_glob` | `~/.fleet-agent/artifacts/*.md` | Files for weekly artifact pack |
 | `artifact_pack_max_files` | `20` | Cap per artifact pack run |
 | `heartbeat_email` | `""` | Report delivery (with SMTP) |
+| `urgent_email_enabled` | `true` | Email + cursor inbox on degradation / home safety |
+| `urgent_email_threshold` | `8.0` | Day Prep hot-item threshold |
+| `coworker_devices_watch_enabled` | `true` | 5m devices-mcp priority poll |
+| `devices_mcp_http_base` | `http://127.0.0.1:10717` | devices-mcp backend for `/api/fleet/priority` |
 
 ## Changelog
 

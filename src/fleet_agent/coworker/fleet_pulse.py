@@ -227,12 +227,76 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
     servers = (discovery.get("data") or {}).get("servers") or []
     online = sum(1 for s in servers if s.get("online"))
 
+    hub_result: dict[str, Any] = {}
+    ingest_result: dict[str, Any] = {}
+    urgent_result: dict[str, Any] = {}
+    try:
+        from .aiwatcher_ingest import push_fritz_report_event
+        from .common import publish_intel_report
+        from .urgent_notify import deliver_urgent_alert
+
+        hub_result = await publish_intel_report(
+            title=f"Fleet Pulse — {pulse_date.split()[0]}",
+            markdown=report,
+            source="fritz",
+            tags=["fleet-pulse", "coworker"],
+        )
+        critical_count = int(pipeline.get("critical_count", 0))
+        down = [s["alias"] for s in servers if not s.get("online")]
+        pipeline_bad = not pipeline.get("healthy")
+        urgency = 8.5 if critical_count else (7.5 if pipeline_bad else 5.0)
+        if down and len(servers) > 0:
+            urgency = max(urgency, 7.0 + min(2.0, len(down) * 0.5))
+
+        hub_link = ""
+        if hub_result.get("success"):
+            from ..intel_hub.client import hub_base_url
+
+            hub_link = f"{hub_base_url()}{hub_result.get('url_path', '/')}"
+
+        ingest_result = await push_fritz_report_event(
+            flow="fleet_pulse",
+            title=f"Fleet Pulse — {online}/{len(servers)} MCP online",
+            summary=(
+                f"Pipeline: {'healthy' if pipeline.get('healthy') else 'DEGRADED'}; "
+                f"{critical_count} critical alerts. "
+                f"Report: {hub_result.get('url_path', 'intel hub')}"
+            ),
+            urgency_hint=urgency,
+        )
+
+        is_critical = pipeline_bad or critical_count > 0 or (
+            len(servers) > 0 and online < len(servers) * 0.5
+        )
+        if is_critical:
+            alert_lines = []
+            if critical_count:
+                alert_lines.append(f"- {critical_count} pipeline critical alert(s)")
+            if down:
+                alert_lines.append(f"- Offline MCP: {', '.join(down[:8])}")
+            urgent_result = await deliver_urgent_alert(
+                subject=f"Fleet Pulse — {pulse_date.split()[0]}",
+                body="\n".join(alert_lines) or report[:1500],
+                reason="fleet pulse degradation",
+                urgency=urgency,
+                critical=True,
+                hub_url=hub_link,
+            )
+    except Exception as exc:
+        logger.warning("Fleet pulse intel publish/ingest failed: %s", exc)
+        hub_result = {"success": False, "message": str(exc)}
+        ingest_result = {"success": False, "message": str(exc)}
+        urgent_result = {"success": False, "message": str(exc)}
+
     return {
         "success": True,
         "message": f"Fleet Pulse complete: {online}/{len(servers)} MCP servers online",
         "report": report,
         "artifact_path": str(artifact_path),
         "delivery": delivery,
+        "intel_hub": hub_result,
+        "aiwatcher_ingest": ingest_result,
+        "urgent_alert": urgent_result,
         "stats": {
             "servers_online": online,
             "servers_total": len(servers),

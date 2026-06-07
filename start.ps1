@@ -24,6 +24,11 @@ if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $WebPort) -Label "fl
 Set-Location $Root
 & "$env:USERPROFILE\.local\bin\uv.exe" sync
 
+$IntelHubScript = Join-Path $Root "scripts\start-intel-hub.ps1"
+if (Test-Path -LiteralPath $IntelHubScript) {
+    & $IntelHubScript -Root $Root
+}
+
 if ($Headless) {
     # Headless: run backend inline - long runner for supervisor / NSSM
     & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --http --port $BackendPort

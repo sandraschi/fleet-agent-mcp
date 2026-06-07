@@ -46,7 +46,9 @@ def _plain_lines(text: str) -> str:
     return "\n".join(rows)
 
 
-async def run_board_pack(*, deliver: bool = True, template: str = "fleet-board-pack.odt") -> dict[str, Any]:
+async def run_board_pack(
+    *, deliver: bool = True, template: str = "fleet-board-pack.odt",
+) -> dict[str, Any]:
     """Build board pack from Fleet Pulse data via libreoffice template merge."""
     store_settings = get_settings_store()
     tz_name = store_settings.get("coworker_timezone", "Europe/Vienna")
@@ -141,7 +143,10 @@ async def run_board_pack(*, deliver: bool = True, template: str = "fleet-board-p
         f"- PDF: `{pdf_file.name}`\n"
         f"- Generated: {pulse_date}\n"
     )
-    log_project_note(BOARD_PACK_PROJECT, pulse_date, summary, tags=["coworker", "office", "board-pack"])
+    log_project_note(
+        BOARD_PACK_PROJECT, pulse_date, summary,
+        tags=["coworker", "office", "board-pack"],
+    )
 
     subject = f"Fleet Board Pack — {stamp}"
     delivery = await deliver_report(

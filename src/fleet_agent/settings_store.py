@@ -23,6 +23,11 @@ DEFAULT_SETTINGS = {
     "smtp_pass": "",
     "artifact_pack_glob": "*.md",
     "artifact_pack_max_files": 20,
+    "urgent_email_enabled": True,
+    "urgent_email_threshold": 8.0,
+    "devices_mcp_http_base": "http://127.0.0.1:10717",
+    "coworker_devices_watch_enabled": True,
+    "devices_watch_interval": "5m",
 }
 
 PROVIDER_PRESETS = {

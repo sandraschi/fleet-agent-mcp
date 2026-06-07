@@ -1,6 +1,6 @@
 # fleet-agent-mcp — Architecture & Design Spec
 
-**Version**: 0.1.0
+**Version**: 0.2.1-pre
 **Created**: 2026-05-19
 **Inspiration**: [kagura-agent](https://github.com/kagura-agent) — self-evolving AI agent born 2026-03-10 on OpenClaw
 
@@ -220,8 +220,15 @@ The agent's wake-up routine:
 - [x] Heartbeat wake-up routine
 - [x] MCP Central Docs project page
 
-### v0.2.0-pre (current)
+### v0.2.0-pre
 - [x] **Coworker mode (pilot)** — 9 MCP tools, 7 scheduled flows, libreoffice-mcp PDF/ODT deliverables — see `docs/coworker-plan.md` and mcp-central-docs `projects/fritz-coworker`
+
+### v0.2.1-pre (current)
+- [x] **Intel Reports Hub** — port 11027, `intel_hub` subsystem, iPad/Tailscale HTML index — `docs/INTEL_REPORTS_HUB.md`
+- [x] **Fritz → AIWatcher ingest** — auto after Pulse/Day Prep; `aiwatcher_push_event` MCP tool
+- [x] **Urgent notifications** — email + cursor inbox on degradation, hot intel, home safety
+- [x] **Devices watch** — `coworker_devices_watch`, polls devices-mcp `/api/fleet/priority` every 5m
+- [x] **Coworker expansion** — 11 tools (+ devices watch, cursor spend watch)
 - [ ] **Hermes borrowings (P0)** — `run_log_*`, skill cards, `memory_card_record_run` — see `docs/hermes-borrowings.md`
 - [ ] Tauri 2.0 native desktop wrapper
 - [ ] React dashboard (workflow visualizer, task kanban, card browser)

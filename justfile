@@ -37,6 +37,10 @@ lint:
     Set-Location '{{justfile_directory()}}'
     & "$env:APPDATA\Python\Python313\Scripts\ruff.exe" check src/ tests/
 
+# Intel Reports Hub (iPad / Tailscale) — port 11027
+intel-hub:
+    pwsh -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\start-intel-hub.ps1"
+
 # Start with stdio transport (for Cursor/Claude Desktop)
 start-stdio:
     Set-Location '{{justfile_directory()}}'

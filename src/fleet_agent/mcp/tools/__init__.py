@@ -13,6 +13,7 @@ from . import (
     github,
     heartbeat,
     identity,
+    intel_hub,
     memory,
     notify,
     pulse,
@@ -24,5 +25,6 @@ __all__ = [
     "flowforge", "pulse", "memory", "identity", "teleport",
     "heartbeat", "evolution_log", "fleet_bridge", "codegen", "github", "contribute", "notify",
     "coworker",
+    "intel_hub",
     "voice",
 ]

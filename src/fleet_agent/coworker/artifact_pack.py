@@ -34,7 +34,9 @@ def _collect_artifacts(*, glob_pattern: str, max_files: int) -> list[Path]:
     return [p for p in paths if p.is_file()][:max_files]
 
 
-async def run_artifact_pack(*, deliver: bool = True, template: str = "fleet-artifact-pack.odt") -> dict[str, Any]:
+async def run_artifact_pack(
+    *, deliver: bool = True, template: str = "fleet-artifact-pack.odt",
+) -> dict[str, Any]:
     """Merge recent coworker markdown artifacts into one styled PDF."""
     store_settings = get_settings_store()
     tz_name = store_settings.get("coworker_timezone", "Europe/Vienna")
@@ -95,7 +97,11 @@ async def run_artifact_pack(*, deliver: bool = True, template: str = "fleet-arti
 
     pdf_path = extract_libreoffice_output(merge_result) or lo_data.get("output")
     if not pdf_path:
-        return {"success": False, "message": "Merge succeeded but PDF path missing", "merge": lo_data}
+        return {
+            "success": False,
+            "message": "Merge succeeded but PDF path missing",
+            "merge": lo_data,
+        }
 
     pdf_file = Path(pdf_path)
     summary = (
@@ -104,7 +110,10 @@ async def run_artifact_pack(*, deliver: bool = True, template: str = "fleet-arti
         f"- PDF: `{pdf_file.name}`\n"
         f"- Generated: {pulse_date}\n"
     )
-    log_project_note(ARTIFACT_PACK_PROJECT, pulse_date, summary, tags=["coworker", "office", "artifact-pack"])
+    log_project_note(
+        ARTIFACT_PACK_PROJECT, pulse_date, summary,
+        tags=["coworker", "office", "artifact-pack"],
+    )
 
     subject = f"Fleet Artifact Pack — {stamp} ({len(paths)} files)"
     delivery = await deliver_report(

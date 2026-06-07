@@ -1,0 +1,27 @@
+name: audit_fleet_startup
+description: WF-FLEET-START — cold-start probe all fleet webapps (parse + stack health)
+start: probe
+
+nodes:
+  probe:
+    task: |
+      Run fleet cold-start health audit for MCP webapps.
+
+      1. Call meta_mcp tool fleet_startup_probe(background=true) — sequential probe with teardown
+         after each repo (does NOT leave the fleet running on goliath).
+         Or fleet_startup_probe(repo_filter="<repo>", background=false) for one repo.
+
+      2. Poll fleet_startup_probe_report until status is complete (or timeout 2h).
+
+      3. Summarize: stack_ok, parse_failed, start_failed counts. List repos with parse_failed first
+         (instacrash / bad start.ps1), then start_failed.
+
+      4. For each failure, note errorMessage and suggest fix (encoding in start.ps1, wrong port in manifest,
+         missing health endpoint).
+
+      5. pulse_add(title="Fleet startup audit", body=summary) and memops note with full failure list.
+
+      Manifest: mcp-central-docs/scripts/fleet-webapp-manifest.json
+      Report: mcp-central-docs/scripts/out/fleet-webapp-report.json
+      UI: meta_mcp Fleet Status -> Cold start tab
+    terminal: true

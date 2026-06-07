@@ -6,6 +6,8 @@ Self-evolving AI agent (Fritz) — state machine, task management, coworker work
 
 **Voice Command Bus:** `POST /api/voice/intent` and tool `route_voice_command`. Registry: `config/voice_command_bus.yaml` or `FLEET_VOICE_REGISTRY` → mcp-central-docs.
 
+**Intel Reports Hub (11027):** `docs/INTEL_REPORTS_HUB.md` — Pulse/Day Prep/devices watch publish HTML; `aiwatcher_push_event` ingests to AIWatcher; urgent email on degradation.
+
 ## Standards
 
 - FastMCP 3.2+ portmanteau tool pattern — tools use `operation` enum param

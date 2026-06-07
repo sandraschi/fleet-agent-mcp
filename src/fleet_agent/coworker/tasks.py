@@ -10,10 +10,11 @@ from .artifact_pack import run_artifact_pack
 from .board_pack import run_board_pack
 from .common import coworker_type
 from .day_prep import run_day_prep
-from .morning_brief import run_morning_brief
+from .devices_watch import run_devices_watch
 from .docs_drift import run_docs_drift
 from .fleet_pulse import run_fleet_pulse
 from .inbox_briefing import run_inbox_briefing
+from .morning_brief import run_morning_brief
 from .weekly_report_pdf import run_weekly_report_pdf
 
 logger = logging.getLogger("fleet_agent.coworker.tasks")
@@ -27,6 +28,7 @@ _COWORKER_RUNNERS = {
     "weekly_report_pdf": run_weekly_report_pdf,
     "board_pack": run_board_pack,
     "artifact_pack": run_artifact_pack,
+    "devices_watch": run_devices_watch,
 }
 
 
@@ -70,7 +72,10 @@ async def execute_recurring_task(task: dict[str, Any]) -> dict[str, Any]:
             from ..llm_client import chat_completion
 
             query = await chat_completion([
-                {"role": "system", "content": "Extract a short arxiv search query. Reply with ONLY the query."},
+                {
+                    "role": "system",
+                    "content": "Extract a short arxiv search query. Reply with ONLY the query.",
+                },
                 {"role": "user", "content": task["task"]},
             ])
             _call("arxiv", "search_papers", {"query": query, "limit": 3})

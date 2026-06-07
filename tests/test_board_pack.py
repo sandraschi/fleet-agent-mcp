@@ -1,6 +1,5 @@
 """Tests for board pack coworker flow."""
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -58,7 +57,12 @@ async def test_board_pack_merge_path(tmp_path, monkeypatch):
         AsyncMock(return_value={"health": {"agent_name": "Fritz", "tasks": {"pending": 2}}}),
     ), patch(
         "fleet_agent.coworker.board_pack.fleet_call",
-        AsyncMock(return_value={"success": True, "data": {"content": [__import__("json").dumps(merge_payload)]}}),
+        AsyncMock(
+            return_value={
+                "success": True,
+                "data": {"content": [__import__("json").dumps(merge_payload)]},
+            },
+        ),
     ) as mock_call, patch(
         "fleet_agent.mcp.tools.notify.send_email_message",
         AsyncMock(return_value={"success": True, "message": "sent"}),
