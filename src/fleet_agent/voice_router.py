@@ -115,6 +115,8 @@ async def route_voice_intent(
     ts = timestamp or datetime.now(UTC).isoformat()
     return {
         "success": bool(result.get("success")),
+        "message": result.get("message", "Delegated"),
+        "next_steps": result.get("next_steps", []),
         "wake": wake,
         "transcript": text,
         "entity": entity_id,
@@ -123,6 +125,5 @@ async def route_voice_intent(
         "arguments": args,
         "timestamp": ts,
         "source": source,
-        "message": result.get("message", "Delegated"),
         "data": result.get("data", result),
     }

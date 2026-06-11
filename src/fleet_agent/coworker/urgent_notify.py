@@ -88,6 +88,8 @@ async def deliver_urgent_alert(
 
     return {
         "success": email_result.get("success", False),
+        "message": email_result.get("message", inbox_result.get("message", "Notification sent")),
+        "next_steps": email_result.get("next_steps", inbox_result.get("next_steps", [])),
         "skipped": False,
         "reason": reason,
         "urgency": urgency,

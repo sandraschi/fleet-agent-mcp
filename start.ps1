@@ -1,4 +1,5 @@
-﻿param([switch]$Headless)
+param([switch]$Headless,
+    [switch]$ReuseIfRunning)
 
 # --- SOTA Headless Standard ---
 if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
@@ -9,7 +10,21 @@ if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
 
 $WebPort = 10997
 $BackendPort = 10996
-$Root = $PSScriptRoot
+
+$portResolve = @{
+    Ports      = @($WebPort, $BackendPort)
+    Label      = "fleet-agent-mcp"
+    AllowReuse = $ReuseIfRunning
+}
+if ($ReuseIfRunning) {
+    $portResolve.HealthChecks = @{
+        $WebPort = "http://127.0.0.1:$WebPort/"
+        $BackendPort = "http://127.0.0.1:$BackendPort/health"
+    }
+}
+$portState = Resolve-FleetPortConflict @portResolve
+if ($portState.Action -eq 'Blocked') { exit 1 }
+if ($portState.Reuse) { return }$Root = $PSScriptRoot
 
 $FleetStartPath = Join-Path $Root "scripts\FleetStartMode.ps1"
 if (-not (Test-Path -LiteralPath $FleetStartPath)) {
@@ -17,9 +32,7 @@ if (-not (Test-Path -LiteralPath $FleetStartPath)) {
     exit 1
 }
 . $FleetStartPath
-Stop-FleetPortSquatters -Ports @($BackendPort, $WebPort) -Label "fleet-agent-mcp"
 
-if (-not (Assert-FleetPortsAvailable -Ports @($BackendPort, $WebPort) -Label "fleet-agent-mcp")) { exit 1 }
 
 Set-Location $Root
 & "$env:USERPROFILE\.local\bin\uv.exe" sync
