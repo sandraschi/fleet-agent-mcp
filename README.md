@@ -13,7 +13,7 @@
 
 Self-evolving AI agent for the fleet ecosystem. **68 FastMCP 3.2 tools across 16 subsystems** (v0.2.1-pre — scripts + Tauri NSIS hardening).
 
-**Name**: Fritz (short for Friedrich). When he fouls up: *"Friefrich! Was ist dir!"*
+**Name**: Fritz (short for Friedrich). When he fouls up: *"Friedrich! Was ist dir!"*
 
 **Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
 
