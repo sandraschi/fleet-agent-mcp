@@ -17,7 +17,7 @@ Self-evolving AI agent for the fleet ecosystem. **68 FastMCP 3.2 tools across 16
 
 **Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
 
-> *"Friefrich! Was ist dir?"* — Sandra, when Fritz messes up
+> *"Friedrich! Was ist dir?"* — Sandra, when Fritz messes up
 
 ---
 
