@@ -2,7 +2,75 @@
 
 ## How it works
 
-Fritz can autonomously contribute to open-source repos through a two-tool pipeline:
+There are two complementary approaches to contributing to open-source repos:
+
+### Option A: Native Fritz — Static analysis find-and-fix (Python)
+
+Fritz discovers issues by scanning source code directly, not by reading existing tickets.
+
+```
+1. fritz_find_contributions()
+   → gh search issues "language:python label:good-first-issue,help-wanted"
+   → returns [{repo, issue_title, issue_url, labels}, ...]
+
+2. fritz_contribute("https://github.com/owner/repo")
+   → clone repo
+   → run ruff --select S701,S110,E722,F401
+   → pick most severe finding (e.g. S701 = XSS security)
+   → LLM computes old_string/new_string fix
+   → gh issue create --label bug
+   → git checkout -b fix/s701
+   → apply fix via file_edit
+   → git commit + push fork
+   → gh pr create
+```
+
+Fritz finds its OWN issues — no dependency on repo maintainers tagging things.
+
+### Option B: gogetajob — Work through EXISTING issue backlogs (multi-language)
+
+gogetajob reads existing open issues from a repo and lets you claim them.
+
+```
+1. gogetajob_scan("owner/repo")
+   → npx @kagura-agent/gogetajob scan owner/repo
+   → reads EXISTING open issues
+   → returns issues with labels, descriptions, difficulty
+
+2. gogetajob_feed()
+   → shows the job queue from the local gogetajob database
+
+3. gogetajob_start("owner/repo#123")
+   → takes issue #123 (fork + clone + branch)
+
+4. (Do the fix — manually via other tools)
+
+5. gogetajob_submit("owner/repo#123", tokens=5000)
+   → git push + gh pr create
+   → records the work + token count
+```
+
+### When to use which
+
+| Approach | Best for | How it finds work |
+|----------|----------|-------------------|
+| Native Fritz | Python repos, security/style lint | `ruff` static analysis |
+| gogetajob | Any language, existing issue queues | Reads repo's open issues |
+
+### Real example (what Kagura does)
+
+```
+gogetajob scan NVIDIA/NemoClaw
+→ "NemoClaw has 12 open good-first-issues"
+
+gogetajob start NVIDIA/NemoClaw#42
+→ fork, clone, branch created
+
+Sub-agent: read issue #42, implement fix
+
+gogetajob submit NVIDIA/NemoClaw#42 --tokens 8500
+→ PR created, work logged
+```
 
 ### 1. Discover opportunities
 `fritz_find_contributions(query, limit)`
