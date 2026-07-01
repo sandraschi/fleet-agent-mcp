@@ -106,6 +106,9 @@ async def fritz_contribute(
     Fritz clones the repo, runs ruff to find lint errors, picks the most
     impactful one, files a GitHub issue, creates a branch, applies the fix
     via file_edit, commits, pushes, and opens a PR — all without hand-holding.
+    Use fritz_find_contributions() to discover repos to target.
+
+    See docs/contribution-pipeline.md for the full methodology.
 
     ## Return Format
     {"success": bool, "steps": [...], "issue_url": str, "pr_url": str, "message": str}
@@ -271,3 +274,62 @@ async def fritz_contribute(
         "pr_url": pr_url or "",
         "message": f"Contribution pipeline complete. {len(findings)} issues found, fixed {code}.",
     }
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def fritz_find_contributions(
+    query: Annotated[str, Field(description="GitHub search query, e.g. 'language:python label:good-first-issue'")] = "language:python label:good-first-issue,help-wanted",
+    limit: Annotated[int, Field(description="Max results", ge=1, le=50)] = 10,
+) -> dict[str, Any]:
+    """Search GitHub for open-source contribution opportunities.
+
+    Uses `gh search issues` to find repos with actionable issues.
+    Returns structured results with repo, title, url, labels, and
+    a ready-to-use repo_url for fritz_contribute.
+
+    ## Return Format
+    {"success": bool, "opportunities": [...], "count": int, "message": str}
+
+    ## Examples
+    fritz_find_contributions()
+    fritz_find_contributions(query="language:python label:bug")
+    fritz_find_contributions(query="user:sandraschi label:help-wanted")
+    """
+    try:
+        result = _sh([
+            "gh", "search", "issues",
+            "--json=repository,title,url,labels,state,number",
+            f"-L{limit}",
+            "--", query,
+        ], timeout=15)
+        if not result or result.startswith("<error"):
+            return {"success": False, "message": "gh search issues failed. Is gh CLI installed?", "opportunities": [], "count": 0}
+
+        items = json.loads(result)
+        opportunities = []
+        seen_repos = set()
+        for item in items:
+            repo_full = item.get("repository", {}).get("nameWithOwner", "")
+            if not repo_full or repo_full in seen_repos:
+                continue
+            seen_repos.add(repo_full)
+            labels = [lb.get("name", "") for lb in item.get("labels", [])]
+            opportunities.append({
+                "repo": repo_full,
+                "repo_url": f"https://github.com/{repo_full}",
+                "issue_title": item.get("title", ""),
+                "issue_url": item.get("url", ""),
+                "state": item.get("state", ""),
+                "labels": labels,
+            })
+            if len(opportunities) >= limit:
+                break
+
+        return {
+            "success": True,
+            "opportunities": opportunities,
+            "count": len(opportunities),
+            "message": f"Found {len(opportunities)} repos with actionable issues",
+        }
+    except Exception as e:
+        return {"success": False, "message": f"Search failed: {e}", "opportunities": [], "count": 0}
