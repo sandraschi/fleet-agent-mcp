@@ -333,3 +333,137 @@ async def fritz_find_contributions(
         }
     except Exception as e:
         return {"success": False, "message": f"Search failed: {e}", "opportunities": [], "count": 0}
+
+
+def _gogetajob(args: list[str], timeout: int = 60) -> str:
+    """Run gogetajob CLI and return stdout."""
+    try:
+        r = subprocess.run(
+            ["npx", "--yes", "@kagura-agent/gogetajob", *args],
+            capture_output=True, text=True, timeout=timeout,
+        )
+        return r.stdout.strip()
+    except FileNotFoundError:
+        return "<error: npx not found>"
+    except subprocess.TimeoutExpired:
+        return "<error: timeout>"
+    except Exception as e:
+        return f"<error: {e}>"
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def gogetajob_scan(
+    repo: Annotated[str, Field(description="GitHub repo (owner/repo) to scan for issues.")],
+) -> dict[str, Any]:
+    """Discover open issues from a repo via gogetajob.
+
+    Delegates to `npx @kagura-agent/gogetajob scan <repo>`.
+    Returns structured issues ready for the feed.
+
+    ## Return Format
+    {"success": bool, "issues": list, "count": int, "raw": str}
+    """
+    out = _gogetajob(["scan", repo])
+    if out.startswith("<error"):
+        return {"success": False, "message": out, "issues": [], "count": 0}
+    try:
+        issues = json.loads(out)
+        return {"success": True, "issues": issues, "count": len(issues) if isinstance(issues, list) else 0, "raw": out[:500]}
+    except json.JSONDecodeError:
+        return {"success": True, "issues": [], "count": 0, "raw": out[:500]}
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def gogetajob_feed() -> dict[str, Any]:
+    """Browse available jobs from the gogetajob feed.
+
+    Delegates to `npx @kagura-agent/gogetajob feed`.
+    Returns the current job queue.
+
+    ## Return Format
+    {"success": bool, "jobs": list, "count": int, "raw": str}
+    """
+    out = _gogetajob(["feed"])
+    if out.startswith("<error"):
+        return {"success": False, "message": out, "jobs": [], "count": 0}
+    try:
+        jobs = json.loads(out)
+        return {"success": True, "jobs": jobs, "count": len(jobs) if isinstance(jobs, list) else 0, "raw": out[:500]}
+    except json.JSONDecodeError:
+        return {"success": True, "jobs": [], "count": 0, "raw": out[:500]}
+
+
+@mcp.tool(version="0.1.0")
+async def gogetajob_start(
+    ref: Annotated[str, Field(description="Issue reference (e.g. owner/repo#123) to take.")],
+) -> dict[str, Any]:
+    """Take a job — fork, clone, and create a branch via gogetajob.
+
+    Delegates to `npx @kagura-agent/gogetajob start <ref>`.
+    After this, work on the fix, then use gogetajob_submit.
+
+    ## Return Format
+    {"success": bool, "message": str, "raw": str}
+    """
+    out = _gogetajob(["start", ref])
+    if out.startswith("<error"):
+        return {"success": False, "message": out}
+    return {"success": True, "message": f"Started job {ref}", "raw": out[:500]}
+
+
+@mcp.tool(version="0.1.0")
+async def gogetajob_submit(
+    ref: Annotated[str, Field(description="Issue reference to submit as PR.")],
+    tokens: Annotated[int, Field(description="Token count for the work done.")] = 0,
+) -> dict[str, Any]:
+    """Push changes and create a PR via gogetajob.
+
+    Delegates to `npx @kagura-agent/gogetajob submit <ref>`.
+    Records the completion and opens a PR.
+
+    ## Return Format
+    {"success": bool, "message": str, "raw": str}
+    """
+    args = ["submit", ref]
+    if tokens:
+        args.extend(["--tokens", str(tokens)])
+    out = _gogetajob(args)
+    if out.startswith("<error"):
+        return {"success": False, "message": out}
+    return {"success": True, "message": f"Submitted {ref}", "raw": out[:500]}
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def gogetajob_stats() -> dict[str, Any]:
+    """View overall contribution statistics from gogetajob.
+
+    Delegates to `npx @kagura-agent/gogetajob stats`.
+    Returns total PRs, tokens, repos, and success rate.
+
+    ## Return Format
+    {"success": bool, "stats": dict, "raw": str}
+    """
+    out = _gogetajob(["stats"])
+    if out.startswith("<error"):
+        return {"success": False, "message": out}
+    try:
+        stats_data = json.loads(out)
+        return {"success": True, "stats": stats_data, "raw": out[:500]}
+    except json.JSONDecodeError:
+        return {"success": True, "message": "Stats returned raw output", "raw": out[:500]}
+
+
+@mcp.tool(version="0.1.0")
+async def gogetajob_sync() -> dict[str, Any]:
+    """Sync PR/issue statuses via gogetajob.
+
+    Delegates to `npx @kagura-agent/gogetajob sync`.
+    Checks PR status, detects merges, CI failures, review comments.
+
+    ## Return Format
+    {"success": bool, "message": str, "raw": str}
+    """
+    out = _gogetajob(["sync"])
+    if out.startswith("<error"):
+        return {"success": False, "message": out}
+    return {"success": True, "message": "Sync complete", "raw": out[:500]}
