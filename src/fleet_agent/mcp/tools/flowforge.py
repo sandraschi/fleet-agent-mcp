@@ -138,7 +138,6 @@ async def workflow_status(
         }
     task = sm.get_current_task()
     branches = sm.get_current_branches()
-    is_terminal = branches is None and task is not None
 
     wf = sm.get_workflow(instance.workflow_name)
     node = wf.nodes.get(instance.current_node) if wf else None

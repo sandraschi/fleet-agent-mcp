@@ -1,5 +1,7 @@
 """Check Fritz memory and evolution."""
-import httpx, json
+import json
+
+import httpx
 
 H = {"Accept": "application/json, text/event-stream"}
 url = "http://127.0.0.1:10996/mcp/"

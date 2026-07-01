@@ -1,118 +1,116 @@
-"""Coworker MCP tools — Viktor-style fleet execution."""
-
-from __future__ import annotationsfrom typing import Annotated, Anyfrom pydantic import Fieldfrom ...coworker.artifact_pack import run_artifact_packfrom ...coworker.board_pack import run_board_packfrom ...coworker.bootstrap import ensure_coworker_tasksfrom ...coworker.cursor_spend_watch import run_cursor_spend_watchfrom ...coworker.day_prep import run_day_prepfrom ...coworker.devices_watch import run_devices_watchfrom ...coworker.docs_drift import run_docs_driftfrom ...coworker.fleet_pulse import run_fleet_pulsefrom ...coworker.flows import OFFICE_FLOW_IDEAS, list_flow_catalogfrom ...coworker.inbox_briefing import run_inbox_briefingfrom ...coworker.weekly_report_pdf import run_weekly_report_pdffrom ..registry import mcp@mcp.tool(version="0.1.0")
-async def coworker_fleet_pulse(
-    deliver: Annotated[
-        bool, Field(description="Send report via email when SMTP configured.")
-    ] = True,
-) -> dict[str, Any]:
-    """Run Morning Fleet Pulse now."""
-    return await run_fleet_pulse(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_inbox_briefing(
-    deliver: Annotated[
-        bool, Field(description="Email unread digest when SMTP configured.")
-    ] = True,
-) -> dict[str, Any]:
-    """Run Inbox Briefing — unread email via email-mcp."""
-    return await run_inbox_briefing(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_day_prep(
-    deliver: Annotated[
-        bool, Field(description="Email combined office prep report.")
-    ] = True,
-) -> dict[str, Any]:
-    """Run Office Day Prep — inbox + pulse tasks + human waits."""
-    return await run_day_prep(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_docs_drift(
-    deliver: Annotated[
-        bool, Field(description="Email weekly docs drift audit.")
-    ] = True,
-) -> dict[str, Any]:
-    """Run Docs Drift Audit — README/CHANGELOG hygiene on watched repos."""
-    return await run_docs_drift(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_weekly_report_pdf(
-    deliver: Annotated[
-        bool, Field(description="Email PDF attachment when SMTP configured.")
-    ] = True,
-) -> dict[str, Any]:
-    """Run Weekly Report PDF — Fleet Pulse markdown → libreoffice convert → email."""
-    return await run_weekly_report_pdf(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_board_pack(
-    deliver: Annotated[
-        bool, Field(description="Email board pack PDF when SMTP configured.")
-    ] = True,
-    template: Annotated[
-        str,
-        Field(description="ODT template name in libreoffice-mcp templates dir."),
-    ] = "fleet-board-pack.odt",
-) -> dict[str, Any]:
-    """Run Board Pack — Fleet Pulse KPIs + narrative via ODT merge → PDF → email."""
-    return await run_board_pack(deliver=deliver, template=template)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_devices_watch(
-    deliver: Annotated[
-        bool,
-        Field(description="Publish hub + urgent email on new critical incidents."),
-    ] = True,
-) -> dict[str, Any]:
-    """Poll devices-mcp priority API — kitchen temp, CO, smoke, Ring burglar."""
-    return await run_devices_watch(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_cursor_spend_watch(
-    deliver: Annotated[
-        bool, Field(description="Email on warn/critical when SMTP configured.")
-    ] = True,
-) -> dict[str, Any]:
-    """Poll cursor-mcp spend guardrails (every 2h via bootstrap)."""
-    return await run_cursor_spend_watch(deliver=deliver)
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_artifact_pack(
-    deliver: Annotated[
-        bool, Field(description="Email combined PDF when SMTP configured.")
-    ] = True,
-    template: Annotated[
-        str, Field(description="ODT template for batch pack.")
-    ] = "fleet-artifact-pack.odt",
-) -> dict[str, Any]:
-    """Run Artifact Pack — merge recent ~/.fleet-agent/artifacts/*.md → styled PDF."""
-    return await run_artifact_pack(deliver=deliver, template=template)
-
-
-@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
-async def coworker_list_flows() -> dict[str, Any]:
-    """List wired coworker flows and future office flow ideas (incl. LibreOffice)."""
-    active = list_flow_catalog()
-    return {
-        "success": True,
-        "active": active,
-        "office_ideas": OFFICE_FLOW_IDEAS,
-        "message": (
-            f"{len(active)} scheduled flows; {len(OFFICE_FLOW_IDEAS)} roadmap ideas"
-        ),
-    }
-
-
-@mcp.tool(version="0.1.0")
-async def coworker_bootstrap() -> dict[str, Any]:
-    """Seed default coworker recurring tasks (pulse, inbox, day prep, docs, PDF)."""
-    return ensure_coworker_tasks()
+"""Coworker MCP tools — Viktor-style fleet execution.
+
+[RATIONAL]: Consolidates 11 scheduled coworker flows into a single portmanteau
+tool to reduce context bloat. Each flow is an operation on the coworker_execute
+tool, plus two read-only discovery tools.
+"""
+
+from __future__ import annotations
+
+from typing import Annotated, Any, Literal
+
+from pydantic import Field
+
+from ...coworker.artifact_pack import run_artifact_pack
+from ...coworker.board_pack import run_board_pack
+from ...coworker.bootstrap import ensure_coworker_tasks
+from ...coworker.cursor_spend_watch import run_cursor_spend_watch
+from ...coworker.day_prep import run_day_prep
+from ...coworker.devices_watch import run_devices_watch
+from ...coworker.docs_drift import run_docs_drift
+from ...coworker.fleet_pulse import run_fleet_pulse
+from ...coworker.flows import OFFICE_FLOW_IDEAS, list_flow_catalog
+from ...coworker.inbox_briefing import run_inbox_briefing
+from ...coworker.weekly_report_pdf import run_weekly_report_pdf
+from ..registry import mcp
+
+_FlowName = Literal[
+    "fleet_pulse",
+    "inbox_briefing",
+    "day_prep",
+    "docs_drift",
+    "weekly_report_pdf",
+    "board_pack",
+    "artifact_pack",
+    "devices_watch",
+    "cursor_spend_watch",
+]
+
+
+@mcp.tool(annotations={"readonly": False}, version="0.2.0")
+async def coworker_execute(
+    flow: Annotated[_FlowName, Field(description="Scheduled coworker flow to run.")],
+    deliver: Annotated[
+        bool,
+        Field(description="Send report via email when SMTP configured."),
+    ] = True,
+    template: Annotated[
+        str,
+        Field(description="ODT template name for board_pack / artifact_pack."),
+    ] = "",
+) -> dict[str, Any]:
+    """Run a scheduled coworker flow immediately.
+
+    Coworker flows are Viktor-style scheduled tasks that produce reports
+    and deliver them via email or the Intel Reports Hub.
+
+    ## Return Format
+    {"success": bool, "flow": str, "delivered": bool, "message": str, "data": dict}
+
+    ## Examples
+    coworker_execute(flow="fleet_pulse")
+    coworker_execute(flow="board_pack", deliver=True, template="fleet-board-pack.odt")
+    """
+    runners = {
+        "fleet_pulse": lambda: run_fleet_pulse(deliver=deliver),
+        "inbox_briefing": lambda: run_inbox_briefing(deliver=deliver),
+        "day_prep": lambda: run_day_prep(deliver=deliver),
+        "docs_drift": lambda: run_docs_drift(deliver=deliver),
+        "weekly_report_pdf": lambda: run_weekly_report_pdf(deliver=deliver),
+        "board_pack": lambda: run_board_pack(
+            deliver=deliver,
+            template=template or "fleet-board-pack.odt",
+        ),
+        "artifact_pack": lambda: run_artifact_pack(
+            deliver=deliver,
+            template=template or "fleet-artifact-pack.odt",
+        ),
+        "devices_watch": lambda: run_devices_watch(deliver=deliver),
+        "cursor_spend_watch": lambda: run_cursor_spend_watch(deliver=deliver),
+    }
+    runner = runners.get(flow)
+    if runner is None:
+        return {"success": False, "message": f"Unknown flow: '{flow}'."}
+    result = await runner()
+    return {**result, "flow": flow}
+
+
+@mcp.tool(annotations={"readonly": True}, version="0.2.0")
+async def coworker_list_flows() -> dict[str, Any]:
+    """List wired coworker flows and future office flow ideas (incl. LibreOffice).
+
+    ## Return Format
+    {"success": bool, "active": list[dict], "office_ideas": list[dict], "message": str}
+    """
+    active = list_flow_catalog()
+    return {
+        "success": True,
+        "active": active,
+        "office_ideas": OFFICE_FLOW_IDEAS,
+        "message": (
+            f"{len(active)} scheduled flows; {len(OFFICE_FLOW_IDEAS)} roadmap ideas"
+        ),
+    }
+
+
+@mcp.tool(version="0.2.0")
+async def coworker_bootstrap() -> dict[str, Any]:
+    """Seed default coworker recurring tasks (pulse, inbox, day prep, docs, PDF).
+
+    Idempotent — safe to call multiple times. Creates scheduled tasks in the
+    pulse TODO list if they don't already exist.
+
+    ## Return Format
+    {"success": bool, "tasks_created": int, "message": str}
+    """
+    return ensure_coworker_tasks()

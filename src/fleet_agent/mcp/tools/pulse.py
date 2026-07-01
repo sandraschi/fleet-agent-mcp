@@ -21,6 +21,10 @@ from ..registry import mcp
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def pulse_add(
     task: Annotated[str, Field(description="Task description.")],
+    description: Annotated[
+        str | None,
+        Field(description="Longer explanation of what this task involves."),
+    ] = None,
     group: Annotated[
         str,
         Field(description="Dependency group: 'self', 'human', or 'external'."),
@@ -29,6 +33,10 @@ async def pulse_add(
     recurrence: Annotated[
         str | None,
         Field(description="Cron-style recurrence for repeating tasks."),
+    ] = None,
+    script_id: Annotated[
+        str | None,
+        Field(description="ID of a script to run when this task fires."),
     ] = None,
     ctx: Context = None,
 ) -> dict[str, Any]:
@@ -82,8 +90,10 @@ async def pulse_add(
         "updated_at": now,
         "completed_at": None,
         "recurrence": recurrence,
-        "metadata": {},
+        "metadata": {"description": description} if description else {},
     }
+    if script_id:
+        item["metadata"]["script_id"] = script_id
     store.todo_upsert(item)
     return {
         "success": True,

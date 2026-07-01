@@ -1,0 +1,22 @@
+{
+  "manifest_version": "0.2",
+  "name": "fleet-agent-mcp",
+  "version": "0.1.0",
+  "description": "Self-evolving AI agent — state machine, task management, knowledge accumulation, identity. Inspired by kagura-agent.",
+  "author": { "name": "sandraschi" },
+  "server": {
+    "type": "python",
+    "entry_point": "run_server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run","--directory","${PWD}","run_server.py"],
+      "env": {
+        "PYTHONPATH": "${PWD}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  },
+  "tools": [
+    { "name": "fleet-agent-mcp", "description": "Self-evolving AI agent — state machine, task management, knowledge accumulation, identity. Inspired by kagura-agent." }
+  ]
+}

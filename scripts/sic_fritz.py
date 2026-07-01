@@ -1,6 +1,10 @@
 """Sic Fritz on discord-mcp: fix S104 0.0.0.0 binding to 127.0.0.1."""
-import httpx, json, os, subprocess, sys, time
+import json
+import subprocess
+import time
 from pathlib import Path
+
+import httpx
 
 REPO = "discord-mcp"
 OWNER = "sandraschi"
@@ -64,7 +68,7 @@ else:
 
 # Step 2: Log via Fritz
 log("Step 2: Logging to Fritz memory...")
-fritz("memory_project_note", {"project": REPO, "content": f"Fixed S104 security issue: changed 0.0.0.0 to 127.0.0.1 in server.py"})
+fritz("memory_project_note", {"project": REPO, "content": "Fixed S104 security issue: changed 0.0.0.0 to 127.0.0.1 in server.py"})
 fritz("evolution_record", {"correction": "S104 binding to all interfaces", "lesson": "Production servers should bind to 127.0.0.1 not 0.0.0.0", "context": f"Fixing {REPO}"})
 log("  Logged.")
 
@@ -93,8 +97,8 @@ if pr_num:
     state = run(["gh", "pr", "view", pr_num, "--repo", f"{OWNER}/{REPO}", "--json", "state"], t=10)
     log(f"  State: {state}")
 
-fritz("evolution_record", {"correction": "Pipeline complete", "lesson": f"Production security fix: 127.0.0.1 not 0.0.0.0", "context": f"{REPO}"})
+fritz("evolution_record", {"correction": "Pipeline complete", "lesson": "Production security fix: 127.0.0.1 not 0.0.0.0", "context": f"{REPO}"})
 
 log("=" * 50)
 log(f"RESULT: PR {pr} merged" if pr_num else "FAILED")
-log(f"  Tools: code_generate, memory, evolution, git, gh")
+log("  Tools: code_generate, memory, evolution, git, gh")

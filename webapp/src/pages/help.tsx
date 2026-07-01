@@ -1,104 +1,176 @@
-import { useState } from "react";
 import {
-  GitBranch, ListChecks, Brain, User, Package,
-  TrendingUp, Activity, Info, ExternalLink, Briefcase, Newspaper,
+	Activity,
+	Brain,
+	Briefcase,
+	ExternalLink,
+	GitBranch,
+	Info,
+	ListChecks,
+	Newspaper,
+	Package,
+	TrendingUp,
+	User,
 } from "lucide-react";
+import { useState } from "react";
 
-type Tab = "overview" | "flowforge" | "pulse" | "memory" | "identity" | "teleport" | "evolution" | "heartbeat" | "coworker" | "intel";
+type Tab =
+	| "overview"
+	| "flowforge"
+	| "pulse"
+	| "memory"
+	| "identity"
+	| "teleport"
+	| "evolution"
+	| "heartbeat"
+	| "coworker"
+	| "intel";
 
 const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
-  { id: "overview", label: "Overview", icon: Info },
-  { id: "flowforge", label: "FlowForge", icon: GitBranch },
-  { id: "pulse", label: "Pulse", icon: ListChecks },
-  { id: "memory", label: "Memory", icon: Brain },
-  { id: "identity", label: "Identity", icon: User },
-  { id: "teleport", label: "Teleport", icon: Package },
-  { id: "evolution", label: "Evolution", icon: TrendingUp },
-  { id: "heartbeat", label: "Heartbeat", icon: Activity },
-  { id: "coworker", label: "Coworker", icon: Briefcase },
-  { id: "intel", label: "Intel Hub", icon: Newspaper },
+	{ id: "overview", label: "Overview", icon: Info },
+	{ id: "flowforge", label: "FlowForge", icon: GitBranch },
+	{ id: "pulse", label: "Pulse", icon: ListChecks },
+	{ id: "memory", label: "Memory", icon: Brain },
+	{ id: "identity", label: "Identity", icon: User },
+	{ id: "teleport", label: "Teleport", icon: Package },
+	{ id: "evolution", label: "Evolution", icon: TrendingUp },
+	{ id: "heartbeat", label: "Heartbeat", icon: Activity },
+	{ id: "coworker", label: "Coworker", icon: Briefcase },
+	{ id: "intel", label: "Intel Hub", icon: Newspaper },
 ];
 
 const TAB_SUBS: Record<Tab, string> = {
-  overview: "69 tools, 15 subsystems — Fritz on FastMCP 3.2",
-  flowforge: "9 tools — YAML state machine, enforced step execution",
-  pulse: "6 tools — task management, north-star alignment",
-  memory: "7 tools — compile-time knowledge wiki, card lint",
-  identity: "4 tools — agent self-definition, SOUL.md, north star",
-  teleport: "3 tools — pack, inspect, unpack .soul archives",
-  evolution: "3 tools — mistake log, correction, lesson extraction",
-  heartbeat: "3 tools — cron wake-up, health monitoring",
-  coworker: "11 tools — scheduled office + fleet flows",
-  intel: "3 tools — HTML reports hub + AIWatcher ingest",
+	overview: "69 tools, 15 subsystems — Fritz on FastMCP 3.2",
+	flowforge: "9 tools — YAML state machine, enforced step execution",
+	pulse: "6 tools — task management, north-star alignment",
+	memory: "7 tools — compile-time knowledge wiki, card lint",
+	identity: "4 tools — agent self-definition, SOUL.md, north star",
+	teleport: "3 tools — pack, inspect, unpack .soul archives",
+	evolution: "3 tools — mistake log, correction, lesson extraction",
+	heartbeat: "3 tools — cron wake-up, health monitoring",
+	coworker: "11 tools — scheduled office + fleet flows",
+	intel: "3 tools — HTML reports hub + AIWatcher ingest",
 };
 
 function mdToHtml(md: string): string {
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+	const esc = (s: string) =>
+		s
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
 
-  const blocks: string[] = [];
-  let out = md.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, _lang, code) => {
-    const idx = blocks.length;
-    blocks.push(
-      `<div class="relative my-4"><pre class="bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-x-auto text-sm font-mono text-slate-300"><code>${esc(code.trimEnd())}</code></pre></div>`
-    );
-    return `\x00BLOCK${idx}\x00`;
-  });
+	const blocks: string[] = [];
+	const out = md.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, _lang, code) => {
+		const idx = blocks.length;
+		blocks.push(
+			`<div class="relative my-4"><pre class="bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-x-auto text-sm font-mono text-slate-300"><code>${esc(code.trimEnd())}</code></pre></div>`,
+		);
+		return `\x00BLOCK${idx}\x00`;
+	});
 
-  const lines = out.split("\n");
-  const result: string[] = [];
-  let i = 0;
+	const lines = out.split("\n");
+	const result: string[] = [];
+	let i = 0;
 
-  while (i < lines.length) {
-    const line = lines[i];
+	while (i < lines.length) {
+		const line = lines[i];
 
-    if (/^\x00BLOCK\d+\x00$/.test(line.trim())) {
-      const idx = parseInt(line.trim().replace(/\x00BLOCK(\d+)\x00/, "$1"));
-      result.push(blocks[idx]);
-      i++;
-      continue;
-    }
+		if (/^\x00BLOCK\d+\x00$/.test(line.trim())) {
+			const idx = Number.parseInt(
+				line.trim().replace(/\x00BLOCK(\d+)\x00/, "$1"),
+			);
+			result.push(blocks[idx]);
+			i++;
+			continue;
+		}
 
-    if (i + 1 < lines.length && /^[\s:-]+\|$/.test(lines[i + 1]?.trim() ?? "") && i > 0) {
-      i++;
-      continue;
-    }
+		if (
+			i + 1 < lines.length &&
+			/^[\s:-]+\|$/.test(lines[i + 1]?.trim() ?? "") &&
+			i > 0
+		) {
+			i++;
+			continue;
+		}
 
-    if (/^\|.+\|$/.test(line.trim()) && i + 1 < lines.length && /^\|[\s:-]+\|$/.test(lines[i + 1]?.trim() ?? "")) {
-      const tableLines: string[] = [];
-      while (i < lines.length && /^\|.+\|$/.test(lines[i].trim())) {
-        tableLines.push(lines[i].trim());
-        i++;
-      }
-      const header = tableLines[0];
-      const body = tableLines.slice(2);
-      const hcells = header.split("|").filter(Boolean).map((c) => esc(c.trim()));
-      result.push(
-        `<div class="my-4 overflow-x-auto"><table class="w-full border border-slate-800 rounded-lg">` +
-        `<thead><tr class="border-b border-slate-800 bg-slate-800/50">${hcells.map((c) => `<th class="px-3 py-2 text-left text-sm font-semibold text-slate-200">${c}</th>`).join("")}</tr></thead>` +
-        `<tbody>${body.map((row) => `<tr class="border-b border-slate-800">${row.split("|").filter(Boolean).map((c) => `<td class="px-3 py-2 text-sm text-slate-300">${esc(c.trim())}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`
-      );
-      continue;
-    }
+		if (
+			/^\|.+\|$/.test(line.trim()) &&
+			i + 1 < lines.length &&
+			/^\|[\s:-]+\|$/.test(lines[i + 1]?.trim() ?? "")
+		) {
+			const tableLines: string[] = [];
+			while (i < lines.length && /^\|.+\|$/.test(lines[i].trim())) {
+				tableLines.push(lines[i].trim());
+				i++;
+			}
+			const header = tableLines[0];
+			const body = tableLines.slice(2);
+			const hcells = header
+				.split("|")
+				.filter(Boolean)
+				.map((c) => esc(c.trim()));
+			result.push(
+				`<div class="my-4 overflow-x-auto"><table class="w-full border border-slate-800 rounded-lg"><thead><tr class="border-b border-slate-800 bg-slate-800/50">${hcells.map((c) => `<th class="px-3 py-2 text-left text-sm font-semibold text-slate-200">${c}</th>`).join("")}</tr></thead><tbody>${body
+					.map(
+						(row) =>
+							`<tr class="border-b border-slate-800">${row
+								.split("|")
+								.filter(Boolean)
+								.map(
+									(c) =>
+										`<td class="px-3 py-2 text-sm text-slate-300">${esc(c.trim())}</td>`,
+								)
+								.join("")}</tr>`,
+					)
+					.join("")}</tbody></table></div>`,
+			);
+			continue;
+		}
 
-    if (/^## (.+)$/.test(line)) {
-      result.push(`<h2 class="text-lg font-semibold text-white mt-6 mb-3">${esc(line.replace(/^## /, ""))}</h2>`);
-    } else if (/^### (.+)$/.test(line)) {
-      result.push(`<h3 class="text-base font-medium text-slate-200 mt-4 mb-2">${esc(line.replace(/^### /, ""))}</h3>`);
-    } else if (/^---$/.test(line)) {
-      result.push(`<hr class="border-slate-800 my-6" />`);
-    } else if (/^- (.+)$/.test(line)) {
-      result.push(
-        `<li class="ml-4 text-slate-300">${line.replace(/^- /, "").replace(/`([^`]+)`/g, "<code class='bg-slate-800 px-1.5 py-0.5 rounded text-fleet-300 text-sm font-mono'>$1</code>").replace(/\*\*(.+?)\*\*/g, "<strong class='text-slate-100'>$1</strong>")}</li>`
-      );
-    } else if (line.trim()) {
-      result.push(
-        `<p class="text-slate-300 leading-relaxed my-2">${line.replace(/`([^`]+)`/g, "<code class='bg-slate-800 px-1.5 py-0.5 rounded text-fleet-300 text-sm font-mono'>$1</code>").replace(/\*\*(.+?)\*\*/g, "<strong class='text-slate-100'>$1</strong>").replace(/\[([^\]]+)\]\(([^)]+)\)/g, "<a href='$2' target='_blank' class='text-fleet-400 hover:text-fleet-300 underline'>$1</a>")}</p>`
-      );
-    }
-    i++;
-  }
+		if (/^## (.+)$/.test(line)) {
+			result.push(
+				`<h2 class="text-lg font-semibold text-white mt-6 mb-3">${esc(line.replace(/^## /, ""))}</h2>`,
+			);
+		} else if (/^### (.+)$/.test(line)) {
+			result.push(
+				`<h3 class="text-base font-medium text-slate-200 mt-4 mb-2">${esc(line.replace(/^### /, ""))}</h3>`,
+			);
+		} else if (/^---$/.test(line)) {
+			result.push(`<hr class="border-slate-800 my-6" />`);
+		} else if (/^- (.+)$/.test(line)) {
+			result.push(
+				`<li class="ml-4 text-slate-300">${line
+					.replace(/^- /, "")
+					.replace(
+						/`([^`]+)`/g,
+						"<code class='bg-slate-800 px-1.5 py-0.5 rounded text-fleet-300 text-sm font-mono'>$1</code>",
+					)
+					.replace(
+						/\*\*(.+?)\*\*/g,
+						"<strong class='text-slate-100'>$1</strong>",
+					)}</li>`,
+			);
+		} else if (line.trim()) {
+			result.push(
+				`<p class="text-slate-300 leading-relaxed my-2">${line
+					.replace(
+						/`([^`]+)`/g,
+						"<code class='bg-slate-800 px-1.5 py-0.5 rounded text-fleet-300 text-sm font-mono'>$1</code>",
+					)
+					.replace(
+						/\*\*(.+?)\*\*/g,
+						"<strong class='text-slate-100'>$1</strong>",
+					)
+					.replace(
+						/\[([^\]]+)\]\(([^)]+)\)/g,
+						"<a href='$2' target='_blank' class='text-fleet-400 hover:text-fleet-300 underline'>$1</a>",
+					)}</p>`,
+			);
+		}
+		i++;
+	}
 
-  return result.join("");
+	return result.join("");
 }
 
 // ── Markdown content per tab ──────────────────────────────────────────────
@@ -469,68 +541,68 @@ Settings: \`urgent_email_enabled\`, \`urgent_email_threshold\` (default 8.0)
 Full doc: \`docs/INTEL_REPORTS_HUB.md\``;
 
 const CONTENT: Record<Tab, string> = {
-  overview: OVERVIEW,
-  flowforge: FLOWFORGE,
-  pulse: PULSE,
-  memory: MEMORY,
-  identity: IDENTITY,
-  teleport: TELEPORT,
-  evolution: EVOLUTION,
-  heartbeat: HEARTBEAT,
-  coworker: COWORKER,
-  intel: INTEL,
+	overview: OVERVIEW,
+	flowforge: FLOWFORGE,
+	pulse: PULSE,
+	memory: MEMORY,
+	identity: IDENTITY,
+	teleport: TELEPORT,
+	evolution: EVOLUTION,
+	heartbeat: HEARTBEAT,
+	coworker: COWORKER,
+	intel: INTEL,
 };
 
 export function Help() {
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+	const [activeTab, setActiveTab] = useState<Tab>("overview");
 
-  return (
-    <div className="space-y-6">
-      {/* Tab bar */}
-      <nav className="flex overflow-x-auto border-b border-slate-800 -mx-6 px-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab.id ? "tab-active" : "tab-inactive"
-            }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
-      </nav>
+	return (
+		<div className="space-y-6">
+			{/* Tab bar */}
+			<nav className="flex overflow-x-auto border-b border-slate-800 -mx-6 px-6">
+				{TABS.map((tab) => (
+					<button
+						key={tab.id}
+						onClick={() => setActiveTab(tab.id)}
+						className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
+							activeTab === tab.id ? "tab-active" : "tab-inactive"
+						}`}
+					>
+						<tab.icon className="w-4 h-4" />
+						{tab.label}
+					</button>
+				))}
+			</nav>
 
-      {/* Subtitle */}
-      <p className="text-sm text-slate-400">{TAB_SUBS[activeTab]}</p>
+			{/* Subtitle */}
+			<p className="text-sm text-slate-400">{TAB_SUBS[activeTab]}</p>
 
-      {/* Content */}
-      <div
-        className="prose prose-invert max-w-none"
-        dangerouslySetInnerHTML={{ __html: mdToHtml(CONTENT[activeTab]) }}
-      />
+			{/* Content */}
+			<div
+				className="prose prose-invert max-w-none"
+				dangerouslySetInnerHTML={{ __html: mdToHtml(CONTENT[activeTab]) }}
+			/>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 pt-6 mt-8 flex items-center gap-3 text-xs text-slate-500">
-        <span>fleet-agent v0.2.1-pre</span>
-        <span>·</span>
-        <span>Fritz</span>
-        <span>·</span>
-        <span>Sandra (Vienna)</span>
-        <span>·</span>
-        <span>10996 / 10997 / 11027</span>
-        <div className="flex-1" />
-        <a
-          href="https://github.com/kagura-agent"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 hover:text-fleet-400 transition-colors"
-        >
-          <ExternalLink className="w-3 h-3" />
-          Kagura — 887+ PRs, 52 repos
-        </a>
-      </footer>
-    </div>
-  );
+			{/* Footer */}
+			<footer className="border-t border-slate-800 pt-6 mt-8 flex items-center gap-3 text-xs text-slate-500">
+				<span>fleet-agent v0.2.1-pre</span>
+				<span>·</span>
+				<span>Fritz</span>
+				<span>·</span>
+				<span>Sandra (Vienna)</span>
+				<span>·</span>
+				<span>10996 / 10997 / 11027</span>
+				<div className="flex-1" />
+				<a
+					href="https://github.com/kagura-agent"
+					target="_blank"
+					rel="noopener noreferrer"
+					className="flex items-center gap-1 hover:text-fleet-400 transition-colors"
+				>
+					<ExternalLink className="w-3 h-3" />
+					Kagura — 887+ PRs, 52 repos
+				</a>
+			</footer>
+		</div>
+	);
 }

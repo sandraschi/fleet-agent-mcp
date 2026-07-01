@@ -397,3 +397,61 @@ async def fleet_inspect_repo(
             "message": f"Could not reach opencode-cli-mcp to inspect {repo_path}: {e}",
             "data": {"hint": "Ensure opencode-cli-mcp is running (ports 10950/10951)"},
         }
+
+
+# ── Fleet List Tools ─────────────────────────────────────
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def fleet_list_tools(
+    server: Annotated[str, Field(description="Server alias from fleet_discover().")],
+) -> dict[str, Any]:
+    """List MCP tools available on a fleet server.
+
+    Uses Streamable HTTP to call tools/list on the remote server.
+
+    ## Return Format
+    {"success": bool, "tools": list[dict], "count": int, "message": str}
+
+    ## Examples
+    fleet_list_tools(server="git-github")
+    fleet_list_tools(server="docs")
+    """
+    known = list(FLEET_SERVERS.keys()) + ["fleet-agent", "self"]
+    canonical = FLEET_SERVER_ALIASES.get(server, server)
+    info = FLEET_SERVERS.get(canonical)
+
+    if canonical in ("fleet-agent", "self"):
+        from ..registry import mcp as _mcp
+        try:
+            tools = await _mcp.local_provider.list_tools()
+            tool_list = [{
+                "name": t.name,
+                "description": t.description or "",
+                "parameters": t.parameters,
+            } for t in tools]
+            return {"success": True, "tools": tool_list, "count": len(tool_list), "message": f"{len(tool_list)} tools on {canonical}"}
+        except Exception as e:
+            return {"success": False, "message": str(e), "tools": [], "count": 0}
+
+    if info is None:
+        return {
+            "success": False,
+            "message": f"Unknown server alias '{server}'. Known: {', '.join(known)}",
+            "tools": [],
+            "count": 0,
+        }
+    server_url = info["url"]
+
+    try:
+        async with await _get_client(server_url) as client:
+            raw_tools = await client.list_tools()
+            tool_list = [{
+                "name": t.name,
+                "description": t.description or "",
+                "parameters": t.parameters,
+            } for t in raw_tools]
+            return {"success": True, "tools": tool_list, "count": len(tool_list), "message": f"{len(tool_list)} tools on {canonical}"}
+    except Exception as e:
+        logger.error("fleet_list_tools failed for %s: %s", server, e)
+        return {"success": False, "message": f"Failed to list tools on {server}: {e}", "tools": [], "count": 0}

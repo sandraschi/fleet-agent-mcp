@@ -37,7 +37,7 @@ Write-Host "Starting Intel Reports Hub on :$Port ..." -ForegroundColor Cyan
 Set-Location $Root
 Start-Process pwsh -ArgumentList @(
     '-NoProfile', '-Command',
-    "& '$uv' run -m fleet_agent.intel_hub"
+    ('' + "& '" + $uv + "' run -m fleet_agent.intel_hub")
 ) -WindowStyle Hidden
 
 Start-Sleep -Seconds 2

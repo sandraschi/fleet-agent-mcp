@@ -28,7 +28,7 @@ def _list_files(directory: Path) -> list[str]:
     return files
 
 
-@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def teleport_pack(
     output_path: Annotated[
         str | None,
@@ -197,11 +197,13 @@ async def teleport_unpack(
             for member in tar.getmembers():
                 if member.name == "manifest.json":
                     continue
-                dest = target / member.name
-                dest.parent.mkdir(parents=True, exist_ok=True)
+                resolved = (target / member.name).resolve()
+                if not str(resolved).startswith(str(target.resolve())):
+                    continue
+                resolved.parent.mkdir(parents=True, exist_ok=True)
                 f = tar.extractfile(member)
                 if f:
-                    dest.write_bytes(f.read())
+                    resolved.write_bytes(f.read())
                     files_restored += 1
 
         return {

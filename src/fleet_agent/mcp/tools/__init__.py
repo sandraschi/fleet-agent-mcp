@@ -17,6 +17,7 @@ from . import (
     memory,
     notify,
     pulse,
+    scripts,
     teleport,
     voice,
 )
@@ -27,4 +28,5 @@ __all__ = [
     "coworker",
     "intel_hub",
     "voice",
+    "scripts",
 ]

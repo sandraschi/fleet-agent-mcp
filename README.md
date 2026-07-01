@@ -11,7 +11,7 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. **69 FastMCP 3.2 tools across 15 subsystems** (v0.2.1-pre — coworker + Intel Hub).
+Self-evolving AI agent for the fleet ecosystem. **68 FastMCP 3.2 tools across 16 subsystems** (v0.2.1-pre — scripts + Tauri NSIS hardening).
 
 **Name**: Fritz (short for Friedrich). When he fouls up: *"Friefrich! Was ist dir!"*
 
@@ -69,22 +69,23 @@ Three roles, one agent:
 ## Subsystems
 
 | # | Subsystem | Tools | Description | Docs |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | 1 | **flowforge** | 9 | YAML state machine — enforced step execution | [docs/flowforge.md](docs/flowforge.md) |
 | 2 | **pulse** | 6 | Task management with north-star alignment | [docs/pulse.md](docs/pulse.md) |
 | 3 | **memory** | 7 | Compile-time knowledge wiki with linting | [docs/memory.md](docs/memory.md) |
 | 4 | **identity** | 4 | Agent self-definition and purpose | [docs/identity.md](docs/identity.md) |
 | 5 | **teleport** | 3 | Soul migration between machines | [docs/teleport.md](docs/teleport.md) |
 | 6 | **evolution** | 3 | Mistake → correction → lesson log | [docs/evolution.md](docs/evolution.md) |
-| 7 | **heartbeat** | 2 | Cron wake-up and health monitoring | [docs/heartbeat.md](docs/heartbeat.md) |
-| 8 | **fleet_bridge** | 3 | Cross-server MCP client — call any fleet server | [src/tools/fleet_bridge.py](src/tools/fleet_bridge.py) |
-| 9 | **codegen** | 3 | LLM code generation, file write, surgical file edit with backup+verify | — |
-| 10 | **github** | 9 | Full PR lifecycle: list, view, review, merge, branch, commit, push, PR, status | — |
-| 11 | **contribute** | 1 | Autonomous contribution: clone→ruff→issue→branch→fix→PR | — |
-| 12 | **notify** | 3 | Email via SMTP, cron scheduler, heartbeat executor | — |
-| 13 | **coworker** | 11 | Scheduled Viktor-style flows: pulse, inbox, day prep, docs drift, weekly PDF, board pack, artifact pack, devices watch, cursor spend | [docs/coworker-plan.md](docs/coworker-plan.md) |
-| 14 | **intel_hub** | 3 | Intel Reports Hub publish/list + AIWatcher fleet event push | [docs/INTEL_REPORTS_HUB.md](docs/INTEL_REPORTS_HUB.md) |
+| 7 | **heartbeat** | 3 | Wake-up, health monitoring, pipeline liveness | [docs/heartbeat.md](docs/heartbeat.md) |
+| 8 | **fleet_bridge** | 4 | Cross-server MCP client + tool discovery | [src/tools/fleet_bridge.py](src/tools/fleet_bridge.py) |
+| 9 | **codegen** | 3 | LLM code gen, file write, surgical edit | — |
+| 10 | **github** | 9 | Full PR lifecycle | — |
+| 11 | **contribute** | 1 | Autonomous PR pipeline | — |
+| 12 | **notify** | 3 | Email + cron scheduler | — |
+| 13 | **coworker** | 3 | Portmanteau: execute flow + list + bootstrap | [docs/coworker-plan.md](docs/coworker-plan.md) |
+| 14 | **intel_hub** | 3 | Intel Reports + AIWatcher push | [docs/INTEL_REPORTS_HUB.md](docs/INTEL_REPORTS_HUB.md) |
 | 15 | **voice** | 1 | Wake-word voice command routing | — |
+| 16 | **scripts** | 7 | Script CRUD, run, and AI generation | — |
 
 **Intel & alerts:** Fleet Pulse / Day Prep publish HTML to the [Intel Reports Hub](docs/INTEL_REPORTS_HUB.md) (port **11027**, iPad via Tailscale). Fritz ingests summaries into AIWatcher and sends **urgent email + cursor inbox** on degradation or home-safety incidents (kitchen temp, CO, Ring).
 
@@ -104,7 +105,7 @@ fleet-agent-mcp/
 │   ├── server.py                      # FastMCP 3.2 entry point
 │   ├── config.py                      # Pydantic settings
 │   ├── engine/                        # Core: state machine, SQLite, YAML loader
-│   ├── mcp/tools/                     # 42 FastMCP tools across 13 files
+│   ├── mcp/tools/                     # 68 FastMCP tools across 16 files
 │   ├── memory/                        # Wiki + evolution log
 │   └── identity/                      # SOUL.md reader
 │

@@ -1,4 +1,6 @@
-﻿# fleet-agent-mcp justfile
+# fleet-agent-mcp justfile
+import 'scripts/just/fleet.just'
+# fleet-agent-mcp justfile
 
 # Open the interactive recipe dashboard in the browser
 default:
@@ -11,12 +13,20 @@ start:
 # Start backend only (no webapp)
 start-backend:
     Set-Location '{{justfile_directory()}}'
-    & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --http --port 10996
+    .\.venv\Scripts\python.exe -m fleet_agent.server --http --port 10996
 
 # Start webapp dev server only
 start-webapp:
     Set-Location '{{justfile_directory()}}\webapp'
     npm run dev
+
+# Force rebuild: reinstall editable, clear pycache, restart
+rebuild:
+    Set-Location '{{justfile_directory()}}'
+    uv sync
+    .\.venv\Scripts\python.exe -m pip install -e . --quiet --no-input 2>&1 | Out-Null
+    Get-ChildItem -Path src -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "Rebuild complete. Run 'just start' to launch."
 
 # Build webapp for production
 build-webapp:
@@ -45,4 +55,3 @@ intel-hub:
 start-stdio:
     Set-Location '{{justfile_directory()}}'
     & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --stdio
-

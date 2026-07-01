@@ -1,3 +1,64 @@
+
+## [Unreleased] — 2026-07-01
+
+### Added — Scripting System (CRUD + Editor + Debugger + MCP Calls + AI Generation)
+- **Script CRUD** — `scripts` SQLite table + MCP tools: `script_create/get/update/delete/list` with REST API
+- **Script execution** — `script_run` supports Python (`exec`), Shell/PowerShell (`subprocess`), and `mcp_call` (fleet server tool calls via `fleet_call_tool`)
+- **MCP Call builder** — visual server dropdown (15 fleet servers), tool dropdown (loaded dynamically), parameter list with add/remove, live JSON preview
+- **AI Analysis** — optional `llm_analyze` field on `mcp_call` scripts: after tool execution, Fritz's LLM interprets the result with a custom analysis prompt
+- **AI Script Generation** — `script_generate` takes a natural language prompt → LLM plans the script → auto-populates name, description, language, and content (Python, shell, or `mcp_call` JSON)
+- **Frontend Scripts page** (`/scripts`) — two-panel layout: script list sidebar + editor/viewer with run/debug panel (exit code, stdout, stderr, result)
+- **AI Generate UI** — 12 clickable prompt idea pills + freeform text input, auto-populates all editor fields
+- **`fleet_list_tools(server)`** — new MCP tool to discover tools on any registered fleet server via Streamable HTTP
+- **REST endpoints**: `GET/POST /api/scripts`, `GET/PUT/DELETE /api/scripts/{id}`, `POST /api/scripts/{id}/run`, `POST /api/scripts/generate`, `POST /api/fleet/list-tools`
+
+### Added — Task Enhancements
+- **Schedule builder** — visual pill selector (Daily/Weekdays/Weekly/Monthly/Interval/Custom) with time picker, day-of-week toggles, day-of-month selector, human-readable preview
+- **Expandable tasks** — click to expand: shows description + full schedule info + created date + status
+- **Proper create form** — title, description, priority select, group select, schedule builder replacing the cryptic LLM chat interface
+- **Task description** — `pulse_add` now accepts a `description` param, stored in `metadata.description`, displayed on expand
+- **`metadata_json` parsing** — `todo_list`/`todo_get` now parse the JSON string to a dict automatically
+- **Timestamps** — task creation date shown in locale format in expanded view
+
+### Added — Tauri NSIS Production Hardening
+- **`free_port`** — multi-layer kill (Stop-Process + taskkill + Get-NetTCPConnection) + 60s polling + re-kill at 5s
+- **Env vars fixed** — `backend.rs` now sets `FLEET_AGENT_PORT`/`FLEET_AGENT_HOST` (matches `config.py`/`run_server.py`), `FLEET_AGENT_TAURI=1` on child process
+- **`main.rs`** — async spawn via `tauri::async_runtime::spawn`, handles `ExitRequested`
+- **`tauri.conf.json`** — `beforeBuildCommand`, `beforeDevCommand`, `devUrl`, `resources/.env.example` in bundle
+- **`Cargo.toml`** — `tray-icon` feature
+- **`build.ps1`** — API_BASE verification, venv PyInstaller (not `uv run`), pre-clean stale exe, >=5 MB size gate, frozen binary smoke test, `.env.example` bundling
+- **`run_server.py`** — added `import uvicorn`, `FLEET_AGENT_TAURI` detection, default port 10996
+
+### Added — LLM Settings Model Listing Fix
+- **Key normalization** — `list_models()` now normalizes LM Studio `id` → `name`, falls back to `size_bytes`
+- **Error handling** — `api_models` catches `KeyError` + `IndexError` (LM Studio crashed with 500)
+- **Auto-fetch** — settings page now auto-fetches models on mount
+- **Provider status** — green/red "Connected (N models)" / "Offline" badge in settings
+- **Chat streaming** — `chat_completion_stream` now supports LM Studio/OpenAI (SSE format), not just Ollama
+
+### Added — Coworker portmanteau
+- **11 tools → 1** — `coworker_fleet_pulse` through `coworker_artifact_pack` consolidated into `coworker_execute(flow="...")`, plus `coworker_list_flows` and `coworker_bootstrap`
+
+### Fixed — Critical Bugs
+- **Path traversal** — `teleport_unpack` now validates resolved paths stay inside target dir
+- **Duplicate except** — `github_merge_pr` removed unreachable second `except Exception`
+- **Silent errors** — `github_list_prs` returns specific error messages instead of blanket "gh CLI not available"
+- **Missing docstring** — `pipeline_liveness_check` now has full docstring + Field descriptions + annotations
+- **Hardcoded counts** — `server.py` tool/subysystem counts now match reality (68 tools, 16 subsystems)
+- **API_BASE** — points to backend port 10996 (was 10997 — worked in dev via Vite proxy, failed in NSIS)
+- **Duplicate `_build_payload`** — removed shadowed first definition in `llm_client.py`
+- **Dead code** — `workflow_status` removed redundant `is_terminal` assignment
+
+### Added — SOTA Compliance
+- `prefab-ui>=0.14.0` in `pyproject.toml`
+- `.env.example` at repo root
+- `GET /api/health` and `GET /api/v1/diagnostics` endpoints
+- `llms.txt`, `llms-full.txt`, `glama.json`
+- Playwright e2e tests (`webapp/e2e/fleet-audit.spec.ts`)
+- Dashboard live KPIs from `/api/health` with exponential backoff + `data-testid`
+- Chat: localStorage persistence, 5 personalities, 6 example prompts, export .txt, Tauri event listener
+- Ctrl+scroll zoom (`useZoom`) in root layout
+- `@tauri-apps/api` in package.json for Tauri backend-status events
 # Changelog
 
 ## 0.2.1-pre (2026-06-07) — Intel Hub, AIWatcher ingest, home safety watch
@@ -110,3 +171,19 @@ First full day of Fritz. Built from scratch in one session.
 - FastMCP 3.3.1 with streamable HTTP + stateless mode
 - PowerShell SOTA guardrails enshrined
 - FOSS contribution etiquette documented
+
+### Added — 2026-07-01 (Session 2: Polish & Production)
+- **Uptime tracking** — `time.monotonic()` with `_START_MONO` set at `build_app()` time, stored as module global, avoiding uv build cache timestamp poisoning
+- **Memory page with FTS5 search** — search bar, tag-based filtering, title extraction from markdown, category badges. New endpoint `GET /api/memory/search?q=`
+- **Script execution on tasks** — `script_id` param on `pulse_add`, script selector dropdown in task create form, Run Script button in expanded task view showing stdout/stderr/exit code
+- **Starter seed data** — 5 memory cards (Architecture, Fleet Servers, Coworker Flows, Script System, PR Pipeline) and 3 example MCP Call scripts auto-seeded on every boot via `coworker/seed.py`
+- **Contributions page** — `/contributions` route, sidebar entry, two-panel layout with status icons (open/merged/dry_run/failed), GitHub links, step-by-step execution log, dashboard KPI
+- **Contributions persistence** — `fritz_contribute` now logs results to `contribution_log` SQLite table
+- **Task description** — `pulse_add` accepts `description` param, stored in `metadata.description`, displayed on task expand
+- **Schedule builder UI** — visual pill selector (Daily/Weekdays/Weekly/Monthly/Interval/Custom) with time picker, day-of-week toggles, day-of-month, human-readable preview
+- **Tool parameter auto-population** — `fleet_list_tools` returns parameter schemas; frontend auto-fills param keys, types, descriptions, required markers when a tool is selected
+- **LLM script generation** — 12 clickable prompt idea pills + freeform text, `script_generate` MCP tool, auto-populates all editor fields
+- **Health endpoint** — live tool count from `local_provider._components` (69 tools), memory card count from direct SQL, exponential backoff retry
+- **Chat page** — localStorage persistence (100 msg cap), 5 personalities, 6 example prompts, Export .txt, provider status indicator, Tauri `backend-status` event listener
+- **Ctrl+Scroll zoom** — `useZoom()` hook in root layout, stepped levels persisted in localStorage
+

@@ -210,7 +210,6 @@ async def github_list_prs(
     ## Examples
     github_list_prs(owner="sandraschi", repo="fritz-test")
     """
-    # Try gh CLI
     try:
         result = subprocess.run(
             ["gh", "pr", "list", "--repo", f"{owner}/{repo}", "--state", state,
@@ -221,9 +220,13 @@ async def github_list_prs(
         if result.returncode == 0:
             prs = json.loads(result.stdout)
             return {"success": True, "prs": prs, "total": len(prs)}
-    except Exception:
-        pass
-    return {"success": False, "message": "gh CLI not available"}
+        return {"success": False, "message": f"gh CLI: {result.stderr.strip()}"}
+    except FileNotFoundError:
+        return {"success": False, "message": "gh CLI not installed"}
+    except json.JSONDecodeError as e:
+        return {"success": False, "message": f"gh CLI returned invalid JSON: {e}"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 
 @mcp.tool(version="0.1.0")
@@ -334,8 +337,6 @@ async def github_merge_pr(
         return {"success": True, "message": f"PR #{number} merged ({method})"}
     except FileNotFoundError:
         return {"success": False, "message": "gh CLI not installed"}
-    except Exception as e:
-        return {"success": False, "message": str(e)}
     except Exception as e:
         return {"success": False, "message": str(e)}
 

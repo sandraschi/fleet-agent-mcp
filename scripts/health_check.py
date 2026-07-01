@@ -1,5 +1,6 @@
 """Fritz health check."""
-import httpx, json
+
+import httpx
 
 r = httpx.get("http://127.0.0.1:10996/api/whoami", timeout=5)
 print(f"Fritz says: {r.json()['name']}")

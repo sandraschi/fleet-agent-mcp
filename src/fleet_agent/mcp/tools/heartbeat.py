@@ -5,9 +5,10 @@ wakes, checks its state machine, executes the current task, and advances.
 """
 
 import time
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp import Context
+from pydantic import Field
 
 from ...config import settings
 from ...engine.sqlite_store import get_store
@@ -67,10 +68,26 @@ async def heartbeat_status(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def pipeline_liveness_check(
-    stale_hours: int = 48,
+    stale_hours: Annotated[
+        int,
+        Field(description="Max hours since last feed poll before flagging stale.", ge=1),
+    ] = 48,
     ctx: Context = None,
 ) -> dict[str, Any]:
-    """Probe arxiv-mcp + aiwatcher-mcp open-weight pipeline liveness."""
+    """Probe arxiv-mcp + aiwatcher-mcp open-weight pipeline liveness.
+
+    Checks the code-hunt + aiwatcher arXiv ingestion pipeline for stale feeds
+    and unreachable upstream servers. Returns healthy/degraded with per-service
+    details and critical alert count.
+
+    ## Return Format
+    {"success": bool, "healthy": bool, "critical_count": int,
+     "services": dict, "message": str}
+
+    ## Examples
+    pipeline_liveness_check()
+    pipeline_liveness_check(stale_hours=24)
+    """
     from ...coworker.pipeline_liveness import check_pipeline_liveness
 
     result = await check_pipeline_liveness(stale_hours=stale_hours)

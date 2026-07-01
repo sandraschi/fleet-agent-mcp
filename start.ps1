@@ -11,6 +11,15 @@ if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
 $WebPort = 10997
 $BackendPort = 10996
 
+$Root = $PSScriptRoot
+
+$FleetStartPath = Join-Path $Root "scripts\FleetStartMode.ps1"
+if (-not (Test-Path -LiteralPath $FleetStartPath)) {
+    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+    exit 1
+}
+. $FleetStartPath
+
 $portResolve = @{
     Ports      = @($WebPort, $BackendPort)
     Label      = "fleet-agent-mcp"
@@ -24,18 +33,16 @@ if ($ReuseIfRunning) {
 }
 $portState = Resolve-FleetPortConflict @portResolve
 if ($portState.Action -eq 'Blocked') { exit 1 }
-if ($portState.Reuse) { return }$Root = $PSScriptRoot
-
-$FleetStartPath = Join-Path $Root "scripts\FleetStartMode.ps1"
-if (-not (Test-Path -LiteralPath $FleetStartPath)) {
-    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
-    exit 1
-}
-. $FleetStartPath
-
+if ($portState.Reuse) { return }
 
 Set-Location $Root
 & "$env:USERPROFILE\.local\bin\uv.exe" sync
+
+# Force editable install to bypass uv build cache
+& "$Root\.venv\Scripts\python.exe" -m pip install -e "$Root" --quiet --no-input 2>&1 | Out-Null
+
+# Clear pycache for fresh module load
+Get-ChildItem -Path "$Root\src" -Recurse -Directory -Filter "__pycache__" | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 $IntelHubScript = Join-Path $Root "scripts\start-intel-hub.ps1"
 if (Test-Path -LiteralPath $IntelHubScript) {
@@ -44,7 +51,7 @@ if (Test-Path -LiteralPath $IntelHubScript) {
 
 if ($Headless) {
     # Headless: run backend inline - long runner for supervisor / NSSM
-    & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --http --port $BackendPort
+    & "$Root\.venv\Scripts\python.exe" -B -m fleet_agent.server --http --port $BackendPort
 } else {
     # Interactive: full stack with webapp
     Push-Location "$Root\webapp"
@@ -54,7 +61,7 @@ if ($Headless) {
     $BackendJob = Start-Job -Name "fleet-agent-backend" -ScriptBlock {
         param($Root, $BackendPort)
         Set-Location $Root
-        & "C:\Users\sandr\.local\bin\uv.exe" run -m fleet_agent.server --http --port $BackendPort
+        & "$Root\.venv\Scripts\python.exe" -B -m fleet_agent.server --http --port $BackendPort
     } -ArgumentList $Root, $BackendPort
 
     $WebappJob = Start-Job -Name "fleet-agent-webapp" -ScriptBlock {

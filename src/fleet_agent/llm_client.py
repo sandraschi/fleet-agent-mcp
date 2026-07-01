@@ -8,7 +8,16 @@ import httpx
 from .settings_store import get_settings_store
 
 
-def _build_payload(messages: list[dict], model: str, stream: bool = True) -> dict:
+def _build_payload(
+    messages: list[dict], model: str, stream: bool = True, provider: str = "ollama"
+) -> dict:
+    if provider in ("lmstudio", "openai"):
+        return {
+            "model": model,
+            "messages": messages,
+            "stream": stream,
+            "temperature": 0.7,
+        }
     return {
         "model": model,
         "messages": messages,
@@ -35,24 +44,6 @@ def _api_path(provider: str, endpoint: str) -> str:
     return paths.get(endpoint, f"/api/{endpoint}")
 
 
-def _build_payload(
-    messages: list[dict], model: str, stream: bool = True, provider: str = "ollama"
-) -> dict:
-    if provider in ("lmstudio", "openai"):
-        return {
-            "model": model,
-            "messages": messages,
-            "stream": stream,
-            "temperature": 0.7,
-        }
-    return {
-        "model": model,
-        "messages": messages,
-        "stream": stream,
-        "options": {"temperature": 0.7},
-    }
-
-
 async def list_models() -> list[dict]:
     base_url, _, _, provider = _get_config()
     models_path = _api_path(provider, "models")
@@ -61,11 +52,21 @@ async def list_models() -> list[dict]:
             resp = await client.get(f"{base_url}{models_path}")
             resp.raise_for_status()
             data = resp.json()
+            raw_models: list[dict] = []
             if provider in ("lmstudio", "openai"):
-                return data.get("data", [])
-            return data.get("models", [])
+                raw_models = data.get("data", [])
+            else:
+                raw_models = data.get("models", [])
+            # Normalize keys: LM Studio returns "id" not "name"
+            return [
+                {
+                    "name": m.get("name") or m.get("id", "unknown"),
+                    "size": m.get("size", m.get("size_bytes", 0)),
+                }
+                for m in raw_models
+            ]
     except Exception as e:
-        raise RuntimeError(f"Failed to list models: {e}")
+        raise RuntimeError(f"Failed to list models from {base_url}{models_path}: {e}")
 
 
 async def chat_completion(
@@ -98,35 +99,47 @@ async def chat_completion_stream(
     messages: list[dict],
     model: str,
 ) -> AsyncIterator[str]:
-    """Streaming chat completion via Ollama API. Yields SSE-formatted chunks."""
+    """Streaming chat completion. Supports Ollama and LM Studio/OpenAI."""
     store = get_settings_store()
     base_url = store.get("base_url")
     timeout = store.get("timeout", 60)
-    payload = _build_payload(messages, model, stream=True)
+    provider = store.get("provider", "ollama")
+    chat_path = _api_path(provider, "chat")
+    payload = _build_payload(messages, model, stream=True, provider=provider)
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            async with client.stream("POST", f"{base_url}/api/chat", json=payload) as resp:
+            async with client.stream("POST", f"{base_url}{chat_path}", json=payload) as resp:
                 if resp.is_error:
                     error_text = await resp.aread()
                     yield f"data: {json.dumps({'error': error_text.decode()})}\n\n"
                     return
-                async for line in resp.aiter_lines():
-                    if line.strip():
-                        try:
-                            chunk = json.loads(line)
-                            if "message" in chunk and "content" in chunk["message"]:
-                                content = chunk["message"]["content"]
+                if provider in ("lmstudio", "openai"):
+                    async for line in resp.aiter_lines():
+                        if line.strip():
+                            try:
+                                chunk = json.loads(line)
+                                choice = chunk.get("choices", [{}])[0]
+                                delta = choice.get("delta", {})
+                                content = delta.get("content", "")
                                 if content:
                                     yield f"data: {json.dumps({'c': content})}\n\n"
-                            if chunk.get("done"):
-                                stats = {
-                                    "done": True,
-                                    "eval_count": chunk.get("eval_count", 0),
-                                    "eval_duration": chunk.get("eval_duration", 0),
-                                }
-                                yield f"data: {json.dumps(stats)}\n\n"
-                        except json.JSONDecodeError:
-                            pass
+                                if choice.get("finish_reason"):
+                                    yield f"data: {json.dumps({'done': True})}\n\n"
+                            except json.JSONDecodeError:
+                                pass
+                else:
+                    async for line in resp.aiter_lines():
+                        if line.strip():
+                            try:
+                                chunk = json.loads(line)
+                                if "message" in chunk and "content" in chunk["message"]:
+                                    content = chunk["message"]["content"]
+                                    if content:
+                                        yield f"data: {json.dumps({'c': content})}\n\n"
+                                if chunk.get("done"):
+                                    yield f"data: {json.dumps({'done': True, 'eval_count': chunk.get('eval_count', 0)})}\n\n"
+                            except json.JSONDecodeError:
+                                pass
     except Exception as e:
         yield f"data: {json.dumps({'error': str(e)})}\n\n"
 

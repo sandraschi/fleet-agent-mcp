@@ -1,6 +1,10 @@
 """Fritz pipeline test - stateless MCP, full cycle."""
-import httpx, json, os, subprocess, sys, time
+import json
+import subprocess
+import time
 from pathlib import Path
+
+import httpx
 
 REPO = "fritz-test"
 OWNER = "sandraschi"

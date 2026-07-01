@@ -75,6 +75,30 @@ CREATE TABLE IF NOT EXISTS evolution_log (
     context TEXT DEFAULT '',
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS scripts (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    language TEXT DEFAULT 'python',
+    content TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS contribution_log (
+    id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    issue_url TEXT DEFAULT '',
+    pr_url TEXT DEFAULT '',
+    pr_number TEXT DEFAULT '',
+    status TEXT DEFAULT 'open',
+    title TEXT NOT NULL,
+    error TEXT DEFAULT '',
+    steps_json TEXT DEFAULT '[]',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -248,16 +272,144 @@ class SqliteStore:
                 rows = conn.execute(
                     "SELECT * FROM todo_items ORDER BY status, priority, created_at"
                 ).fetchall()
-            return [dict(r) for r in rows]
+            items = [dict(r) for r in rows]
+            for item in items:
+                if isinstance(item.get("metadata_json"), str):
+                    item["metadata"] = json.loads(item.pop("metadata_json"))
+                else:
+                    item.pop("metadata_json", None)
+            return items
 
     def todo_get(self, item_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute("SELECT * FROM todo_items WHERE id = ?", (item_id,)).fetchone()
-            return dict(row) if row else None
+            if not row:
+                return None
+            item = dict(row)
+            if isinstance(item.get("metadata_json"), str):
+                item["metadata"] = json.loads(item.pop("metadata_json"))
+            return item
 
     def todo_delete(self, item_id: str) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM todo_items WHERE id = ?", (item_id,))
+
+    # ── Scripts ────────────────────────────────────────────
+
+    def script_create(self, name: str, content: str, language: str = "python", description: str = "") -> dict[str, Any]:
+        now = datetime.now(UTC).isoformat()
+        import uuid
+        item = {
+            "id": str(uuid.uuid4())[:8],
+            "name": name,
+            "description": description,
+            "language": language,
+            "content": content,
+            "created_at": now,
+            "updated_at": now,
+        }
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO scripts (id, name, description, language, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (item["id"], item["name"], item["description"], item["language"], item["content"], item["created_at"], item["updated_at"]),
+            )
+        return item
+
+    def script_get(self, script_id: str) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM scripts WHERE id = ?", (script_id,)).fetchone()
+            return dict(row) if row else None
+
+    def script_update(self, script_id: str, **kwargs: Any) -> dict[str, Any] | None:
+        existing = self.script_get(script_id)
+        if not existing:
+            return None
+        for key in ("name", "description", "language", "content"):
+            if key in kwargs:
+                existing[key] = kwargs[key]
+        existing["updated_at"] = datetime.now(UTC).isoformat()
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE scripts SET name=?, description=?, language=?, content=?, updated_at=? WHERE id=?",
+                (existing["name"], existing["description"], existing["language"], existing["content"], existing["updated_at"], script_id),
+            )
+        return existing
+
+    def script_delete(self, script_id: str) -> bool:
+        with self._connect() as conn:
+            cur = conn.execute("DELETE FROM scripts WHERE id = ?", (script_id,))
+            return cur.rowcount > 0
+
+    def script_list(self) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM scripts ORDER BY updated_at DESC").fetchall()
+            return [dict(r) for r in rows]
+
+    # ── Contribution Log ───────────────────────────────────
+
+    def contrib_create(self, repo: str, title: str, issue_url: str = "", pr_url: str = "", pr_number: str = "", status: str = "open", steps: list[dict] | None = None, error: str = "") -> dict[str, Any]:
+        import uuid
+        now = datetime.now(UTC).isoformat()
+        item = {
+            "id": str(uuid.uuid4())[:8],
+            "repo": repo,
+            "title": title,
+            "issue_url": issue_url,
+            "pr_url": pr_url,
+            "pr_number": pr_number,
+            "status": status,
+            "steps": steps or [],
+            "error": error,
+            "created_at": now,
+            "updated_at": now,
+        }
+        with self._connect() as conn:
+            conn.execute(
+                "INSERT INTO contribution_log (id, repo, issue_url, pr_url, pr_number, status, title, error, steps_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (item["id"], item["repo"], item["issue_url"], item["pr_url"], item["pr_number"], item["status"], item["title"], item["error"], json.dumps(item["steps"]), item["created_at"], item["updated_at"]),
+            )
+        return item
+
+    def contrib_list(self, limit: int = 50) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            rows = conn.execute("SELECT * FROM contribution_log ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+            items = []
+            for r in rows:
+                item = dict(r)
+                try:
+                    item["steps"] = json.loads(item.pop("steps_json", "[]"))
+                except (json.JSONDecodeError, KeyError):
+                    item["steps"] = []
+                items.append(item)
+            return items
+
+    def contrib_get(self, contrib_id: str) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute("SELECT * FROM contribution_log WHERE id = ?", (contrib_id,)).fetchone()
+            if not row:
+                return None
+            item = dict(row)
+            try:
+                item["steps"] = json.loads(item.pop("steps_json", "[]"))
+            except (json.JSONDecodeError, KeyError):
+                item["steps"] = []
+            return item
+
+    def contrib_update(self, contrib_id: str, **kwargs: Any) -> dict[str, Any] | None:
+        existing = self.contrib_get(contrib_id)
+        if not existing:
+            return None
+        for key in ("pr_url", "pr_number", "status", "error", "steps"):
+            if key in kwargs:
+                existing[key] = kwargs[key]
+        existing["updated_at"] = datetime.now(UTC).isoformat()
+        steps_str = json.dumps(existing.get("steps", []))
+        with self._connect() as conn:
+            conn.execute(
+                "UPDATE contribution_log SET pr_url=?, pr_number=?, status=?, error=?, steps_json=?, updated_at=? WHERE id=?",
+                (existing["pr_url"], existing["pr_number"], existing["status"], existing["error"], steps_str, existing["updated_at"], contrib_id),
+            )
+        return existing
 
     def todo_add(
         self,

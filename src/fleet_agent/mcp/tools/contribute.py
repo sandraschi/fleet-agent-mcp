@@ -247,6 +247,23 @@ async def fritz_contribute(
         pr_url = None
         step("pr", "dry run - skipped")
 
+    # Log contribution to database
+    try:
+        from ...engine.sqlite_store import get_store
+        pr_num = ""
+        if pr_url:
+            import re as _re
+            m = _re.search(r"/pull/(\d+)", pr_url)
+            if m:
+                pr_num = m.group(1)
+        status = "dry_run" if dry_run else ("open" if pr_url else "failed")
+        get_store().contrib_create(
+            repo=f"{owner}/{repo_name}", title=title, issue_url=issue_url or "",
+            pr_url=pr_url or "", pr_number=pr_num, status=status, steps=steps,
+        )
+    except Exception as log_e:
+        logger.warning("Failed to log contribution: %s", log_e)
+
     return {
         "success": True,
         "steps": steps,

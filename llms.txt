@@ -1,0 +1,43 @@
+# fleet-agent-mcp (Fritz)
+
+Self-evolving AI fleet conductor agent. 68 FastMCP 3.2 tools across 16 subsystems.
+
+## Quick Links
+- README: https://github.com/sandraschi/fleet-agent-mcp#readme
+- Full docs: llms-full.txt
+- Install: INSTALL.md
+- Changelog: CHANGELOG.md
+
+## Architecture
+Three-layer: flowforge (state machine) → heartbeat (coordinator) → coworker (worker).
+Cron heartbeat → wake → check workflow → execute task → evaluate → advance.
+
+## Key Files
+- src/fleet_agent/server.py — Starlette + FastMCP HTTP server (port 10996)
+- src/fleet_agent/config.py — pydantic-settings config (FLEET_AGENT_ prefix)
+- src/fleet_agent/mcp/tools/ — 16 tool modules (68 tools)
+- workflows/ — YAML state machine definitions
+- identity/SOUL.md — Agent core identity
+- webapp/ — React + Vite + Tailwind SPA (port 10997)
+
+## Subsystems
+1. flowforge (9) — YAML state machine
+2. pulse (6) — TODO list with LLM validation + schedule builder + script linking
+3. memory (7) — Knowledge wiki with FTS5 search + lint
+4. identity (4) — Soul/North Star/User
+5. teleport (3) — Soul migration (.soul archives)
+6. evolution (3) — Mistake → correction → lesson
+7. heartbeat (3) — Wake-up + health + pipeline liveness
+8. fleet_bridge (4) — Cross-server MCP client + tool list discovery
+9. codegen (3) — Code generation + file I/O
+10. github (9) — Full PR lifecycle
+11. contribute (1) — Autonomous contribution pipeline (persisted to DB)
+12. notify (3) — Email + cron scheduler
+13. coworker (3) — Portmanteau: execute flow + list + bootstrap
+14. intel_hub (3) — Intel reports + AIWatcher push
+15. voice (1) — Wake-word voice command routing
+16. scripts (7) — Task script CRUD, run (Python/Shell/MCP Call), AI generation
+
+## Seed Data (auto-populated on boot)
+- 5 memory cards: Architecture, Fleet Servers, Coworker Flows, Script System, PR Pipeline
+- 3 example scripts: Fleet Health Summary, Pending Tasks Report, Pipeline Liveness Check

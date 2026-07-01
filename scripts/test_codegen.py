@@ -1,5 +1,7 @@
 """Test Fritz code generation via LM Studio."""
-import httpx, json
+import json
+
+import httpx
 
 H = {"Accept": "application/json, text/event-stream"}
 payload = {

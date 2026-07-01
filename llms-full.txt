@@ -1,0 +1,173 @@
+# fleet-agent-mcp — Full LLM Documentation (llms-full.txt)
+
+## Identity
+- **Name**: Fritz (Friedrich) — Sandra's childhood bike
+- **Role**: Autonomous fleet conductor agent
+- **Inspiration**: kagura-agent (887+ PRs, 52 repos)
+- **Ports**: Backend 10996 (Starlette+FastMCP), Frontend 10997 (Vite React SPA), Intel Hub 11027
+
+## Architecture
+
+Three layers:
+1. **flowforge** — YAML-defined state machine. What to do, in what order.
+2. **heartbeat** — Coordinator. Wakes on cron, reads state, spawns workers, evaluates, advances.
+3. **coworker** — Worker. Executes scheduled flows (fleet pulse, inbox briefing, day prep, docs drift, weekly PDF, board pack, artifact pack, devices watch, cursor spend watch).
+
+### State Machine
+Workflows are YAML files with nodes, tasks, branches (condition-based), and terminal states. SQLite persists all instances. Example:
+```
+cron → heartbeat_wake() → check active workflow → get current task → execute → evaluate → workflow_next(branch) → advance
+```
+
+### Persistence
+SQLite at `~/.fleet-agent/fleet-agent.db` with tables: workflows, instances, execution_log, todo_items, memory_cards, memory_projects, evolution_log.
+
+### Fleet Bridge
+Cross-server MCP client. 19 registered servers: opencode, fleet-agent, git-github, docs, memory, discord, robofang, plex, calibre, arxiv, aiwatcher, browser, cursor, pywinauto, speech, alexa, yahboom, vla-robotics, email, notion, onenote, libreoffice, libreoffice-ext, devices, glance, vienna-life, secrets.
+
+## Tool Subsystems
+
+### flowforge (9 tools)
+- workflow_define — Register YAML workflow
+- workflow_autodiscover — Auto-discover .yaml workflows
+- workflow_start — Start instance
+- workflow_status — Current state
+- workflow_next — Advance to next node
+- workflow_log — Execution history
+- workflow_list — All registered
+- workflow_active — Active instances
+- workflow_reset — Reset to start node
+
+### pulse (6 tools)
+- pulse_add — Add task (LLM-validated for feasibility)
+- pulse_list — List with filters
+- pulse_complete — Mark done
+- pulse_delete — Delete (DESTRUCTIVE)
+- pulse_stale — Find untouched tasks
+- pulse_align — Strategic alignment sort
+
+### memory (7 tools)
+- memory_card_create — Knowledge card
+- memory_card_search — FTS5 search
+- memory_card_update — Edit card
+- memory_cards_list — All cards
+- memory_lint — Health check (orphans, stale, untagged)
+- memory_project_note — Project observation
+- memory_project_notes — List project notes
+
+### identity (4 tools)
+- identity_whoami — Agent introduction
+- identity_soul — SOUL.md content
+- identity_north_star — NORTH_STAR.md content
+- identity_user — USER.md content
+
+### teleport (3 tools)
+- teleport_pack — Create .soul archive
+- teleport_inspect — List contents
+- teleport_unpack — Restore (DESTRUCTIVE)
+
+### evolution (3 tools)
+- evolution_record — Log correction
+- evolution_list — List entries
+- evolution_stats — Summary stats
+
+### heartbeat (3 tools)
+- heartbeat_status — Health check (uptime, tasks, cards, workflows)
+- pipeline_liveness_check — Probe arxiv+aiwatcher pipeline
+- heartbeat_wake — Core wake-up routine
+
+### fleet_bridge (4 tools)
+- fleet_discover — List reachable servers
+- fleet_call_tool — Call tool on remote server
+- fleet_list_tools — List tools on a remote server
+- fleet_inspect_repo — Study repo via fleet server
+
+### codegen (3 tools)
+- code_generate — LLM code generation
+- file_write — Write file
+- file_edit — Surgical edit
+
+### github (9 tools)
+- github_create_branch, github_commit, github_push, github_create_pr, github_list_prs, github_get_pr, github_review_pr, github_merge_pr, github_status
+
+### contribute (1 tool)
+- fritz_contribute — Autonomous: clone → ruff → issue → branch → fix → PR. Real PRs shipped: discord-mcp (#2, #4), GrandOrgue (#2497, #2498), edge-bookmark-mcp-server (#5).
+
+### notify (3 tools)
+- notify_email — Send email via SMTP
+- cron_start — Start background scheduler
+- cron_status — Scheduler status
+
+### coworker (3 tools)
+- coworker_execute(flow) — Run any scheduled flow: fleet_pulse, inbox_briefing, day_prep, docs_drift, weekly_report_pdf, board_pack, artifact_pack, devices_watch, cursor_spend_watch
+- coworker_list_flows — Show active + roadmap
+- coworker_bootstrap — Seed recurring tasks
+
+### intel_hub (3 tools)
+- intel_reports_publish — Push HTML report
+- intel_reports_list — List reports
+- aiwatcher_push_event — Fleet event → AIWatcher
+
+### voice (1 tool)
+- route_voice_command — Wake-word → fleet MCP routing
+
+### scripts (7 tools)
+- script_create — Create a script
+- script_get — Get script by ID
+- script_update — Update script
+- script_delete — Delete script
+- script_list — List all scripts
+- script_run — Execute script (Python/Shell/PowerShell/MCP Call)
+- script_generate — AI-generate a script from natural language
+
+Scripts support three language types:
+- **python** — Full Python via exec() with __result/__log/__args context
+- **shell/powershell** — Subprocess with 30s timeout, stdout/stderr capture
+- **mcp_call** — JSON: {server, tool, params, llm_analyze?} — calls tool on fleet server, optionally analyzes result with LLM
+
+## Coworker Flows
+| Flow | Schedule | Purpose |
+|------|----------|---------|
+| Fleet Pulse | Daily 07:00 | MCP health, git snapshots, pipeline liveness |
+| Inbox Briefing | Weekdays 08:00 | Unread email digest |
+| Office Day Prep | Weekdays 08:30 | Combined: inbox + pulse + intel |
+| Docs Drift Audit | Sunday 10:00 | README/CHANGELOG hygiene |
+| Weekly Report PDF | Friday 17:00 | MD → PDF via libreoffice-mcp |
+| Board Pack | 1st of month 09:00 | ODT merge → styled PDF |
+| Artifact Pack | Sunday 18:00 | Batch artifacts → styled PDF |
+| Cursor Spend Watch | Every 2h | Cursor-mcp guardrail check |
+| Devices Watch | Every 5m | Home safety: CO, smoke, kitchen temp, Ring |
+
+## Environment
+All settings via `FLEET_AGENT_` prefixed env vars (see config.py). Copy .env.example to .env.
+
+## Webapp
+React 18 + Vite 5 + Tailwind CSS 3 + React Router 6 + Lucide React. Dark theme only.
+Pages: Dashboard, Chat, Tools, Tasks, Memory, Evolution, Status, Settings, Logger, Help.
+
+## REST API
+- GET /api/health — Fleet-standard health check
+- GET /api/v1/diagnostics — Full diagnostics (tool list, system info)
+- GET /api/status — Agent health
+- GET /api/tools — Tool listing
+- GET/PUT /api/settings — LLM provider settings
+- GET /api/models — Available models
+- POST /api/chat — Streaming chat (SSE)
+- GET /api/logs — Recent logs
+- GET /api/logs/stream — SSE log stream
+- POST /api/log — Add log entry
+- GET/POST /api/tasks — Task CRUD
+- POST /api/voice/intent — Voice command bus
+- GET /api/scripts — List scripts
+- POST /api/scripts — Create script
+- POST /api/scripts/generate — AI-generate script from prompt
+- GET/PUT/DELETE /api/scripts/{id} — Script get/update/delete
+- POST /api/scripts/{id}/run — Execute script, return result
+- POST /api/fleet/list-tools — List tools on a fleet server
+- GET /api/memory — Memory cards
+- GET /api/evolution — Evolution log
+- GET /whoami — Agent identity
+
+## Dual Transport
+- HTTP: `uv run -m fleet_agent.server --http --port 10996`
+- stdio: `uv run -m fleet_agent.server --stdio` (Claude Desktop / Cursor)
