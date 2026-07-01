@@ -63,3 +63,22 @@ selection strategy:
 - Requires a configured LLM for fix computation
 - Fork push assumes `sandraschi` GitHub user
 - Only targets `src/` directory for lint scanning
+
+## gogetajob integration
+
+Fritz also wraps [gogetajob](https://github.com/kagura-agent/gogetajob) (npm: `@kagura-agent/gogetajob`),
+Kagura's open-source contribution CLI. This gives Fritz access to the full gogetajob workflow:
+
+| Tool | Delegates to | Purpose |
+|------|-------------|---------|
+| `gogetajob_scan(repo)` | `gogetajob scan` | Discover issues in a repo |
+| `gogetajob_feed()` | `gogetajob feed` | Browse available jobs |
+| `gogetajob_start(ref)` | `gogetajob start` | Take a job, fork/clone/branch |
+| `gogetajob_submit(ref)` | `gogetajob submit` | Push + create PR |
+| `gogetajob_stats()` | `gogetajob stats` | View contribution stats |
+| `gogetajob_sync()` | `gogetajob sync` | Check PR statuses |
+
+The two pipelines can be mixed: use `fritz_find_contributions` to discover targets,
+`gogetajob_start` to set up the workspace, `fritz_contribute` for the fix, and
+`gogetajob_submit` to ship it.
+
