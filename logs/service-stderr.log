@@ -9,3 +9,26 @@ INFO:     Started server process [89148]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
+INFO:     Started server process [72208]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [72208]
+INFO:     Started server process [106368]
+INFO:     Waiting for application startup.
+Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 101, in chat_completion
+    raise RuntimeError("No model configured. Set model in settings.")
+RuntimeError: No model configured. Set model in settings.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
