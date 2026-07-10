@@ -1,0 +1,41 @@
+{
+  "name": "build-verify",
+  "description": "Build → Review → Gate. The agent that builds never evaluates.",
+  "start": "brief",
+  "nodes": {
+    "brief": {
+      "task": "Produce a structured build brief with design tokens, file plan, and constraints",
+      "node_type": "discussion",
+      "next": "build"
+    },
+    "build": {
+      "task": "Implement the feature according to the brief",
+      "node_type": "build",
+      "next": "review"
+    },
+    "review": {
+      "task": "Independent multi-role review of the implementation",
+      "node_type": "review",
+      "branches_map": {
+        "PASS": "gate",
+        "FAIL": "build",
+        "ITERATE": "build"
+      }
+    },
+    "gate": {
+      "task": "Mechanical quality gate: verify all evaluations pass",
+      "node_type": "gate",
+      "branches_map": {
+        "PASS": null,
+        "FAIL": "review",
+        "ITERATE": "build"
+      }
+    }
+  },
+  "limits": {
+    "maxTotalSteps": 25,
+    "maxLoopsPerEdge": 3,
+    "maxNodeReentry": 5
+  },
+  "soft_evidence": false
+}

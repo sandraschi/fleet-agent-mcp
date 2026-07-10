@@ -1,0 +1,18 @@
+name: gate-review
+description: "Review → Gate → (PASS: terminal | ITERATE/FAIL: review loopback). Mechanical gate enforcement."
+start: review
+nodes:
+  review:
+    task: "Independent multi-role review of the changes. At least 2 reviewers required."
+    node_type: review
+    branches_map:
+      PASS: gate
+      FAIL: review
+      ITERATE: review
+  gate:
+    task: "Mechanical gate: synthesize evaluator findings, compute PASS/FAIL/ITERATE"
+    node_type: gate
+    branches_map:
+      PASS: null
+      FAIL: review
+      ITERATE: review

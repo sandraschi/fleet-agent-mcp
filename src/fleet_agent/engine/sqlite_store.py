@@ -24,7 +24,9 @@ CREATE TABLE IF NOT EXISTS instances (
     started_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     history_json TEXT DEFAULT '[]',
-    archived INTEGER DEFAULT 0
+    archived INTEGER DEFAULT 0,
+    last_verdict TEXT,
+    gate_results_json TEXT DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS execution_log (
@@ -118,6 +120,15 @@ class SqliteStore:
     def _init_db(self) -> None:
         with self._connect() as conn:
             conn.executescript(DB_SCHEMA)
+            # Migrate: add columns that may not exist in older DBs
+            for migration in (
+                "ALTER TABLE instances ADD COLUMN last_verdict TEXT",
+                "ALTER TABLE instances ADD COLUMN gate_results_json TEXT DEFAULT '[]'",
+            ):
+                try:
+                    conn.execute(migration)
+                except Exception:
+                    pass  # column already exists
 
     # ── Workflows ──────────────────────────────────────────
 
@@ -161,6 +172,8 @@ class SqliteStore:
                     next_node=v.get("next"),
                     branches=branches,
                     terminal=v.get("terminal", False),
+                    node_type=v.get("node_type"),
+                    branches_map=v.get("branches_map", {}),
                 )
             return Workflow(
                 name=d["name"],
@@ -178,14 +191,17 @@ class SqliteStore:
         with self._connect() as conn:
             conn.execute(
                 """INSERT OR REPLACE INTO instances
-                   (workflow_name, current_node, started_at, updated_at, history_json, archived)
-                   VALUES (?, ?, ?, ?, ?, 0)""",
+                   (workflow_name, current_node, started_at, updated_at,
+                    history_json, archived, last_verdict, gate_results_json)
+                   VALUES (?, ?, ?, ?, ?, 0, ?, ?)""",
                 (
                     inst.workflow_name,
                     inst.current_node,
                     inst.started_at,
                     inst.updated_at,
                     json.dumps(inst.history),
+                    inst.last_verdict,
+                    json.dumps(inst.gate_results),
                 ),
             )
 
@@ -197,12 +213,23 @@ class SqliteStore:
             ).fetchone()
             if row is None:
                 return None
+            # Compatibility: handle missing columns gracefully (older DB)
+            try:
+                gate_results = json.loads(row["gate_results_json"]) if row["gate_results_json"] else []
+            except (KeyError, json.JSONDecodeError):
+                gate_results = []
+            try:
+                last_verdict = row["last_verdict"] or None
+            except KeyError:
+                last_verdict = None
             return WorkflowInstance(
                 workflow_name=row["workflow_name"],
                 current_node=row["current_node"],
                 started_at=row["started_at"],
                 updated_at=row["updated_at"],
                 history=json.loads(row["history_json"]),
+                last_verdict=last_verdict,
+                gate_results=gate_results,
             )
 
     def list_active_instances(self) -> list[dict[str, Any]]:

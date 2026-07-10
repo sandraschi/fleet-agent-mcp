@@ -10,6 +10,7 @@ from . import (
     evolution_log,
     fleet_bridge,
     flowforge,
+    gate,
     github,
     heartbeat,
     identity,

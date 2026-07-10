@@ -430,16 +430,6 @@ def build_app() -> Starlette:
     if seeded.get("seeded_cards") or seeded.get("seeded_scripts"):
         logs.add("info", seeded["message"], "system")
 
-    # Start PR poll background task
-    try:
-        import asyncio as _aio
-
-        from .coworker.pr_poll import pr_poll_loop
-        _aio.create_task(pr_poll_loop(interval=300))
-        logs.add("info", "PR poll background task started (300s)", "system")
-    except Exception as e:
-        logs.add("info", f"PR poll init: {e}", "system")
-
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
     cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
     return Starlette(
@@ -487,6 +477,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="fleet-agent-mcp server")
     parser.add_argument("--http", action="store_true", help="Start HTTP transport")
     parser.add_argument("--stdio", action="store_true", help="Start stdio transport")
+    parser.add_argument("--agentic", action="store_true", help="Enable CodeMode BM25 discovery transform")
     parser.add_argument("--port", type=int, default=settings.port, help="Port")
     parser.add_argument("--host", type=str, default=settings.host, help="Host")
     args = parser.parse_args()
@@ -496,16 +487,41 @@ def main() -> None:
         import uvicorn
 
         async def run():
+            from .coworker.pr_poll import pr_poll_loop
             from .mcp.tools.notify import start_scheduler
             config = uvicorn.Config(app, host=args.host, port=args.port, log_level="info")
             server = uvicorn.Server(config)
             start_scheduler()
+            asyncio.create_task(pr_poll_loop(interval=300))
             await server.serve()
 
         asyncio.run(run())
     else:
+        HTTP_PROXY_URL = os.getenv("FLEET_AGENT_MCP_API_URL", "http://127.0.0.1:10996/mcp")
+        try:
+            import httpx
+            r = httpx.post(HTTP_PROXY_URL, json={
+                "jsonrpc": "2.0", "id": 1, "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-11-25",
+                    "capabilities": {},
+                    "clientInfo": {"name": "probe", "version": "1"}
+                }
+            }, headers={"Accept": "application/json, text/event-stream"}, timeout=0.5)
+            if r.status_code == 200:
+                from fastmcp.server import create_proxy
+                proxy = create_proxy(HTTP_PROXY_URL, name="fleet-agent-mcp")
+                proxy.run(transport="stdio")
+                return
+        except Exception:
+            pass
+
         from .mcp import tools as _tools  # noqa: F401
         from .mcp.registry import mcp
+
+        if args.agentic:
+            from fastmcp.experimental.transforms.code_mode import CodeMode
+            mcp.add_transform(CodeMode())
 
         settings.ensure_dirs()
         mcp.run(transport="stdio")
