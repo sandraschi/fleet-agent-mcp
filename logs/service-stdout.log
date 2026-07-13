@@ -26553,4 +26553,22 @@ Terminate batch job (Y/N)? INFO:     127.0.0.1:65498 - "GET /api/scripts HTTP/1.
 Terminate batch job (Y/N)? INFO:     127.0.0.1:62251 - "GET /api/logs?limit=5 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52353 - "GET /api/tools HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61239 - "GET /api/tools HTTP/1.1" 200 OK
+Terminate batch job (Y/N)? INFO:     127.0.0.1:55389 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55394 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:51592 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51597 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:56050 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56054 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:53506 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53508 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:52148 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52155 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:51878 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51885 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:60108 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:64985 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:58704 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53783 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
+INFO:     127.0.0.1:53704 - "GET /api/health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50809 - "POST /mcp/ HTTP/1.1" 406 Not Acceptable
 Terminate batch job (Y/N)? 

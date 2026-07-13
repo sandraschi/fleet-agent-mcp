@@ -119,6 +119,17 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_enabled": True,
         "description": "Check all NSSM services: health, error logs, escalate via email/siren",
     },
+    "check_email": {
+        "id": "coworker-check-email",
+        "label": "Email Security Scan",
+        "task": "Email Security Scan — coworker:check_email",
+        "category": "system",
+        "recurrence_setting": "check_email_interval",
+        "default_recurrence": "15m",
+        "enabled_setting": "coworker_check_email_enabled",
+        "default_enabled": True,
+        "description": "Scan inbox for security alerts: password resets, breaches, suspicious logins",
+    },
 }
 
 

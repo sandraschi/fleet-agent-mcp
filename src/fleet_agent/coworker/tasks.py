@@ -8,6 +8,7 @@ from typing import Any
 
 from .artifact_pack import run_artifact_pack
 from .board_pack import run_board_pack
+from .check_email import run_check_email
 from .common import coworker_type
 from .day_prep import run_day_prep
 from .devices_watch import run_devices_watch
@@ -31,7 +32,7 @@ _COWORKER_RUNNERS = {
     "artifact_pack": run_artifact_pack,
     "devices_watch": run_devices_watch,
     "surveillance_watch": run_surveillance_watch,
-    "check_email": None,  # stub — wired via fleet_bridge call to email-mcp
+    "check_email": run_check_email,
 }
 
 
