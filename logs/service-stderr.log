@@ -921,3 +921,43 @@ KeyboardInterrupt
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
+Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [299952]
+Traceback (most recent call last):
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\run_server.py", line 42, in <module>
+    asyncio.run(run())
+    ~~~~~~~~~~~^^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+^C

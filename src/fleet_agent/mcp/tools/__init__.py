@@ -15,6 +15,7 @@ from . import (
     heartbeat,
     identity,
     intel_hub,
+    log_tools,
     memory,
     notify,
     pulse,
