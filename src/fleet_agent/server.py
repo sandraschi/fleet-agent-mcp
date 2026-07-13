@@ -315,6 +315,8 @@ async def api_contribution_get(request: Request) -> JSONResponse:
 
 async def api_health(request: Request) -> JSONResponse:
     """GET /api/health — fleet-standard health check."""
+    if _SHUTTING_DOWN:
+        return JSONResponse({"status": "shutting_down", "server": "fleet-agent-mcp"})
 
     from .config import settings as _settings
     from .mcp.registry import mcp as _mcp
@@ -355,6 +357,20 @@ async def api_health(request: Request) -> JSONResponse:
         },
     })
 
+
+_SHUTTING_DOWN: bool = False
+
+async def api_shutdown(request: Request) -> JSONResponse:
+    """POST /api/shutdown — graceful shutdown, health returns shutting_down."""
+    global _SHUTTING_DOWN
+    _SHUTTING_DOWN = True
+    import os
+    async def _die():
+        import asyncio
+        await asyncio.sleep(0.5)
+        os._exit(0)
+    asyncio.ensure_future(_die())
+    return JSONResponse({"success": True, "message": "Shutting down"})
 
 async def api_diagnostics(request: Request) -> JSONResponse:
     """GET /api/v1/diagnostics — full fleet diagnostics payload."""
@@ -466,6 +482,7 @@ def build_app() -> Starlette:
             Route("/api/contributions/{id}", endpoint=api_contribution_get),
             Route("/api/health", endpoint=api_health),
             Route("/api/v1/diagnostics", endpoint=api_diagnostics),
+            Route("/api/shutdown", endpoint=api_shutdown, methods=["POST"]),
         ],
         middleware=[cors],
         lifespan=mcp_asgi.lifespan,

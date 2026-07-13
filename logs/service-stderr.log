@@ -917,4 +917,7 @@ Traceback (most recent call last):
   File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 123, in run
     raise KeyboardInterrupt()
 KeyboardInterrupt
-^C
+^CINFO:     Started server process [299952]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)

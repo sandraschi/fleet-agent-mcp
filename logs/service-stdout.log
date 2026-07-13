@@ -26546,4 +26546,6 @@ INFO:     127.0.0.1:60241 - "GET /api/evolution HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54581 - "GET /api/memory HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52329 - "GET /api/logs?limit=100 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:62576 - "GET /api/logs?since=2026-07-13T00:00:00Z&limit=200 HTTP/1.1" 200 OK
-Terminate batch job (Y/N)? Terminate batch job (Y/N)? 
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? INFO:     127.0.0.1:58184 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58949 - "GET /api/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54944 - "GET /health HTTP/1.1" 404 Not Found
