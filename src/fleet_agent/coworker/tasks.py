@@ -31,6 +31,7 @@ _COWORKER_RUNNERS = {
     "artifact_pack": run_artifact_pack,
     "devices_watch": run_devices_watch,
     "surveillance_watch": run_surveillance_watch,
+    "check_email": None,  # stub — wired via fleet_bridge call to email-mcp
 }
 
 

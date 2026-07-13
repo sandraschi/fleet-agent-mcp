@@ -15,6 +15,7 @@ NSSM_SERVERS = [
     ("devices-mcp", "http://127.0.0.1:10717"),
     ("tvtropes-mcp", "http://127.0.0.1:10964"),
     ("yahboom-mcp", "http://127.0.0.1:10892"),
+    ("email-mcp", "http://127.0.0.1:10813"),
 ]
 
 

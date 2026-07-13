@@ -26553,3 +26553,4 @@ Terminate batch job (Y/N)? INFO:     127.0.0.1:65498 - "GET /api/scripts HTTP/1.
 Terminate batch job (Y/N)? INFO:     127.0.0.1:62251 - "GET /api/logs?limit=5 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:52353 - "GET /api/tools HTTP/1.1" 200 OK
 INFO:     127.0.0.1:61239 - "GET /api/tools HTTP/1.1" 200 OK
+Terminate batch job (Y/N)? 
