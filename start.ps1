@@ -1,5 +1,15 @@
-param([switch]$Headless,
-    [switch]$ReuseIfRunning)
+param([switch]$Headless)
+
+$svc = Get-Service -Name fleet-agent-mcp -ErrorAction SilentlyContinue
+if ($svc -and $svc.Status -eq 'Running') {
+    Write-Host 'fleet-agent-mcp service is running -- starting frontend only' -ForegroundColor Cyan
+    $Root = $PSScriptRoot
+    $WebRoot = Join-Path $Root "webapp"
+    Push-Location $WebRoot
+    npm run dev
+    Pop-Location
+    exit
+}
 
 # --- SOTA Headless Standard ---
 if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {

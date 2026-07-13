@@ -26526,3 +26526,24 @@ INFO:     127.0.0.1:56380 - "GET /api/health HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58597 - "POST /mcp/ HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58598 - "POST /mcp/ HTTP/1.1" 202 Accepted
 INFO:     127.0.0.1:58600 - "POST /mcp/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53383 - "POST /mcp/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53385 - "POST /mcp/ HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:53386 - "POST /mcp/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62847 - "FOO / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:0 - "FOO / HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62102 - "POST /mcp/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62103 - "POST /mcp/ HTTP/1.1" 202 Accepted
+INFO:     127.0.0.1:62104 - "POST /mcp/ HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61818 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61821 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61822 - "GET /api/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56264 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62245 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62246 - "GET /api/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65272 - "GET /api/logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50916 - "GET /api/tasks HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60241 - "GET /api/evolution HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54581 - "GET /api/memory HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52329 - "GET /api/logs?limit=100 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:62576 - "GET /api/logs?since=2026-07-13T00:00:00Z&limit=200 HTTP/1.1" 200 OK
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? 
