@@ -26550,4 +26550,6 @@ Terminate batch job (Y/N)? Terminate batch job (Y/N)? INFO:     127.0.0.1:58184 
 INFO:     127.0.0.1:58949 - "GET /api/logs HTTP/1.1" 200 OK
 INFO:     127.0.0.1:54944 - "GET /health HTTP/1.1" 404 Not Found
 Terminate batch job (Y/N)? INFO:     127.0.0.1:65498 - "GET /api/scripts HTTP/1.1" 200 OK
-Terminate batch job (Y/N)? 
+Terminate batch job (Y/N)? INFO:     127.0.0.1:62251 - "GET /api/logs?limit=5 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52353 - "GET /api/tools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61239 - "GET /api/tools HTTP/1.1" 200 OK

@@ -1,0 +1,44 @@
+name: security_escalation
+description: Fleet health surveillance with escalating alerts — email → siren → failover
+start: surveillance
+
+nodes:
+  surveillance:
+    task: |
+      Check health of all NSSM long-runners via fleet_call_tool:
+      - fleet-agent (Fritz self), aiwatcher, devices-mcp, tvtropes-mcp, yahboom-mcp
+      - For each: call query_logs(level="error", limit=5) and check_log_errors()
+      - For each: call health endpoint (if accessible via fleet_bridge)
+      Compile a map: {server: {health: ok|down|errors, error_count: N, critical_errors: [...]}}
+      If all healthy and no errors: return {"status": "green", "message": "All clear"}
+    next: assess
+
+  assess:
+    task: |
+      Evaluate the surveillance report:
+      - GREEN: No errors, all servers healthy → skip alert
+      - YELLOW: 1-3 non-critical errors (warnings, transient failures) → send email briefing
+      - RED: Critical errors (service down, repeated failures, security breaches) → escalate
+      Use heartbeat_wake() context for severity assessment.
+      Log findings via evolution_record().
+    next: alert
+
+  alert:
+    task: |
+      Execute the appropriate alert level:
+      - GREEN: No action. Log "All clear" via evolution_record().
+      - YELLOW: Call coworker_notify("Fleet Surveillance — Warnings", report_md) to send email.
+        Also log via memory_card_create() with tag "surveillance".
+      - RED: Call coworker_notify("Fleet Surveillance — CRITICAL", report_md) with URGENT flag.
+        If devices-mcp is reachable, trigger Ring siren via fleet_call_tool(server="devices", tool="...", args=...)
+        Log critical event via evolution_record(severity="critical").
+    next: evaluate
+
+  evaluate:
+    task: |
+      Check if escalation resolved the issue:
+      - Re-run surveillance on RED-flagged services.
+      - If still RED: escalate to external notification (robofang, SMS via speech-mcp).
+      - If resolved: log recovery via evolution_record().
+      - If Goliath is unreachable (Fritz can't reach own API): mark for failover.
+    terminal: true

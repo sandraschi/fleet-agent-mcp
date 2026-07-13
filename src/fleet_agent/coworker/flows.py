@@ -108,6 +108,17 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_enabled": True,
         "description": "devices-mcp — kitchen temp, CO, smoke, Ring burglar → Fritz urgent",
     },
+    "surveillance_watch": {
+        "id": "coworker-surveillance-watch",
+        "label": "Fleet Health Surveillance",
+        "task": "Fleet Surveillance — coworker:surveillance_watch",
+        "category": "system",
+        "recurrence_setting": "surveillance_watch_interval",
+        "default_recurrence": "15m",
+        "enabled_setting": "coworker_surveillance_watch_enabled",
+        "default_enabled": True,
+        "description": "Check all NSSM services: health, error logs, escalate via email/siren",
+    },
 }
 
 

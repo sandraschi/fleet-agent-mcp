@@ -225,6 +225,7 @@ def seed_cards_and_scripts() -> dict[str, Any]:
                 "content": _json.dumps({
                     "server": "fleet-agent",
                     "tool": "coworker_execute",
+                    "params": {"flow": "surveillance_watch", "deliver": False},
                     "params": {"flow": "devices_watch", "deliver": False},
                     "llm_analyze": "Are there any critical safety alerts?",
                 }, indent=2),

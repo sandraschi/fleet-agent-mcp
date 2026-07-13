@@ -11,6 +11,7 @@ from .board_pack import run_board_pack
 from .common import coworker_type
 from .day_prep import run_day_prep
 from .devices_watch import run_devices_watch
+from .surveillance_watch import run_surveillance_watch
 from .docs_drift import run_docs_drift
 from .fleet_pulse import run_fleet_pulse
 from .inbox_briefing import run_inbox_briefing
@@ -29,6 +30,7 @@ _COWORKER_RUNNERS = {
     "board_pack": run_board_pack,
     "artifact_pack": run_artifact_pack,
     "devices_watch": run_devices_watch,
+    "surveillance_watch": run_surveillance_watch,
 }
 
 
