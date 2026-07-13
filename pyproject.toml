@@ -12,6 +12,7 @@ dependencies = [
     "starlette>=0.40",
     "httpx>=0.28",
     "tzdata>=2024.1",
+    "agent-client-protocol>=0.1.0",
 ]
 
 [project.optional-dependencies]

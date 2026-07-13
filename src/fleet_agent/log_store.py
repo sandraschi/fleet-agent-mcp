@@ -9,7 +9,7 @@ from uuid import uuid4
 
 
 class LogStore:
-    def __init__(self, max_entries: int = 500) -> None:
+    def __init__(self, max_entries: int = 5000) -> None:
         self._logs: deque[dict[str, Any]] = deque(maxlen=max_entries)
         self._subscribers: list[asyncio.Queue] = []
 

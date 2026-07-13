@@ -18,6 +18,7 @@ Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childho
 import argparse
 import asyncio
 import json
+import os
 import time as _time
 
 from starlette.applications import Starlette
@@ -134,11 +135,11 @@ async def api_chat(request: Request) -> StreamingResponse:
 
 async def api_logs(request: Request) -> JSONResponse:
     from .log_store import get_log_store
-    limit_str = request.query_params.get("limit", "100")
+    limit_str = request.query_params.get("limit", "500")
     try:
         limit = int(limit_str)
     except ValueError:
-        limit = 100
+        limit = 500
     return JSONResponse({"logs": get_log_store().recent(limit)})
 
 
@@ -477,10 +478,16 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="fleet-agent-mcp server")
     parser.add_argument("--http", action="store_true", help="Start HTTP transport")
     parser.add_argument("--stdio", action="store_true", help="Start stdio transport")
+    parser.add_argument("--acp", action="store_true", help="Start ACP stdio agent server")
     parser.add_argument("--agentic", action="store_true", help="Enable CodeMode BM25 discovery transform")
     parser.add_argument("--port", type=int, default=settings.port, help="Port")
     parser.add_argument("--host", type=str, default=settings.host, help="Host")
     args = parser.parse_args()
+
+    if args.acp:
+        from .acp_server import run_acp_server
+        run_acp_server()
+        return
 
     if args.http or (not args.stdio and settings.transport == "http"):
         app = build_app()

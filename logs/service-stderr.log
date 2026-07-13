@@ -32,3 +32,512 @@ Traceback (most recent call last):
 RuntimeError: No model configured. Set model in settings.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [106368]
+Traceback (most recent call last):
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\run_server.py", line 42, in <module>
+    asyncio.run(run())
+    ~~~~~~~~~~~^^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\sandr\AppData\Roaming\uv\python\cpython-3.13.5-windows-x86_64-none\Lib\asyncio\runners.py", line 123, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt
+^CINFO:     Started server process [111268]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:10996 (Press CTRL+C to quit)
+fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+Fleet server opencode unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server git-github unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server docs unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server memory unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server discord unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server robofang unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server plex unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server calibre unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server arxiv unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server aiwatcher unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server browser unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server cursor unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server pywinauto unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server speech unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server alexa unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server yahboom unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server vla-robotics unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server email unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server notion unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server onenote unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server libreoffice unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server libreoffice-ext unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server devices unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server glance unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server vienna-life unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server secrets unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.coworker.pipeline_liveness:Pipeline probe failed for http://127.0.0.1:11024/api/pipeline/liveness: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+WARNING:fleet_agent.coworker.aiwatcher_ingest:AIWatcher ingest failed: 
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+WARNING:fleet_agent.coworker.aiwatcher_ingest:AIWatcher ingest failed: 
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+WARNING:fleet_agent.coworker.aiwatcher_ingest:AIWatcher ingest failed: 
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server opencode unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server git-github unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server docs unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server memory unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server discord unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server robofang unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server plex unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server calibre unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server arxiv unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server aiwatcher unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server browser unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server cursor unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server pywinauto unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server speech unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server alexa unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server yahboom unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server vla-robotics unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server email unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server notion unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server onenote unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server libreoffice unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server libreoffice-ext unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server devices unreachable: Session terminated
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server glance unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server vienna-life unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.tools.fleet_bridge:Fleet server secrets unreachable: Client failed to connect: All connection attempts failed
+WARNING:fleet_agent.coworker.pipeline_liveness:Pipeline probe failed for http://127.0.0.1:10770/api/pipeline/liveness: All connection attempts failed
+WARNING:fleet_agent.coworker.pipeline_liveness:Pipeline probe failed for http://127.0.0.1:11024/api/pipeline/liveness: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.coworker.tasks:Recurring task failed: Cursor Spend Watch — coworker:cursor_spend_watch
+Traceback (most recent call last):
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\coworker\tasks.py", line 107, in execute_recurring_task
+    route = await chat_completion([
+            ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<8 lines>...
+    ])
+    ^^
+  File "D:\Dev\repos\fleet-agent-mcp\src\fleet_agent\llm_client.py", line 118, in chat_completion
+    raise RuntimeError(
+    ...<3 lines>...
+    )
+RuntimeError: Chat completion failed: all providers unreachable. Tried: http://127.0.0.1:11434, http://127.0.0.1:1234. Last error: http://127.0.0.1:1234: Client error '400 Bad Request' for url 'http://127.0.0.1:1234/v1/chat/completions'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/400
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for docs/search_docs: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
+WARNING:fleet_agent.coworker.aiwatcher_ingest:AIWatcher ingest failed: 
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for cursor/cursor_inbox: Client failed to connect: All connection attempts failed
+ERROR:fleet_agent.tools.fleet_bridge:fleet_call_tool failed for aiwatcher/ingest_fleet_event: Session terminated
