@@ -25,7 +25,7 @@ $uv = Join-Path $env:USERPROFILE ".local\bin\uv.exe"
 if (-not (Test-Path -LiteralPath $uv)) {
     $uvCmd = Get-Command uv -ErrorAction SilentlyContinue
     if ($uvCmd) { $uv = $uvCmd.Source } else {
-        Write-Host "WARN: uv not found — Intel Hub not started" -ForegroundColor Yellow
+        Write-Host "WARN: uv not found - Intel Hub not started" -ForegroundColor Yellow
         exit 1
     }
 }
@@ -44,5 +44,5 @@ Start-Sleep -Seconds 2
 if (Test-PortListening -PortNum $Port) {
     Write-Host "Intel Reports Hub online: http://127.0.0.1:$Port" -ForegroundColor Green
 } else {
-    Write-Host "Intel Hub may still be starting — check http://127.0.0.1:$Port" -ForegroundColor Yellow
+    Write-Host "Intel Hub may still be starting - check http://127.0.0.1:$Port" -ForegroundColor Yellow
 }
