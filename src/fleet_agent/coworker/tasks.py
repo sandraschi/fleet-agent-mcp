@@ -6,22 +6,25 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
+from .activity_pulse import run_activity_pulse
 from .artifact_pack import run_artifact_pack
 from .board_pack import run_board_pack
 from .check_email import run_check_email
 from .common import coworker_type
 from .day_prep import run_day_prep
 from .devices_watch import run_devices_watch
-from .surveillance_watch import run_surveillance_watch
 from .docs_drift import run_docs_drift
 from .fleet_pulse import run_fleet_pulse
 from .inbox_briefing import run_inbox_briefing
 from .morning_brief import run_morning_brief
+from .scribe_watch import run_scribe_watch
+from .surveillance_watch import run_surveillance_watch
 from .weekly_report_pdf import run_weekly_report_pdf
 
 logger = logging.getLogger("fleet_agent.coworker.tasks")
 
 _COWORKER_RUNNERS = {
+    "activity_pulse": run_activity_pulse,
     "fleet_pulse": run_fleet_pulse,
     "inbox_briefing": run_inbox_briefing,
     "docs_drift": run_docs_drift,
@@ -31,6 +34,7 @@ _COWORKER_RUNNERS = {
     "board_pack": run_board_pack,
     "artifact_pack": run_artifact_pack,
     "devices_watch": run_devices_watch,
+    "scribe_watch": run_scribe_watch,
     "surveillance_watch": run_surveillance_watch,
     "check_email": run_check_email,
 }

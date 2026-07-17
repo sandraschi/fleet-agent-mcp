@@ -9,6 +9,17 @@ FlowRunner = Callable[..., Awaitable[dict[str, Any]]]
 
 # recurrence formats: HH:MM | wd:HH:MM | sun:HH:MM | 0 H * * * | 3600 | 30m
 COWORKER_FLOWS: dict[str, dict[str, Any]] = {
+    "activity_pulse": {
+        "id": "coworker-activity-pulse",
+        "label": "Fritz Activity Pulse",
+        "task": "Fritz Activity Pulse — coworker:activity_pulse",
+        "category": "fleet",
+        "recurrence_setting": "activity_pulse_interval",
+        "default_recurrence": "15m",
+        "enabled_setting": "coworker_activity_pulse_enabled",
+        "default_enabled": True,
+        "description": "Periodic status report to Fleet Hub :11027/reports/fritz-activity",
+    },
     "fleet_pulse": {
         "id": "coworker-fleet-pulse",
         "label": "Morning Fleet Pulse",
@@ -119,6 +130,17 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_enabled": True,
         "description": "Check all NSSM services: health, error logs, escalate via email/siren",
     },
+    "scribe_watch": {
+        "id": "coworker-scribe-watch",
+        "label": "Session Scribe Watch",
+        "task": "Session Scribe Watch — coworker:scribe_watch",
+        "category": "system",
+        "recurrence_setting": "scribe_watch_interval",
+        "default_recurrence": "2h",
+        "enabled_setting": "coworker_scribe_watch_enabled",
+        "default_enabled": True,
+        "description": "advanced-memory session scribe: freshness, log errors, aiwatcher copies; RED email if capture stopped",
+    },
     "check_email": {
         "id": "coworker-check-email",
         "label": "Email Security Scan",
@@ -128,7 +150,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_recurrence": "15m",
         "enabled_setting": "coworker_check_email_enabled",
         "default_enabled": True,
-        "description": "Scan inbox for security alerts: password resets, breaches, suspicious logins",
+        "description": "Scan inbox: password resets, breaches, suspicious logins",
     },
 }
 
