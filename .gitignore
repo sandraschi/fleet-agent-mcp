@@ -12,3 +12,8 @@ build/
 .env
 webapp/node_modules/
 webapp/dist/
+
+# Runtime logs (services write here - untracked)
+*.log
+logs/
+
