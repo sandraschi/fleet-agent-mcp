@@ -1,11 +1,10 @@
 """Fleet health surveillance — checks NSSM services for errors, escalates."""
 
-import json
 import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from .common import fleet_call, save_artifact
+from .common import save_artifact
 
 logger = logging.getLogger("fleet_agent.coworker.surveillance_watch")
 
@@ -65,16 +64,91 @@ async def check_server_health(name: str, base_url: str) -> dict[str, Any]:
     return result
 
 
+async def restart_hung_service(
+    name: str, base_url: str, wait_timeout: float = 30.0
+) -> dict[str, Any]:
+    """Restart a hung NSSM service by making it EXIT.
+
+    NSSM auto-restarts a service when its process exits, but NOT when the
+    process hangs (alive, port dead). So: find the service PID, taskkill it -
+    NSSM sees the exit and starts a fresh process. Then poll the health URL.
+
+    Requires the service to run as the current user (taskkill without admin).
+    Returns {"action": ..., "detail": ..., "healthy_after": bool}.
+    """
+    import asyncio
+    import subprocess
+
+    import httpx
+
+    def _service_pid() -> int | None:
+        try:
+            out = subprocess.run(
+                ["sc", "queryex", name], capture_output=True, text=True, timeout=10
+            ).stdout
+            for line in out.splitlines():
+                line = line.strip()
+                if line.upper().startswith("PID") and ":" in line:
+                    pid = line.split(":", 1)[1].strip()
+                    if pid.isdigit():
+                        return int(pid)
+        except Exception:
+            pass
+        return None
+
+    pid = _service_pid()
+    if pid is None:
+        return {
+            "action": "no_service",
+            "detail": f"no service '{name}' or no PID",
+            "healthy_after": False,
+        }
+
+    try:
+        kill = subprocess.run(
+            ["taskkill", "/F", "/PID", str(pid), "/T"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        detail = f"killed PID {pid} -> nssm should auto-restart"
+        if kill.returncode != 0:
+            detail = f"taskkill PID {pid} failed: {kill.stderr.strip()[:120]} (access denied?)"
+            return {"action": "kill_failed", "detail": detail, "healthy_after": False}
+    except Exception as e:
+        return {"action": "kill_failed", "detail": f"taskkill error: {e}", "healthy_after": False}
+
+    # Poll health after the nssm restart
+    deadline = asyncio.get_event_loop().time() + wait_timeout
+    healthy = False
+    while asyncio.get_event_loop().time() < deadline:
+        try:
+            async with httpx.AsyncClient(timeout=3) as client:
+                r = await client.get(f"{base_url}/api/health")
+                if r.status_code == 200:
+                    healthy = True
+                    break
+        except Exception:
+            pass
+        await asyncio.sleep(2)
+    return {"action": "restarted", "detail": detail, "healthy_after": healthy}
+
+
 async def run_surveillance_watch(*, deliver: bool = True) -> dict[str, Any]:
     """Check all NSSM services, report findings, escalate if needed."""
     from ..settings_store import get_settings_store
 
     settings = get_settings_store()
-    report_lines = ["# Fleet Surveillance Report", f"Generated: {datetime.now(UTC).isoformat()}", ""]
+    report_lines = [
+        "# Fleet Surveillance Report",
+        f"Generated: {datetime.now(UTC).isoformat()}",
+        "",
+    ]
 
     status = "green"
     all_errors = []
     down_services = []
+    restart_count = 0
 
     for name, url in NSSM_SERVERS:
         result = await check_server_health(name, url)
@@ -85,6 +159,21 @@ async def run_surveillance_watch(*, deliver: bool = True) -> dict[str, Any]:
         if result["health"] == "down":
             down_services.append(name)
             status = "red"
+            # Self-heal: hung NSSM service -> kill process, nssm restarts
+            restart = await restart_hung_service(name, url)
+            if restart["action"] == "restarted":
+                if restart["healthy_after"]:
+                    report_lines.append(
+                        f"- RESTARTED (was hung): {restart['detail']} - now healthy"
+                    )
+                    restart_count += 1
+                    down_services.remove(name)
+                    if status == "red" and not down_services:
+                        status = "green"
+                else:
+                    report_lines.append(f"- RESTARTED but STILL DOWN: {restart['detail']}")
+            else:
+                report_lines.append(f"- Restart failed ({restart['action']}): {restart['detail']}")
         elif result["health"] not in ("ok", "shutting_down"):
             status = "yellow"
 
@@ -99,6 +188,8 @@ async def run_surveillance_watch(*, deliver: bool = True) -> dict[str, Any]:
 
     if all_errors:
         report_lines.append(f"## Total errors: {len(all_errors)}")
+    if restart_count:
+        report_lines.append(f"## Restarted hung services: {restart_count}")
     if down_services:
         report_lines.append(f"## DOWN: {', '.join(down_services)}")
 
@@ -117,7 +208,7 @@ async def run_surveillance_watch(*, deliver: bool = True) -> dict[str, Any]:
 
             await _send_email_smtp(
                 to=to,
-                subject=f"FLEET SURVEILLANCE — {status.upper()} — {len(all_errors)} errors, {len(down_services)} down",
+                subject=f"FLEET SURV {status.upper()} - e={len(all_errors)} d={len(down_services)}",
                 body=report,
                 smtp_host=smtp_host,
                 smtp_port=int(settings.get("smtp_port", 587)),
@@ -130,6 +221,6 @@ async def run_surveillance_watch(*, deliver: bool = True) -> dict[str, Any]:
         "status": status,
         "down_services": down_services,
         "error_count": len(all_errors),
-        "message": f"Surveillance: {status.upper()} — {len(down_services)} down, {len(all_errors)} errors",
+        "message": f"Surveillance: {status.upper()} - d={len(down_services)} e={len(all_errors)}",
         "artifact_path": artifact_path,
     }
