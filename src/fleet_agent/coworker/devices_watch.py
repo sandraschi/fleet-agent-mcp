@@ -5,7 +5,9 @@ from __future__ import annotations
 import json
 import logging
 import os
+import subprocess
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -58,6 +60,84 @@ async def fetch_priority_incidents() -> dict[str, Any]:
         return resp.json()
 
 
+def _devices_port() -> int:
+    base = devices_http_base()
+    try:
+        return int(base.rsplit(":", 1)[1].rstrip("/"))
+    except (ValueError, IndexError):
+        return 10717
+
+
+def _find_devices_mcp() -> str | None:
+    candidates = [
+        os.environ.get("DEVICES_MCP_PATH", ""),
+        str(Path.home() / "Dev" / "repos" / "devices-mcp"),
+        r"D:\Dev\repos\devices-mcp",
+        r"D:\Dev\Repos\devices-mcp",
+    ]
+    for c in candidates:
+        if c and Path(c).is_dir():
+            return c
+    return None
+
+
+async def _wait_port(port: int, timeout: float = 30.0) -> bool:
+    import asyncio
+    import socket
+
+    deadline = asyncio.get_event_loop().time() + timeout
+    while asyncio.get_event_loop().time() < deadline:
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            s.connect(("127.0.0.1", port))
+            s.close()
+            return True
+        except OSError:
+            await asyncio.sleep(0.5)
+    return False
+
+
+async def ensure_devices_mcp() -> str | None:
+    """Ensure devices-mcp is reachable; autostart it from the repo if not.
+
+    Ensure-before-open (fleet standard): never fetch from a port that may be
+    down - start the service first, wait for its port, then proceed.
+    """
+    port = _devices_port()
+    if await _wait_port(port, timeout=2):
+        return None  # already running
+
+    mcp_path = _find_devices_mcp()
+    if not mcp_path:
+        return (
+            "devices-mcp not found. Clone it to D:\\Dev\\repos\\devices-mcp "
+            "or set DEVICES_MCP_PATH."
+        )
+
+    try:
+        start_script = Path(mcp_path) / "start.bat"
+        if start_script.is_file():
+            subprocess.Popen(
+                ["cmd", "/c", str(start_script)],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        else:
+            subprocess.Popen(
+                ["uv", "run", "--directory", mcp_path, "devices-mcp"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        if await _wait_port(port, timeout=30):
+            return f"devices-mcp launched on :{port}."
+        return f"devices-mcp launch attempted but not detected on :{port}."
+    except Exception as e:
+        return f"Failed to launch devices-mcp: {e}"
+
+
 def format_devices_report(payload: dict[str, Any], *, new_incidents: list[dict[str, Any]]) -> str:
     lines = [
         "# Devices Priority Watch",
@@ -95,13 +175,34 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
     state = _load_state()
     seen: set[str] = set(state.get("seen_ids") or [])
 
+    ensure_msg = await ensure_devices_mcp()
     try:
         payload = await fetch_priority_incidents()
     except httpx.HTTPError as exc:
-        return {
+        offline = {
             "success": False,
             "message": f"devices-mcp unreachable at {devices_http_base()}: {exc}",
+            "ensure": ensure_msg,
         }
+        # Honest offline report to the hub - the outage must be visible,
+        # not silent (fleet ensure-before-open standard).
+        if deliver:
+            try:
+                await publish_intel_report(
+                    title="Devices watch - devices-mcp offline",
+                    markdown=(
+                        "# Devices Priority Watch\n\n"
+                        f"- **devices-mcp unreachable** at {devices_http_base()}\n"
+                        f"- Ensure result: {ensure_msg or 'already running (then lost)'}\n"
+                        f"- Auto-launch was attempted via start.bat - check "
+                        "`uv run devices-mcp` or the devices-mcp start script."
+                    ),
+                    source="devices-mcp",
+                    tags=["devices", "offline"],
+                )
+            except Exception:
+                logger.warning("Failed to publish offline report to hub", exc_info=True)
+        return offline
 
     if not payload.get("success", True) and payload.get("error"):
         return {"success": False, "message": payload.get("error", "scan failed")}
@@ -110,8 +211,7 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
     new_incidents = [i for i in incidents if i.get("id") and i["id"] not in seen]
     threshold = urgent_threshold()
     critical_new = [
-        i for i in new_incidents
-        if i.get("critical") or float(i.get("urgency") or 0) >= threshold
+        i for i in new_incidents if i.get("critical") or float(i.get("urgency") or 0) >= threshold
     ]
 
     report = format_devices_report(payload, new_incidents=new_incidents)
