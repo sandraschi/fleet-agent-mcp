@@ -88,8 +88,12 @@ def format_fleet_pulse_report(
         mark = "up" if server.get("online") else "down"
         alias = server.get("alias", "?")
         err = server.get("error")
-        suffix = f" — {err[:80]}" if err and not server.get("online") else ""
-        lines.append(f"- `{alias}`: **{mark}** ({server.get('tool_count', 0)} tools){suffix}")
+        on_demand = "" if server.get("daemon", False) else " (on-demand/stdio)"
+        suffix = f" - {err[:80]}" if err and not server.get("online") else ""
+        lines.append(
+            f"- `{alias}`: **{mark}**{on_demand}"
+            f" ({server.get('tool_count', 0)} tools){suffix}"
+        )
     lines.append("")
 
     if pipeline is not None:
@@ -108,7 +112,10 @@ def format_fleet_pulse_report(
             lines.append(f"  - last: {row['last_commit']}")
     lines.append("")
 
-    down = [s["alias"] for s in servers if not s.get("online")]
+    down = [s["alias"] for s in servers if not s.get("online") and s.get("daemon", False)]
+    on_demand_down = [
+        s["alias"] for s in servers if not s.get("online") and not s.get("daemon", False)
+    ]
     dirty: list[str] = []
     for r in git_rows:
         st = r.get("status") or ""
@@ -129,10 +136,16 @@ def format_fleet_pulse_report(
                 )
                 item_n += 1
     if down:
-        lines.append(f"{item_n}. Restart offline MCP servers: {', '.join(down)}")
+        lines.append(f"{item_n}. Restart offline MCP daemons: {', '.join(down)}")
         item_n += 1
-    elif item_n == 1:
-        lines.append("1. All registered fleet MCP servers reachable.")
+    if on_demand_down:
+        lines.append(
+            f"{item_n}. On-demand (stdio) servers not running - expected unless "
+            f"a session needs them: {', '.join(on_demand_down)}"
+        )
+        item_n += 1
+    if item_n == 1:
+        lines.append("1. All registered fleet MCP daemons reachable.")
         item_n += 1
     if dirty:
         lines.append(f"{item_n}. Uncommitted changes in: {', '.join(dirty)}")
@@ -242,7 +255,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
             tags=["fleet-pulse", "coworker"],
         )
         critical_count = int(pipeline.get("critical_count", 0))
-        down = [s["alias"] for s in servers if not s.get("online")]
+        down = [s["alias"] for s in servers if not s.get("online") and s.get("daemon", False)]
         pipeline_bad = not pipeline.get("healthy")
         urgency = 8.5 if critical_count else (7.5 if pipeline_bad else 5.0)
         if down and len(servers) > 0:

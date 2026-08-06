@@ -21,6 +21,28 @@ logger = logging.getLogger("fleet_agent.coworker.devices_watch")
 
 _STATE_FILE = "devices_watch_state.json"
 
+# Report the same incident (by kind/source/title) at most once per day.
+# Raw incident ids churn when a device flaps or a new message row is created,
+# so id-based dedup alone lets the same offline camera re-report every poll.
+_REPORT_WINDOW_DAYS = 1
+_REPORT_WINDOW_SECONDS = _REPORT_WINDOW_DAYS * 24 * 3600
+
+
+def _incident_key(inc: dict[str, Any]) -> str:
+    return f"{inc.get('kind')}|{inc.get('source')}|{inc.get('title')}"
+
+
+def _iso_age_seconds(iso_value: str | None, now: datetime) -> float | None:
+    if not iso_value:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(iso_value).replace("Z", "+00:00"))
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=UTC)
+        return (now - ts).total_seconds()
+    except (ValueError, TypeError):
+        return None
+
 
 def devices_http_base() -> str:
     return os.environ.get(
@@ -174,6 +196,8 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
     """Poll devices-mcp /api/fleet/priority; alert on new critical incidents."""
     state = _load_state()
     seen: set[str] = set(state.get("seen_ids") or [])
+    reported_keys: dict[str, str] = state.get("reported_keys") or {}
+    now = datetime.now(UTC)
 
     ensure_msg = await ensure_devices_mcp()
     try:
@@ -185,8 +209,11 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
             "ensure": ensure_msg,
         }
         # Honest offline report to the hub - the outage must be visible,
-        # not silent (fleet ensure-before-open standard).
-        if deliver:
+        # not silent (fleet ensure-before-open standard). Throttled to
+        # once per day so a sustained outage does not spam the hub.
+        last_offline = state.get("last_offline_report")
+        age = _iso_age_seconds(last_offline, now)
+        if deliver and (age is None or age > _REPORT_WINDOW_SECONDS):
             try:
                 await publish_intel_report(
                     title="Devices watch - devices-mcp offline",
@@ -200,6 +227,8 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
                     source="devices-mcp",
                     tags=["devices", "offline"],
                 )
+                state["last_offline_report"] = now.isoformat()
+                _save_state(state)
             except Exception:
                 logger.warning("Failed to publish offline report to hub", exc_info=True)
         return offline
@@ -208,7 +237,17 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
         return {"success": False, "message": payload.get("error", "scan failed")}
 
     incidents = payload.get("incidents") or []
-    new_incidents = [i for i in incidents if i.get("id") and i["id"] not in seen]
+    new_incidents = []
+    for i in incidents:
+        inc_id = i.get("id")
+        if inc_id and inc_id in seen:
+            continue
+        key = _incident_key(i)
+        last_reported = reported_keys.get(key)
+        age = _iso_age_seconds(last_reported, now)
+        if age is not None and age <= _REPORT_WINDOW_SECONDS:
+            continue  # same incident already reported within the window
+        new_incidents.append(i)
     threshold = urgent_threshold()
     critical_new = [
         i for i in new_incidents if i.get("critical") or float(i.get("urgency") or 0) >= threshold
@@ -270,7 +309,9 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
     for inc in new_incidents:
         if inc.get("id"):
             seen.add(inc["id"])
+        reported_keys[_incident_key(inc)] = now.isoformat()
     state["seen_ids"] = list(seen)
+    state["reported_keys"] = reported_keys
     _save_state(state)
 
     return {

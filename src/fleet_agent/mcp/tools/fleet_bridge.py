@@ -32,12 +32,14 @@ FLEET_SERVER_ALIASES: dict[str, str] = {
 
 FLEET_SERVERS: dict[str, dict[str, Any]] = {
     "opencode": {
+        "daemon": False,  # launched on demand with opencode
         "url": "http://127.0.0.1:10951/mcp",
         "description": "opencode-cli-mcp — AI coding agents, sessions, provider config",
         "category": "code",
         "key_tools": ["opencode_run_agent", "opencode_list_sessions", "opencode_get_project"],
     },
     "fleet-agent": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10996/mcp/",
         "description": "fleet-agent-mcp (Lumen) — state machine, tasks, memory, identity",
         "category": "orchestration",
@@ -56,6 +58,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "key_tools": ["search_docs", "ask_docs", "get_document"],
     },
     "memory": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10732/mcp",
         "description": "advanced-memory-mcp — persistent agent memory, knowledge graphs, embedding",
         "category": "knowledge",
@@ -86,12 +89,14 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "key_tools": ["query_books", "search_fulltext", "manage_libraries", "calibre_rag"],
     },
     "arxiv": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10770/mcp",
         "description": "arxiv-mcp — Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",
         "category": "research",
         "key_tools": ["search_papers", "get_paper_details", "find_connected_papers", "arxiv_agentic_assist"],
     },
     "aiwatcher": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10946/mcp",
         "description": "aiwatcher-mcp — AI news distillation, urgency scoring, top items, search, digest history",
         "category": "intelligence",
@@ -117,6 +122,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "key_tools": ["cursor_usage", "cursor_cloud", "cursor_docs", "cursor_sdk", "cursor_help"],
     },
     "pywinauto": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10788/mcp",
         "description": "pywinauto-mcp — Windows UI automation: windows, clicks, keyboard, OCR, Cua-shaped window snapshots",
         "category": "automation",
@@ -162,6 +168,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         ],
     },
     "email": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10813/mcp",
         "description": "email-mcp — SMTP/IMAP inbox, send, search, mailing lists, auto-respond",
         "category": "office",
@@ -192,6 +199,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "key_tools": ["convert_document", "read_document_text", "create_document"],
     },
     "devices": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10716/mcp",
         "description": "devices-mcp — home IoT: cameras, Shelly temps, Nest CO/smoke, Ring alarm",
         "category": "smart_home",
@@ -254,6 +262,7 @@ async def fleet_discover() -> dict[str, Any]:
             "description": info["description"],
             "category": info["category"],
             "online": False,
+            "daemon": bool(info.get("daemon", False)),
             "tool_count": 0,
             "tools": [],
         }
