@@ -108,12 +108,18 @@ def test_empty_evals_pass():
 
 def test_check_independence_pass():
     evals = [
-        EvalReport(role="frontend", findings=[
-            Finding(severity="warning", message="Missing ARIA labels"),
-        ]),
-        EvalReport(role="security", findings=[
-            Finding(severity="critical", message="XSS in search form"),
-        ]),
+        EvalReport(
+            role="frontend",
+            findings=[
+                Finding(severity="warning", message="Missing ARIA labels"),
+            ],
+        ),
+        EvalReport(
+            role="security",
+            findings=[
+                Finding(severity="critical", message="XSS in search form"),
+            ],
+        ),
     ]
     result = check_independence(evals)
     assert result.passed
@@ -129,12 +135,18 @@ def test_check_independence_fail_single():
 
 def test_check_independence_identical_content():
     evals = [
-        EvalReport(role="frontend", findings=[
-            Finding(severity="warning", message="Same issue"),
-        ]),
-        EvalReport(role="backend", findings=[
-            Finding(severity="warning", message="Same issue"),
-        ]),
+        EvalReport(
+            role="frontend",
+            findings=[
+                Finding(severity="warning", message="Same issue"),
+            ],
+        ),
+        EvalReport(
+            role="backend",
+            findings=[
+                Finding(severity="warning", message="Same issue"),
+            ],
+        ),
     ]
     result = check_independence(evals)
     assert not result.passed
@@ -182,7 +194,7 @@ search()
 
 
 def test_lint_criteria_empty_bullets():
-    text = """- 
+    text = """-
 - This one has content
 
 ## Return Format
@@ -210,13 +222,27 @@ def test_oscillation_no_previous():
 
 
 def test_oscillation_stable():
-    v1 = synthesize([EvalReport(role="x", findings=[
-        Finding(severity="warning", message="Fix this"),
-    ])])
-    v2 = synthesize([EvalReport(role="x", findings=[
-        Finding(severity="warning", message="Fix this"),
-        Finding(severity="warning", message="Also this"),
-    ])])
+    v1 = synthesize(
+        [
+            EvalReport(
+                role="x",
+                findings=[
+                    Finding(severity="warning", message="Fix this"),
+                ],
+            )
+        ]
+    )
+    v2 = synthesize(
+        [
+            EvalReport(
+                role="x",
+                findings=[
+                    Finding(severity="warning", message="Fix this"),
+                    Finding(severity="warning", message="Also this"),
+                ],
+            )
+        ]
+    )
     result = detect_oscillation(v2, v1)
     # Both ITERATE → not oscillating
     assert not result.oscillating
@@ -224,12 +250,26 @@ def test_oscillation_stable():
 
 def test_oscillation_detected():
     """FAIL → ITERATE is a reversal, but needs 3-round for true oscillation."""
-    v1 = synthesize([EvalReport(role="x", findings=[
-        Finding(severity="critical", message="Security issue"),
-    ])])
-    v2 = synthesize([EvalReport(role="x", findings=[
-        Finding(severity="warning", message="Minor issue"),
-    ])])
+    v1 = synthesize(
+        [
+            EvalReport(
+                role="x",
+                findings=[
+                    Finding(severity="critical", message="Security issue"),
+                ],
+            )
+        ]
+    )
+    v2 = synthesize(
+        [
+            EvalReport(
+                role="x",
+                findings=[
+                    Finding(severity="warning", message="Minor issue"),
+                ],
+            )
+        ]
+    )
     result = detect_oscillation(v2, v1)
     assert result.oscillating
     assert "FAIL" in result.message or "ITERATE" in result.message
@@ -258,6 +298,7 @@ def test_tier_coverage_unknown_tier():
 
 def test_parse_eval_markdown():
     from fleet_agent.harness.gate_engine import _parse_eval_markdown
+
     md = """🔴 Critical: Hardcoded secret in config.py:42
 🟡 Warning: Missing input validation on line 88
 🔵 Suggestion: Rename for clarity

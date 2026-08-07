@@ -43,10 +43,12 @@ class TestFleetPulseReport:
         assert "Action items" in report
 
     def test_is_fleet_pulse_task_metadata(self):
-        assert is_fleet_pulse_task({
-            "task": "anything",
-            "metadata_json": '{"coworker": "fleet_pulse"}',
-        })
+        assert is_fleet_pulse_task(
+            {
+                "task": "anything",
+                "metadata_json": '{"coworker": "fleet_pulse"}',
+            }
+        )
 
     def test_is_fleet_pulse_task_text(self):
         assert is_fleet_pulse_task({"task": "Morning Fleet Pulse please"})
@@ -62,6 +64,7 @@ class TestCoworkerBootstrap:
         monkeypatch.setattr(settings, "data_dir", tmp_path)
 
         import fleet_agent.engine.sqlite_store as ss
+
         ss._store = None
 
         first = ensure_coworker_tasks()

@@ -1,12 +1,13 @@
 """Tests for state machine (gate-aware transitions, verdict routing, eval tracking)."""
 
-from fleet_agent.engine.state_machine import get_state_machine, StateMachine
+from fleet_agent.engine.state_machine import StateMachine, get_state_machine
 from fleet_agent.engine.workflow_loader import workflow_from_dict
 
 
 def _reset_sm():
-    from fleet_agent.engine import state_machine as sm_mod
     from fleet_agent.engine import sqlite_store as store_mod
+    from fleet_agent.engine import state_machine as sm_mod
+
     store_mod._store = None
     sm_mod._state_machine = StateMachine()
     return get_state_machine()
@@ -57,12 +58,18 @@ class TestGateAwareTransitions:
     def test_next_with_evals_in_history(self):
         self.sm.start("gate-test")
         evals = [
-            {"role": "security", "findings": [
-                {"severity": "warning", "message": "Missing input validation"},
-            ]},
-            {"role": "frontend", "findings": [
-                {"severity": "suggestion", "message": "Consider ARIA labels"},
-            ]},
+            {
+                "role": "security",
+                "findings": [
+                    {"severity": "warning", "message": "Missing input validation"},
+                ],
+            },
+            {
+                "role": "frontend",
+                "findings": [
+                    {"severity": "suggestion", "message": "Consider ARIA labels"},
+                ],
+            },
         ]
         instance = self.sm.next(verdict="PASS", evals=evals)
         assert instance is not None
@@ -122,8 +129,10 @@ class TestNodeTypes:
         data = {
             "name": "default-flow",
             "start": "build",
-            "nodes": {"build": {"task": "Build", "next": "done"},
-                      "done": {"task": "Done", "terminal": True}},
+            "nodes": {
+                "build": {"task": "Build", "next": "done"},
+                "done": {"task": "Done", "terminal": True},
+            },
         }
         wf = workflow_from_dict(data)
         sm._store.save_workflow(wf)

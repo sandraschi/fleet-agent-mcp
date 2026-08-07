@@ -7,10 +7,9 @@ from pathlib import Path
 import pytest
 
 from fleet_agent.engine.workflow_loader import (
-    WorkflowNode,
-    workflow_from_dict,
-    load_workflow_from_json,
     discover_workflows,
+    load_workflow_from_json,
+    workflow_from_dict,
 )
 
 
@@ -93,8 +92,10 @@ class TestJsonFlowTemplates:
         data = {
             "name": "soft-flow",
             "start": "exec",
-            "nodes": {"exec": {"task": "Execute", "node_type": "execute", "next": "done"},
-                      "done": {"task": "Done", "terminal": True}},
+            "nodes": {
+                "exec": {"task": "Execute", "node_type": "execute", "next": "done"},
+                "done": {"task": "Done", "terminal": True},
+            },
             "soft_evidence": True,
         }
         wf = workflow_from_dict(data)
@@ -106,8 +107,10 @@ class TestWorkflowValidation:
         data = {
             "name": "bad-flow",
             "start": "build",
-            "nodes": {"build": {"task": "Build", "node_type": "invalid_type", "next": "done"},
-                      "done": {"task": "Done", "terminal": True}},
+            "nodes": {
+                "build": {"task": "Build", "node_type": "invalid_type", "next": "done"},
+                "done": {"task": "Done", "terminal": True},
+            },
         }
         with pytest.raises(ValueError, match="Invalid node_type"):
             workflow_from_dict(data)
@@ -163,8 +166,10 @@ class TestJsonFileLoading:
         data = {
             "name": "file-test",
             "start": "build",
-            "nodes": {"build": {"task": "Build", "next": "done"},
-                      "done": {"task": "Done", "terminal": True}},
+            "nodes": {
+                "build": {"task": "Build", "next": "done"},
+                "done": {"task": "Done", "terminal": True},
+            },
         }
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(data, f)
@@ -183,8 +188,12 @@ class TestDiscoverWorkflows:
     def test_discover_json_and_yaml(self, tmp_path):
         wf_dir = tmp_path / "workflows"
         wf_dir.mkdir()
-        (wf_dir / "wf1.yaml").write_text("name: yaml-flow\nstart: build\nnodes:\n  build:\n    task: Build\n    terminal: true\n")
-        (wf_dir / "wf2.json").write_text('{"name": "json-flow", "start": "build", "nodes": {"build": {"task": "Build", "terminal": true}}}')
+        (wf_dir / "wf1.yaml").write_text(
+            "name: yaml-flow\nstart: build\nnodes:\n  build:\n    task: Build\n    terminal: true\n"
+        )
+        (wf_dir / "wf2.json").write_text(
+            '{"name": "json-flow", "start": "build", "nodes": {"build": {"task": "Build", "terminal": true}}}'
+        )
         (wf_dir / "ignore.txt").write_text("not a workflow")
 
         paths = discover_workflows(tmp_path)

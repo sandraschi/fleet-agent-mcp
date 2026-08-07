@@ -36,23 +36,28 @@ async def test_artifact_pack_merge(tmp_path, monkeypatch):
         "smtp_pass": "secret",
     }.get(key, default)
 
-    with patch(
-        "fleet_agent.coworker.artifact_pack.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.coworker.common.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.coworker.artifact_pack.fleet_call",
-        AsyncMock(
-            return_value={
-                "success": True,
-                "data": {"content": [__import__("json").dumps(merge_payload)]},
-            },
+    with (
+        patch(
+            "fleet_agent.coworker.artifact_pack.get_settings_store",
+            return_value=settings_mock,
         ),
-    ) as mock_call, patch(
-        "fleet_agent.mcp.tools.notify.send_email_message",
-        AsyncMock(return_value={"success": True, "message": "sent"}),
+        patch(
+            "fleet_agent.coworker.common.get_settings_store",
+            return_value=settings_mock,
+        ),
+        patch(
+            "fleet_agent.coworker.artifact_pack.fleet_call",
+            AsyncMock(
+                return_value={
+                    "success": True,
+                    "data": {"content": [__import__("json").dumps(merge_payload)]},
+                },
+            ),
+        ) as mock_call,
+        patch(
+            "fleet_agent.mcp.tools.notify.send_email_message",
+            AsyncMock(return_value={"success": True, "message": "sent"}),
+        ),
     ):
         from fleet_agent.coworker.artifact_pack import run_artifact_pack
 

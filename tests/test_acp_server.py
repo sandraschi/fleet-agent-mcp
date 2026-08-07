@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from fleet_agent.acp_server import FleetACPAgent
+
+import pytest
 from acp.schema import TextContentBlock
+
+from fleet_agent.acp_server import FleetACPAgent
+
 
 @pytest.mark.asyncio
 async def test_acp_agent_initialize() -> None:
@@ -10,6 +13,7 @@ async def test_acp_agent_initialize() -> None:
     assert res.protocol_version == 1
     assert res.agent_info is not None
     assert res.agent_info.name == "fleet-agent-acp"
+
 
 @pytest.mark.asyncio
 async def test_acp_agent_sessions() -> None:
@@ -27,6 +31,7 @@ async def test_acp_agent_sessions() -> None:
     # Close session
     await agent.close_session(session_id=session_id)
     assert session_id not in agent.active_sessions
+
 
 @pytest.mark.asyncio
 async def test_acp_agent_prompt() -> None:

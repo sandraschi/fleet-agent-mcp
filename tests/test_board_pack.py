@@ -43,29 +43,36 @@ async def test_board_pack_merge_path(tmp_path, monkeypatch):
         "smtp_pass": "secret",
     }.get(key, default)
 
-    with patch(
-        "fleet_agent.coworker.board_pack.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.coworker.common.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.mcp.tools.fleet_bridge.fleet_discover",
-        AsyncMock(return_value={"data": {"servers": [{"online": True}, {"online": False}]}}),
-    ), patch(
-        "fleet_agent.mcp.tools.heartbeat.heartbeat_status",
-        AsyncMock(return_value={"health": {"agent_name": "Fritz", "tasks": {"pending": 2}}}),
-    ), patch(
-        "fleet_agent.coworker.board_pack.fleet_call",
-        AsyncMock(
-            return_value={
-                "success": True,
-                "data": {"content": [__import__("json").dumps(merge_payload)]},
-            },
+    with (
+        patch(
+            "fleet_agent.coworker.board_pack.get_settings_store",
+            return_value=settings_mock,
         ),
-    ) as mock_call, patch(
-        "fleet_agent.mcp.tools.notify.send_email_message",
-        AsyncMock(return_value={"success": True, "message": "sent"}),
+        patch(
+            "fleet_agent.coworker.common.get_settings_store",
+            return_value=settings_mock,
+        ),
+        patch(
+            "fleet_agent.mcp.tools.fleet_bridge.fleet_discover",
+            AsyncMock(return_value={"data": {"servers": [{"online": True}, {"online": False}]}}),
+        ),
+        patch(
+            "fleet_agent.mcp.tools.heartbeat.heartbeat_status",
+            AsyncMock(return_value={"health": {"agent_name": "Fritz", "tasks": {"pending": 2}}}),
+        ),
+        patch(
+            "fleet_agent.coworker.board_pack.fleet_call",
+            AsyncMock(
+                return_value={
+                    "success": True,
+                    "data": {"content": [__import__("json").dumps(merge_payload)]},
+                },
+            ),
+        ) as mock_call,
+        patch(
+            "fleet_agent.mcp.tools.notify.send_email_message",
+            AsyncMock(return_value={"success": True, "message": "sent"}),
+        ),
     ):
         from fleet_agent.coworker.board_pack import run_board_pack
 

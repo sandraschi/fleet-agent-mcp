@@ -37,24 +37,29 @@ async def test_weekly_report_pdf_happy_path(tmp_path, monkeypatch):
         "smtp_pass": "secret",
     }.get(key, default)
 
-    with patch(
-        "fleet_agent.coworker.weekly_report_pdf.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.coworker.common.get_settings_store",
-        return_value=settings_mock,
-    ), patch(
-        "fleet_agent.coworker.weekly_report_pdf.fleet_call",
-        AsyncMock(
-            return_value={
-                "success": True,
-                "data": {"content": [__import__("json").dumps(convert_payload)]},
-            },
+    with (
+        patch(
+            "fleet_agent.coworker.weekly_report_pdf.get_settings_store",
+            return_value=settings_mock,
         ),
-    ), patch(
-        "fleet_agent.mcp.tools.notify.send_email_message",
-        AsyncMock(return_value={"success": True, "message": "sent"}),
-    ) as mock_mail:
+        patch(
+            "fleet_agent.coworker.common.get_settings_store",
+            return_value=settings_mock,
+        ),
+        patch(
+            "fleet_agent.coworker.weekly_report_pdf.fleet_call",
+            AsyncMock(
+                return_value={
+                    "success": True,
+                    "data": {"content": [__import__("json").dumps(convert_payload)]},
+                },
+            ),
+        ),
+        patch(
+            "fleet_agent.mcp.tools.notify.send_email_message",
+            AsyncMock(return_value={"success": True, "message": "sent"}),
+        ) as mock_mail,
+    ):
         from fleet_agent.coworker.weekly_report_pdf import run_weekly_report_pdf
 
         result = await run_weekly_report_pdf(deliver=True)
@@ -74,10 +79,12 @@ def test_extract_libreoffice_output_nested():
         "success": True,
         "data": {
             "content": [
-                json.dumps({
-                    "success": True,
-                    "data": {"success": True, "output": "C:/tmp/report.pdf"},
-                })
+                json.dumps(
+                    {
+                        "success": True,
+                        "data": {"success": True, "output": "C:/tmp/report.pdf"},
+                    }
+                )
             ]
         },
     }

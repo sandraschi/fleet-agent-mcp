@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,7 +23,17 @@ class Settings(BaseSettings):
     memory_dir: Path = Path("memory")
     workflows_dir: Path = Path("workflows")
     identity_dir: Path = Path("identity")
-    db_path: Path = data_dir / "fleet-agent.db"
+    db_path: Path | None = None
+
+    @model_validator(mode="after")
+    def _derive_paths(self) -> "Settings":
+        # See src/fleet_agent/config.py for the full explanation. Short version:
+        # `db_path = data_dir / "fleet-agent.db"` in the class body is evaluated
+        # once at class-definition time against the DEFAULT data_dir, so an
+        # FLEET_AGENT_DATA_DIR override moves data_dir but leaves db_path behind.
+        if self.db_path is None:
+            object.__setattr__(self, "db_path", self.data_dir / "fleet-agent.db")
+        return self
 
     # Agent identity
     agent_name: str = "Fritz"

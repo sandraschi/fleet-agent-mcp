@@ -9,7 +9,9 @@ $Root = (Resolve-Path -LiteralPath $Root).Path
 function Test-PortListening {
     param([int]$PortNum)
     try {
-        $conn = Get-NetTCPConnection -LocalPort $PortNum -State Listen -ErrorAction SilentlyContinue
+        # Check loopback specifically - tailscaled serve may hold the external listener
+        # while the hub itself is down (false "already listening").
+        $conn = Get-NetTCPConnection -LocalPort $PortNum -LocalAddress 127.0.0.1 -State Listen -ErrorAction SilentlyContinue
         return ($null -ne $conn)
     } catch {
         return $false

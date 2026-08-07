@@ -14,21 +14,25 @@ class TestDevicesWatch:
             "incident_count": 1,
             "critical_count": 1,
             "highest_urgency": 10.0,
-            "incidents": [{
+            "incidents": [
+                {
+                    "title": "CO alert",
+                    "urgency": 10,
+                    "kind": "co_alarm",
+                    "source": "nest",
+                }
+            ],
+        }
+        new = [
+            {
+                "id": "nest-co-1",
                 "title": "CO alert",
                 "urgency": 10,
                 "kind": "co_alarm",
                 "source": "nest",
-            }],
-        }
-        new = [{
-            "id": "nest-co-1",
-            "title": "CO alert",
-            "urgency": 10,
-            "kind": "co_alarm",
-            "source": "nest",
-            "description": "CO emergency",
-        }]
+                "description": "CO emergency",
+            }
+        ]
         report = format_devices_report(payload, new_incidents=new)
         assert "CO alert" in report
         assert "New incidents" in report

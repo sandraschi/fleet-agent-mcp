@@ -1,6 +1,5 @@
 """Tests for Intel Reports Hub store + render."""
 
-
 from fleet_agent.intel_hub.render import markdown_to_html, render_index_page, wrap_markdown_report
 from fleet_agent.intel_hub.store import list_reports, publish_report
 
