@@ -10,6 +10,60 @@ Pretty HTML reports from **any fleet member**, served on a lightweight hub for i
 | Fritz backend | 10996 | publishes + ingests to AIWatcher |
 | AIWatcher backend | 10946 | publishes digests to hub |
 
+## Access matrix (2026-08-15)
+
+| Surface | URL | Access |
+|---------|-----|--------|
+| Hub (full) | `https://goliath.tailfab45.ts.net:11027/` | Tailnet only |
+| Hub (full) | `https://goliath.tailfab45.ts.net/` | **Public internet (Funnel) — HTTP Basic auth required** |
+| Harmless page | `https://goliath.tailfab45.ts.net/public` | **Public — no auth** (name + report count only) |
+| Health | `/health` | Public (watchdog probes) |
+| Legacy 10900 route | `https://goliath.tailfab45.ts.net:10443/` | Tailnet only |
+
+## HTTP Basic auth (Funnel hardening)
+
+Since the Funnel exposes the hub to the public internet, everything except `/public`
+and `/health` is gated by HTTP Basic auth:
+
+- Credentials from env `INTEL_REPORTS_HUB_USER` / `INTEL_REPORTS_HUB_PASS`
+  (defaults `fleet` / `intel`, set in `run-fleet-hub.bat` and
+  `scripts/start-intel-hub.ps1`).
+- **Change the default before relying on the public URL** — edit
+  `run-fleet-hub.bat` (or set env before `start-intel-hub.ps1`) and restart the
+  `fleet-hub` NSSM service.
+- The publish client (`intel_hub/client.py`) sends the same credentials via
+  `_hub_auth()`; without them it silently falls back to the filesystem store
+  (BUG-021 masking behavior — the hub keeps working locally).
+- Startup logs `(HTTP Basic auth: user=...)` when enabled, or a loud WARNING
+  when serving unauthenticated.
+
+## Funnel
+
+Funnel exposes the hub on the public internet: `https://goliath.tailfab45.ts.net/`
+(443) → `127.0.0.1:11027`. Requires the `funnel` node attribute in the tailnet
+ACL (granted to goliath) and HTTPS (already on).
+
+```powershell
+tailscale funnel --bg --https=443 http://127.0.0.1:11027   # enable
+tailscale funnel --https=443 off                            # kill switch
+tailscale funnel status
+```
+
+Traffic flows browser → Tailscale relay → goliath; no port forwarding needed.
+Funnel is public by design — no ACLs, no rate limiting — which is why the hub
+carries its own auth gate.
+
+**Verified 2026-08-15 from an iPad with Tailscale fully disabled:**
+
+| Check | Result |
+|-------|--------|
+| `goliath.tailfab45.ts.net` resolves via public DNS (Google resolver) | ✅ A records → Tailscale relay IPs (185.40.x.x) |
+| `https://goliath.tailfab45.ts.net/public` (no Tailscale) | ✅ 200 — harmless page |
+| `https://goliath.tailfab45.ts.net/` (no Tailscale) | ✅ 401 → login prompt → 200 with creds |
+
+Key fact: once Funnel is on, the `.ts.net` hostname resolves **publicly** —
+no MagicDNS needed, so any device anywhere reaches the hub.
+
 ## Start
 
 ```powershell
