@@ -21,6 +21,7 @@ from . import (
     notify,
     pulse,
     scripts,
+    surveil,
     teleport,
     voice,
 )
@@ -40,6 +41,7 @@ __all__ = [
     "notify",
     "coworker",
     "board",
+    "surveil",
     "intel_hub",
     "voice",
     "scripts",
