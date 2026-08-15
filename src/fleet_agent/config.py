@@ -44,6 +44,15 @@ class Settings(BaseSettings):
     # Bearer token for hub board/inbox + management endpoints (empty = no auth)
     fleet_hub_token: str = ""
 
+    # SFB crosspost (P2): discord-mcp REST + channel map + vla diary db
+    discord_mcp_url: str = "http://127.0.0.1:10756"
+    sfb_channels: dict[str, str] = {
+        "work": "1538243264300196031",
+        "thoughts": "1538243282759454751",
+        "alerts": "1538243284554743861",
+    }
+    vla_notebooks_db: str = "D:/Dev/repos/vla-mcp/data/notebooks/notebooks.sqlite3"
+
     def ensure_dirs(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("cards").mkdir(parents=True, exist_ok=True)

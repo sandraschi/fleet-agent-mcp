@@ -149,6 +149,58 @@ async def agent_send(
         return {"success": False, "error": str(exc)}
 
 
+@mcp.tool(annotations={"readonly": False}, version="0.1.0")
+async def sfb_post(
+    target: Annotated[
+        Literal["work", "thoughts", "alerts"],
+        Field(
+            description="Discord channel + budget bucket: work (#sfb-work, <=2 per task), "
+            "thoughts (#sfb-thoughts, <=1/h), alerts (#sfb-alerts, <=10/h)."
+        ),
+    ],
+    title: Annotated[str, Field(description="Short title (also used on the board).")],
+    body: Annotated[
+        str, Field(description="Post body - sanitized before Discord; raw stays on board.")
+    ],
+    board_channel: Annotated[
+        str,
+        Field(
+            description="Hub board channel (default dev-worklog; thoughts/alerts -> fleet-pulse)."
+        ),
+    ] = "dev-worklog",
+    task_id: Annotated[str | None, Field(description="Task id (required for target=work).")] = None,
+    category: Annotated[
+        str, Field(description="Diary category: note | repo_fix | decision | blooper.")
+    ] = "note",
+    dry_run: Annotated[bool, Field(description="Validate budget only - no posts.")] = False,
+) -> dict[str, Any]:
+    """Crosspost one event to all three surfaces: hub board + Discord + vla diary.
+
+    The board is the source of truth; Discord carries a sanitized summary
+    (credentials stripped); the diary entry carries board_post_id +
+    discord_message_id in metrics so all surfaces trace to one event.
+
+    ## Return Format
+    {"success": bool, "board_post_id": int|None, "discord_message_id": str|None,
+     "diary_entry_id": str|None, "metrics": {...}}
+
+    ## Examples
+    sfb_post(target="work", title="started P2", body="WIP: comm bus up", task_id="p2-board")
+    sfb_post(target="thoughts", title="idea", body="agents should post deltas, not full logs")
+    """
+    from ...coworker.crosspost import crosspost_event
+
+    return await crosspost_event(
+        target,
+        title,
+        body,
+        board_channel=board_channel,
+        task_id=task_id,
+        category=category,
+        dry_run=dry_run,
+    )
+
+
 @mcp.tool(annotations={"readonly": True}, version="0.1.0")
 async def agent_poll(
     entity: Annotated[str, Field(description="Entity to poll (defaults to this agent).")] = "",
