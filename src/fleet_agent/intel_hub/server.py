@@ -6,11 +6,12 @@ import base64
 import hmac
 import os
 from datetime import UTC, datetime
+from pathlib import Path
 
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.routing import Route
 
 from .render import render_index_page, wrap_markdown_report
@@ -94,6 +95,13 @@ class _BasicAuthMiddleware:
                 authorized = False
 
         if not authorized:
+            # Funnel visitors hitting the root land on the public site; only
+            # authenticated requests reach the private index. Other private
+            # paths (reports, API) stay hard-401.
+            if path == "/":
+                response = RedirectResponse("/public", status_code=302)
+                await response(scope, receive, send)
+                return
             await _unauthorized()(scope, receive, send)
             return
         await self.app(scope, receive, send)
@@ -158,7 +166,15 @@ async def page_index(request: Request) -> HTMLResponse:
 
 
 async def page_public(request: Request) -> HTMLResponse:
-    """Deliberately harmless public page (funnel-friendly): no report content."""
+    """Public funnel page — serves the generated public site when present,
+    otherwise the minimal status card."""
+    public_index = Path.home() / ".fleet-intel" / "public" / "index.html"
+    if public_index.is_file():
+        try:
+            return HTMLResponse(public_index.read_text(encoding="utf-8"))
+        except OSError:
+            pass
+
     meta = hub_meta()
     now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
     return HTMLResponse(
@@ -167,7 +183,7 @@ async def page_public(request: Request) -> HTMLResponse:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fleet Intel — Public</title>
+<title>Fleet Intel - Public</title>
 <style>
   body {{ margin:0; background:#0f1419; color:#e6e6e6; font-family:system-ui,sans-serif;
          display:flex; align-items:center; justify-content:center; min-height:100vh; }}
@@ -181,7 +197,7 @@ async def page_public(request: Request) -> HTMLResponse:
 <body>
 <div class="card">
   <h1>Fleet Intel Reports</h1>
-  <p>Service operational — {meta.get("reports_count", 0)} reports stored.</p>
+  <p>Service operational - {meta.get("reports_count", 0)} reports stored.</p>
   <p>Generated {now}</p>
   <p><a href="/">Sign in to view reports</a></p>
 </div>

@@ -65,3 +65,22 @@ async def aiwatcher_push_event(
         url=url,
         urgency_hint=urgency_hint,
     )
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def intel_public_site_generate() -> dict[str, Any]:
+    """Regenerate the public funnel site (GitHub repos + diary + AIWatcher counts).
+
+    PUBLIC-SAFE: renders only public repo metadata, per-repo dev-diary
+    aggregates, and AIWatcher pipeline counts — never private content.
+
+    ## Return Format
+    {"success": bool, "path": str, "repos": int, "diary_entries": int,
+     "aiwatcher_reachable": bool, "generated_at": str, "message": str}
+
+    ## Examples
+    intel_public_site_generate()
+    """
+    from ...intel_hub.public_site import generate_public_site
+
+    return await generate_public_site()
