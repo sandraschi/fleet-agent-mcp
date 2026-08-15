@@ -63,6 +63,7 @@ async def _execute_nonrecurring_task(task: dict[str, Any]) -> dict[str, Any]:
             return {"success": False, "message": f"Script failed: {exc}"}
 
     # LLM route and dispatch
+    route_json = ""
     try:
         from ..llm_client import chat_completion
         from ..mcp.tools.fleet_bridge import fleet_call_tool
@@ -73,10 +74,12 @@ async def _execute_nonrecurring_task(task: dict[str, Any]) -> dict[str, Any]:
                     "role": "system",
                     "content": (
                         "You are a task router for an MCP agent fleet. "
-                        "Given a task description, respond with EXACTLY this JSON (no markdown, no extra text):\n"
+                        "Given a task description, respond with EXACTLY this JSON "
+                        "(no markdown, no extra text):\n"
                         '{"server":"<mcp-server-name>","tool":"<tool-name>","args":{...}}\n\n'
                         "Available servers and their tools:\n"
-                        "- fleet-agent (this server): coworker_execute, pulse_list, script_run, memory_note, workflow_start\n"
+                        "- fleet-agent (this server): coworker_execute, pulse_list, "
+                        "script_run, memory_note, workflow_start\n"
                         "- arxiv: search_papers, get_paper_details, fetch_full_text\n"
                         "- email-mcp: list_emails, search_emails, send_email\n"
                         "- speech: speech_say\n"
@@ -153,18 +156,58 @@ async def _handle_workflow_tick() -> None:
             )
             verdict = verdict.strip().upper()
             if verdict not in ("PASS", "FAIL", "ITERATE", "BLOCKED"):
-                log.warning(
+                logger.warning(
                     "Gate '%s': LLM returned invalid verdict '%s' — defaulting to PASS",
                     current_node,
                     verdict,
                 )
                 verdict = "PASS"
         except Exception as exc:
-            log.error("Gate '%s': LLM call failed — defaulting to PASS: %s", current_node, exc)
+            logger.error("Gate '%s': LLM call failed — defaulting to PASS: %s", current_node, exc)
             verdict = "PASS"
 
         logs.add("info", f"Gate '{current_node}': verdict={verdict}", "agentic")
         result = await workflow_next(verdict=verdict)
+        if result.get("completed"):
+            logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
+    elif node_type == "agent":
+        # SFB reasoning step: run cline-mcp agent_run (ollama/muse-glimmer),
+        # store the output on the instance, then advance.
+        from ..engine.state_machine import get_state_machine
+        from .agent_step import run_agent_step
+
+        sm = get_state_machine()
+        task_desc = status.get("task", "") or current_node
+        prior = sm.get_node_outputs()
+        logs.add("info", f"Agent step '{current_node}': invoking brain tier...", "agentic")
+        try:
+            result = await run_agent_step(
+                workflow_name=workflow_name,
+                node_name=current_node,
+                task=task_desc,
+                prior_outputs=prior,
+            )
+            sm.record_node_output(current_node, result)
+            if result.get("success"):
+                ctx_chars = result.get("prompt_chars", 0)
+                logs.add(
+                    "info",
+                    f"Agent step '{current_node}' OK ({ctx_chars} ctx chars)",
+                    "agentic",
+                )
+            else:
+                logs.add(
+                    "warning",
+                    f"Agent step '{current_node}' failed: {result.get('error', 'unknown')}",
+                    "agentic",
+                )
+        except Exception as exc:
+            logger.exception("Agent step '%s' raised", current_node)
+            sm.record_node_output(current_node, {"success": False, "error": str(exc)})
+            logs.add("error", f"Agent step '{current_node}' raised: {exc}", "agentic")
+        # Advance regardless — a failed agent step records the error for the
+        # next node/gate instead of stalling the workflow forever.
+        result = await workflow_next()
         if result.get("completed"):
             logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
     elif node_type in ("build", "execute", "discussion"):
@@ -235,7 +278,8 @@ async def _handle_task_tick() -> None:
                 )
                 logs.add(
                     "warning",
-                    f"Task failed after {attempt} attempts: {task['task'][:100]} — {result.get('message', '')[:120]}",
+                    f"Task failed after {attempt} attempts: {task['task'][:100]} "
+                    f"— {result.get('message', '')[:120]}",
                     "agentic",
                 )
             else:
@@ -248,7 +292,8 @@ async def _handle_task_tick() -> None:
                 )
                 logs.add(
                     "warning",
-                    f"Task failed (attempt {attempt}/3): {task['task'][:100]} — {result.get('message', '')[:120]}",
+                    f"Task failed (attempt {attempt}/3): {task['task'][:100]} "
+                    f"— {result.get('message', '')[:120]}",
                     "agentic",
                 )
 

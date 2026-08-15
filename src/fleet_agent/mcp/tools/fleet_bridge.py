@@ -8,15 +8,21 @@ Enables the fleet agent to delegate work to specialized servers:
   - and any other fleet MCP server
 
 Uses FastMCP 3.2 Client with StreamableHttpTransport.
+
+Server discovery: the static FLEET_SERVERS table is the offline fallback; the
+mcp-federation-hub bridge (fleet_hub_url) is the canonical registry and is
+refreshed by fleet_refresh_from_hub() (hub entries win on alias conflict).
 """
 
 import logging
 from typing import Annotated, Any
 
+import httpx
 from fastmcp import Client
 from fastmcp.client.transports import StreamableHttpTransport
 from pydantic import Field
 
+from ...config import settings
 from ..registry import mcp
 
 logger = logging.getLogger("fleet_agent.tools.fleet_bridge")
@@ -93,7 +99,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "url": "http://127.0.0.1:10770/mcp",
         "description": "arxiv-mcp — Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",
         "category": "research",
-        "key_tools": ["search_papers", "get_paper_details", "find_connected_papers", "arxiv_agentic_assist"],
+        "key_tools": [
+            "search_papers",
+            "get_paper_details",
+            "find_connected_papers",
+            "arxiv_agentic_assist",
+        ],
     },
     "aiwatcher": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
@@ -113,7 +124,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "url": "http://127.0.0.1:10780/mcp",
         "description": "browser-mcp — Browser automation: open URLs, screenshots, web scraping, bookmarks",
         "category": "automation",
-        "key_tools": ["browser_open", "browser_screenshot", "browser_navigate", "browser_bookmarks"],
+        "key_tools": [
+            "browser_open",
+            "browser_screenshot",
+            "browser_navigate",
+            "browser_bookmarks",
+        ],
     },
     "cursor": {
         "url": "http://127.0.0.1:11000/mcp",
@@ -231,6 +247,102 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
 }
 
 
+# ── Hub-backed discovery (canonical registry) ────────────────────────────────
+
+# Overlay populated by fleet_refresh_from_hub(); static FLEET_SERVERS remains
+# the offline fallback.
+_hub_servers: dict[str, dict[str, Any]] = {}
+_hub_aliases: dict[str, str] = {}
+
+
+def _all_servers() -> dict[str, dict[str, Any]]:
+    """Merged server table: hub overlay wins over the static table."""
+    merged = dict(FLEET_SERVERS)
+    merged.update(_hub_servers)
+    return merged
+
+
+def _resolve_alias(alias: str) -> str:
+    """Resolve an alias to a canonical server id (hub first, static fallback)."""
+    if alias in _hub_aliases:
+        return _hub_aliases[alias]
+    return FLEET_SERVER_ALIASES.get(alias, alias)
+
+
+@mcp.tool(annotations={"readOnly": True}, version="0.1.0")
+async def fleet_refresh_from_hub() -> dict[str, Any]:
+    """Refresh the fleet server table from the mcp-federation-hub registry.
+
+    Fetches ``GET {hub}/api/v1/servers`` and merges every registered server
+    into the bridge's lookup (hub entries win on alias conflict). The static
+    table remains the offline fallback when the hub is unreachable.
+
+    ## Return Format
+    {"success": bool, "hub": str, "servers_added": int,
+     "servers_total": int, "error": str|null, "message": str}
+
+    ## Examples
+    fleet_refresh_from_hub()
+    """
+    global _hub_servers, _hub_aliases
+    hub = settings.fleet_hub_url
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(f"{hub}/api/v1/servers")
+            resp.raise_for_status()
+            data = resp.json()
+    except Exception as e:  # hub down → keep static table
+        return {
+            "success": False,
+            "hub": hub,
+            "servers_added": 0,
+            "servers_total": len(_all_servers()),
+            "error": str(e)[:300],
+            "message": f"Hub unreachable ({e}); static fleet table still active.",
+        }
+
+    servers = data.get("servers", []) if isinstance(data, dict) else []
+    fresh: dict[str, dict[str, Any]] = {}
+    aliases: dict[str, str] = {}
+    for entry in servers:
+        if not isinstance(entry, dict):
+            continue
+        sid = entry.get("id") or entry.get("name")
+        if not sid:
+            continue
+        alias = str(sid).lower().removesuffix("-mcp")
+        port = entry.get("mcp_port") or entry.get("port")
+        web = entry.get("web_interface") or ""
+        url = None
+        if port:
+            url = f"http://127.0.0.1:{port}/mcp"
+        elif web and str(web).startswith("http"):
+            url = str(web).rstrip("/") + "/mcp"
+        if not url:
+            continue
+        fresh[alias] = {
+            "url": url,
+            "description": f"{sid} — via hub registry",
+            "category": str(entry.get("tier") or "hub"),
+            "key_tools": [],
+            "hub": True,
+        }
+        aliases[alias] = alias
+        aliases[str(sid).lower()] = alias
+
+    _hub_servers = fresh
+    _hub_aliases = aliases
+    total = len(_all_servers())
+    return {
+        "success": True,
+        "hub": hub,
+        "servers_added": len(fresh),
+        "servers_total": total,
+        "error": None,
+        "message": f"Refreshed from hub: {len(fresh)} servers ({total} total after merge).",
+    }
+
+
 async def _get_client(server_url: str) -> Client:
     """Create a connected MCP client for a fleet server."""
     transport = StreamableHttpTransport(server_url)
@@ -255,7 +367,7 @@ async def fleet_discover() -> dict[str, Any]:
     """
     servers_result = []
 
-    for alias, info in FLEET_SERVERS.items():
+    for alias, info in _all_servers().items():
         entry = {
             "alias": alias,
             "url": info["url"],
@@ -273,8 +385,7 @@ async def fleet_discover() -> dict[str, Any]:
                 entry["online"] = True
                 entry["tool_count"] = len(tools)
                 entry["tools"] = [
-                    {"name": t.name, "description": t.description or ""}
-                    for t in tools
+                    {"name": t.name, "description": t.description or ""} for t in tools
                 ]
         except Exception as e:
             entry["error"] = str(e)[:200]
@@ -292,9 +403,16 @@ async def fleet_discover() -> dict[str, Any]:
 
 @mcp.tool(version="0.1.0")
 async def fleet_call_tool(
-    server: Annotated[str, Field(description="Server alias or URL. Aliases: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, ...")],  # noqa: E501
+    server: Annotated[
+        str,
+        Field(
+            description="Server alias or URL. Aliases: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, ..."
+        ),
+    ],  # noqa: E501
     tool: Annotated[str, Field(description="Tool name to call on the target server")],
-    arguments: Annotated[dict[str, Any] | None, Field(description="Tool arguments as key-value dict")] = None,  # noqa: E501
+    arguments: Annotated[
+        dict[str, Any] | None, Field(description="Tool arguments as key-value dict")
+    ] = None,  # noqa: E501
 ) -> dict[str, Any]:
     """Call a tool on any fleet MCP server via HTTP bridge.
 
@@ -310,10 +428,14 @@ async def fleet_call_tool(
     # Resolve server alias to URL
     server_url = server
     if not server.startswith("http"):
-        canonical = FLEET_SERVER_ALIASES.get(server, server)
-        info = FLEET_SERVERS.get(canonical)
+        canonical = _resolve_alias(server)
+        info = _all_servers().get(canonical)
         if not info:
-            known = sorted(set(FLEET_SERVERS.keys()) | set(FLEET_SERVER_ALIASES.keys()))
+            known = sorted(
+                set(_all_servers().keys())
+                | set(FLEET_SERVER_ALIASES.keys())
+                | set(_hub_aliases.keys())
+            )
             return {
                 "success": False,
                 "message": f"Unknown server alias '{server}'. Known: {', '.join(known)}",
@@ -331,10 +453,13 @@ async def fleet_call_tool(
             # Extract content
             content_parts = []
             for block in result.content:
-                if hasattr(block, "text"):
-                    content_parts.append(block.text)
-                elif hasattr(block, "data"):
-                    content_parts.append(str(block.data))
+                block_text = getattr(block, "text", None)
+                if block_text:
+                    content_parts.append(block_text)
+                    continue
+                block_data = getattr(block, "data", None)
+                if block_data is not None:
+                    content_parts.append(str(block_data))
 
             return {
                 "success": not result.is_error,
@@ -357,9 +482,22 @@ async def fleet_call_tool(
 
 @mcp.tool(version="0.1.0")
 async def fleet_inspect_repo(
-    repo_path: Annotated[str, Field(description="Absolute path to the repo to inspect. Use fleet_discover() to see available repos on disk.")],  # noqa: E501
-    aspect: Annotated[str | None, Field(description="What to check: 'status' (git + lint), 'tests', 'deps', 'structure', or None for general inspection")] = None,  # noqa: E501
-    wait: Annotated[bool, Field(description="Wait for completion (true) or return immediately with job_id (false)")] = True,  # noqa: E501
+    repo_path: Annotated[
+        str,
+        Field(
+            description="Absolute path to the repo to inspect. Use fleet_discover() to see available repos on disk."
+        ),
+    ],  # noqa: E501
+    aspect: Annotated[
+        str | None,
+        Field(
+            description="What to check: 'status' (git + lint), 'tests', 'deps', 'structure', or None for general inspection"
+        ),
+    ] = None,  # noqa: E501
+    wait: Annotated[
+        bool,
+        Field(description="Wait for completion (true) or return immediately with job_id (false)"),
+    ] = True,  # noqa: E501
 ) -> dict[str, Any]:
     """Inspect a fleet repo using opencode AI agent.
 
@@ -426,24 +564,35 @@ async def fleet_list_tools(
     fleet_list_tools(server="git-github")
     fleet_list_tools(server="docs")
     """
-    known = list(FLEET_SERVERS.keys()) + ["fleet-agent", "self"]
-    canonical = FLEET_SERVER_ALIASES.get(server, server)
-    info = FLEET_SERVERS.get(canonical)
+    canonical = _resolve_alias(server)
+    info = _all_servers().get(canonical)
 
     if canonical in ("fleet-agent", "self"):
         from ..registry import mcp as _mcp
+
         try:
             tools = await _mcp.local_provider.list_tools()
-            tool_list = [{
-                "name": t.name,
-                "description": t.description or "",
-                "parameters": t.parameters,
-            } for t in tools]
-            return {"success": True, "tools": tool_list, "count": len(tool_list), "message": f"{len(tool_list)} tools on {canonical}"}
+            tool_list = [
+                {
+                    "name": t.name,
+                    "description": t.description or "",
+                    "parameters": t.parameters,
+                }
+                for t in tools
+            ]
+            return {
+                "success": True,
+                "tools": tool_list,
+                "count": len(tool_list),
+                "message": f"{len(tool_list)} tools on {canonical}",
+            }
         except Exception as e:
             return {"success": False, "message": str(e), "tools": [], "count": 0}
 
     if info is None:
+        known = sorted(
+            set(_all_servers().keys()) | set(FLEET_SERVER_ALIASES.keys()) | set(_hub_aliases.keys())
+        )
         return {
             "success": False,
             "message": f"Unknown server alias '{server}'. Known: {', '.join(known)}",
@@ -455,12 +604,25 @@ async def fleet_list_tools(
     try:
         async with await _get_client(server_url) as client:
             raw_tools = await client.list_tools()
-            tool_list = [{
-                "name": t.name,
-                "description": t.description or "",
-                "parameters": t.parameters,
-            } for t in raw_tools]
-            return {"success": True, "tools": tool_list, "count": len(tool_list), "message": f"{len(tool_list)} tools on {canonical}"}
+            tool_list = [
+                {
+                    "name": t.name,
+                    "description": t.description or "",
+                    "parameters": getattr(t, "parameters", None),
+                }
+                for t in raw_tools
+            ]
+            return {
+                "success": True,
+                "tools": tool_list,
+                "count": len(tool_list),
+                "message": f"{len(tool_list)} tools on {canonical}",
+            }
     except Exception as e:
         logger.error("fleet_list_tools failed for %s: %s", server, e)
-        return {"success": False, "message": f"Failed to list tools on {server}: {e}", "tools": [], "count": 0}
+        return {
+            "success": False,
+            "message": f"Failed to list tools on {server}: {e}",
+            "tools": [],
+            "count": 0,
+        }

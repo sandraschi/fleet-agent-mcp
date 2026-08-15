@@ -14,7 +14,9 @@ async def poll_open_contributions() -> None:
 
     store = get_store()
     contribs = store.contrib_list(limit=100)
-    open_ones = [c for c in contribs if c.get("status") == "open" and c.get("pr_number") and c.get("repo")]
+    open_ones = [
+        c for c in contribs if c.get("status") == "open" and c.get("pr_number") and c.get("repo")
+    ]
 
     if not open_ones:
         return
@@ -31,7 +33,9 @@ async def poll_open_contributions() -> None:
         try:
             result = subprocess.run(
                 ["gh", "pr", "view", pr_num, "--repo", repo, "--json", "state,mergedAt"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
             )
             if result.returncode != 0:
                 continue
@@ -52,6 +56,7 @@ async def poll_open_contributions() -> None:
 async def pr_poll_loop(interval: int = 300) -> None:
     """Background loop checking PR status every `interval` seconds."""
     from ..log_store import get_log_store
+
     logs = get_log_store()
     logs.add("info", f"PR poll loop started ({interval}s interval)", "system")
     while True:

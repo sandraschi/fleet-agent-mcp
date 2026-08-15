@@ -81,12 +81,14 @@ class Wiki:
         for card in cards:
             for ref in card.get("cross_refs", []):
                 if ref not in card_by_id:
-                    issues.append({
-                        "type": "broken_ref",
-                        "card_id": card["id"],
-                        "card_title": card["title"],
-                        "broken_ref": ref,
-                    })
+                    issues.append(
+                        {
+                            "type": "broken_ref",
+                            "card_id": card["id"],
+                            "card_title": card["title"],
+                            "broken_ref": ref,
+                        }
+                    )
 
         # Check for stale cards (not updated in 30+ days)
         from datetime import timedelta
@@ -94,21 +96,25 @@ class Wiki:
         cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
         for card in cards:
             if card["updated_at"] < cutoff:
-                issues.append({
-                    "type": "stale",
-                    "card_id": card["id"],
-                    "card_title": card["title"],
-                    "last_updated": card["updated_at"],
-                })
+                issues.append(
+                    {
+                        "type": "stale",
+                        "card_id": card["id"],
+                        "card_title": card["title"],
+                        "last_updated": card["updated_at"],
+                    }
+                )
 
         # Check for untagged cards
         for card in cards:
             if not card.get("tags"):
-                issues.append({
-                    "type": "untagged",
-                    "card_id": card["id"],
-                    "card_title": card["title"],
-                })
+                issues.append(
+                    {
+                        "type": "untagged",
+                        "card_id": card["id"],
+                        "card_title": card["title"],
+                    }
+                )
 
         return issues
 

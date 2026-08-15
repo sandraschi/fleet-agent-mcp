@@ -24,7 +24,7 @@ async def evolution_record(
         str,
         Field(description="What was being attempted when the mistake happened."),
     ] = "",
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Record a mistake, correction, and lesson in the evolution log.
 
@@ -53,7 +53,7 @@ async def evolution_record(
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def evolution_list(
     limit: Annotated[int, Field(description="Max entries to return.", ge=1, le=500)] = 50,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List recent evolution log entries — corrections and lessons.
 
@@ -85,7 +85,7 @@ async def evolution_list(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def evolution_stats(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Get evolution log statistics — total corrections, unique lessons, patterns.
 
@@ -103,7 +103,6 @@ async def evolution_stats(
         "stats": stats,
         "duplicate_lessons": dupes,
         "message": (
-            f"{stats['total_corrections']} corrections, "
-            f"{stats['unique_lessons']} unique lessons."
+            f"{stats['total_corrections']} corrections, {stats['unique_lessons']} unique lessons."
         ),
     }

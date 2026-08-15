@@ -97,9 +97,7 @@ async def coworker_list_flows() -> dict[str, Any]:
         "success": True,
         "active": active,
         "office_ideas": OFFICE_FLOW_IDEAS,
-        "message": (
-            f"{len(active)} scheduled flows; {len(OFFICE_FLOW_IDEAS)} roadmap ideas"
-        ),
+        "message": (f"{len(active)} scheduled flows; {len(OFFICE_FLOW_IDEAS)} roadmap ideas"),
     }
 
 

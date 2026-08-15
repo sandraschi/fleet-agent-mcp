@@ -10,12 +10,12 @@ from . import (
     evolution_log,
     fleet_bridge,
     flowforge,
-    gate,
+    gate,  # noqa: F401  # import registers tools
     github,
     heartbeat,
     identity,
     intel_hub,
-    log_tools,
+    log_tools,  # noqa: F401  # import registers tools
     memory,
     notify,
     pulse,
@@ -25,8 +25,18 @@ from . import (
 )
 
 __all__ = [
-    "flowforge", "pulse", "memory", "identity", "teleport",
-    "heartbeat", "evolution_log", "fleet_bridge", "codegen", "github", "contribute", "notify",
+    "flowforge",
+    "pulse",
+    "memory",
+    "identity",
+    "teleport",
+    "heartbeat",
+    "evolution_log",
+    "fleet_bridge",
+    "codegen",
+    "github",
+    "contribute",
+    "notify",
     "coworker",
     "intel_hub",
     "voice",

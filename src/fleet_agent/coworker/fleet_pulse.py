@@ -78,12 +78,14 @@ def format_fleet_pulse_report(
 
     servers = (discovery.get("data") or {}).get("servers") or []
     online = sum(1 for s in servers if s.get("online"))
-    lines.extend([
-        "## MCP fleet",
-        "",
-        f"- Online: **{online}/{len(servers)}**",
-        "",
-    ])
+    lines.extend(
+        [
+            "## MCP fleet",
+            "",
+            f"- Online: **{online}/{len(servers)}**",
+            "",
+        ]
+    )
     for server in servers:
         mark = "up" if server.get("online") else "down"
         alias = server.get("alias", "?")
@@ -91,8 +93,7 @@ def format_fleet_pulse_report(
         on_demand = "" if server.get("daemon", False) else " (on-demand/stdio)"
         suffix = f" - {err[:80]}" if err and not server.get("online") else ""
         lines.append(
-            f"- `{alias}`: **{mark}**{on_demand}"
-            f" ({server.get('tool_count', 0)} tools){suffix}"
+            f"- `{alias}`: **{mark}**{on_demand} ({server.get('tool_count', 0)} tools){suffix}"
         )
     lines.append("")
 
@@ -203,14 +204,16 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         existing["updated_at"] = now
         store.project_upsert(existing)
     else:
-        store.project_upsert({
-            "id": "fleet-pulse",
-            "project_name": FLEET_PULSE_PROJECT,
-            "content": f"# {FLEET_PULSE_PROJECT}\n\n{report[:2000]}",
-            "tags": ["coworker", "fleet-pulse"],
-            "created_at": now,
-            "updated_at": now,
-        })
+        store.project_upsert(
+            {
+                "id": "fleet-pulse",
+                "project_name": FLEET_PULSE_PROJECT,
+                "content": f"# {FLEET_PULSE_PROJECT}\n\n{report[:2000]}",
+                "tags": ["coworker", "fleet-pulse"],
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
 
     delivery: dict[str, Any] = {"email": None}
     if deliver:
@@ -278,8 +281,8 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
             urgency_hint=urgency,
         )
 
-        is_critical = pipeline_bad or critical_count > 0 or (
-            len(servers) > 0 and online < len(servers) * 0.5
+        is_critical = (
+            pipeline_bad or critical_count > 0 or (len(servers) > 0 and online < len(servers) * 0.5)
         )
         if is_critical:
             alert_lines = []

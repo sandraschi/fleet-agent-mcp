@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     heartbeat_enabled: bool = False
     heartbeat_interval_minutes: int = 30
 
+    # Agent step (SFB brain tier): cline-mcp REST endpoint + local model
+    cline_mcp_url: str = "http://127.0.0.1:11103"
+    cline_mcp_provider: str = "ollama"
+    cline_mcp_model: str = "muse-glimmer"
+    cline_mcp_timeout_s: float = 300.0
+
+    # Fleet registry (mcp-federation-hub bridge) for dynamic server discovery
+    fleet_hub_url: str = "http://127.0.0.1:10857"
+
     def ensure_dirs(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("cards").mkdir(parents=True, exist_ok=True)

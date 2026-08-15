@@ -45,10 +45,15 @@ def _iso_age_seconds(iso_value: str | None, now: datetime) -> float | None:
 
 
 def devices_http_base() -> str:
-    return os.environ.get(
-        "FLEET_AGENT_DEVICES_HTTP_BASE",
-        get_settings_store().get("devices_mcp_http_base", "http://127.0.0.1:10717"),
-    ).rstrip("/")
+    base = os.environ.get("FLEET_AGENT_DEVICES_HTTP_BASE")
+    if not base:
+        store = get_settings_store()
+        base = (
+            store.get("devices_mcp_http_base", "http://127.0.0.1:10717")
+            if store
+            else "http://127.0.0.1:10717"
+        )
+    return str(base).rstrip("/")
 
 
 def _state_path():

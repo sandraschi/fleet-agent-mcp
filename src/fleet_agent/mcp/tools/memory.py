@@ -27,7 +27,7 @@ async def memory_card_create(
         str,
         Field(description="Category: general, pattern, project, mistake, reference."),
     ] = "general",
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Create a knowledge card in the wiki.
 
@@ -56,7 +56,7 @@ async def memory_card_create(
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def memory_card_search(
     query: Annotated[str, Field(description="Search query (matches title, content, and tags).")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Search knowledge cards by full-text query.
 
@@ -84,7 +84,7 @@ async def memory_card_update(
         list[str] | None,
         Field(description="New tags (replaces existing if provided)."),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Update a knowledge card's content and/or tags.
 
@@ -110,7 +110,7 @@ async def memory_card_update(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def memory_cards_list(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List all knowledge cards.
 
@@ -132,7 +132,7 @@ async def memory_cards_list(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def memory_lint(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Lint the knowledge base for issues: broken references, stale cards, untagged cards.
 
@@ -153,7 +153,8 @@ async def memory_lint(
         "count": len(issues),
         "message": (
             f"{len(issues)} issues found in knowledge base."
-            if issues else "Knowledge base is healthy."
+            if issues
+            else "Knowledge base is healthy."
         ),
     }
 
@@ -166,7 +167,7 @@ async def memory_project_note(
     ],
     content: Annotated[str, Field(description="Note content — what you learned or observed.")],
     tags: Annotated[list[str] | None, Field(description="Tags for cross-referencing.")] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Log a project observation or learning.
 
@@ -222,7 +223,7 @@ async def memory_project_notes(
         str | None,
         Field(description="Filter by project name. If omitted, lists all."),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List project notes, optionally filtered by project.
 

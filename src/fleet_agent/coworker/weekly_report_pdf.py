@@ -71,11 +71,8 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
     )
 
     inner = parse_fleet_payload(merge_result)
-    lo_data = (
-        inner.get("data")
-        if isinstance(inner, dict) and isinstance(inner.get("data"), dict)
-        else inner
-    )
+    raw_data = inner.get("data") if isinstance(inner, dict) else None
+    lo_data: dict = raw_data if isinstance(raw_data, dict) else (inner or {})
     pdf_path = None
     inner_ok = inner.get("success") if isinstance(inner, dict) else False
     if (
@@ -107,7 +104,8 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
                 "message": err,
                 "artifact_path": str(md_path),
             }
-        lo_data = inner.get("data") if isinstance(inner.get("data"), dict) else inner
+        raw_data = inner.get("data")
+        lo_data: dict = raw_data if isinstance(raw_data, dict) else inner
         if not lo_data.get("success", inner.get("success")):
             return {
                 "success": False,

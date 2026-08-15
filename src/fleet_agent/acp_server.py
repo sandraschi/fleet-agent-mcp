@@ -27,6 +27,7 @@ from acp.schema import (
 
 logger = logging.getLogger("fleet-agent.acp")
 
+
 class FleetACPAgent(Agent):
     def __init__(self) -> None:
         self.conn: Client | None = None
@@ -72,7 +73,7 @@ class FleetACPAgent(Agent):
     ) -> LoadSessionResponse | None:
         self.active_sessions[session_id] = cwd
         logger.info(f"Loaded ACP session: {session_id}")
-        return LoadSessionResponse(session_id=session_id)
+        return LoadSessionResponse()
 
     async def list_sessions(
         self, cwd: str | None = None, cursor: str | None = None, **kwargs: Any
@@ -125,7 +126,7 @@ class FleetACPAgent(Agent):
                 # Parse the SSE line
                 # e.g., data: {"c": "hello"}\n\n
                 if sse_line.startswith("data: "):
-                    content_str = sse_line[len("data: "):].strip()
+                    content_str = sse_line[len("data: ") :].strip()
                     if not content_str:
                         continue
                     try:
@@ -161,9 +162,7 @@ class FleetACPAgent(Agent):
                     session_id=session_id,
                     update=AgentMessageChunk(
                         session_update="agent_message_chunk",
-                        content=TextContentBlock(
-                            text=f"\n[Internal Error: {e}]\n", type="text"
-                        ),
+                        content=TextContentBlock(text=f"\n[Internal Error: {e}]\n", type="text"),
                     ),
                 )
 
@@ -192,13 +191,13 @@ class FleetACPAgent(Agent):
     ) -> ResumeSessionResponse:
         self.active_sessions[session_id] = cwd
         logger.info(f"Resumed session: {session_id}")
-        return ResumeSessionResponse(session_id=session_id)
+        return ResumeSessionResponse()
 
     async def close_session(self, session_id: str, **kwargs: Any) -> CloseSessionResponse | None:
         if session_id in self.active_sessions:
             del self.active_sessions[session_id]
         logger.info(f"Closed session: {session_id}")
-        return CloseSessionResponse(session_id=session_id)
+        return CloseSessionResponse()
 
     async def cancel(self, session_id: str, **kwargs: Any) -> None:
         logger.info(f"Cancelled processing for session: {session_id}")

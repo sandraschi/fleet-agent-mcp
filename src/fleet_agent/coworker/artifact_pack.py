@@ -35,7 +35,9 @@ def _collect_artifacts(*, glob_pattern: str, max_files: int) -> list[Path]:
 
 
 async def run_artifact_pack(
-    *, deliver: bool = True, template: str = "fleet-artifact-pack.odt",
+    *,
+    deliver: bool = True,
+    template: str = "fleet-artifact-pack.odt",
 ) -> dict[str, Any]:
     """Merge recent coworker markdown artifacts into one styled PDF."""
     store_settings = get_settings_store()
@@ -86,7 +88,8 @@ async def run_artifact_pack(
             "sources": [str(p) for p in paths],
         }
 
-    lo_data = inner.get("data") if isinstance(inner.get("data"), dict) else inner
+    raw_data = inner.get("data")
+    lo_data: dict = raw_data if isinstance(raw_data, dict) else inner
     if not lo_data.get("success", inner.get("success")):
         return {
             "success": False,
@@ -111,7 +114,9 @@ async def run_artifact_pack(
         f"- Generated: {pulse_date}\n"
     )
     log_project_note(
-        ARTIFACT_PACK_PROJECT, pulse_date, summary,
+        ARTIFACT_PACK_PROJECT,
+        pulse_date,
+        summary,
         tags=["coworker", "office", "artifact-pack"],
     )
 

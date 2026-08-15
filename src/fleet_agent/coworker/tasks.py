@@ -79,26 +79,30 @@ async def execute_recurring_task(task: dict[str, Any]) -> dict[str, Any]:
         if "arxiv" in task_lower or "paper" in task_lower:
             from ..llm_client import chat_completion
 
-            query = await chat_completion([
-                {
-                    "role": "system",
-                    "content": "Extract a short arxiv search query. Reply with ONLY the query.",
-                },
-                {"role": "user", "content": task["task"]},
-            ])
+            query = await chat_completion(
+                [
+                    {
+                        "role": "system",
+                        "content": "Extract a short arxiv search query. Reply with ONLY the query.",
+                    },
+                    {"role": "user", "content": task["task"]},
+                ]
+            )
             _call("arxiv", "search_papers", {"query": query, "limit": 3})
             return {"handler": "arxiv", "success": True, "message": f"Searched arxiv: {query}"}
 
         if any(k in task_lower for k in ("speak", "sonnet", "say", "tts")):
             from ..llm_client import chat_completion
 
-            text = await chat_completion([
-                {
-                    "role": "system",
-                    "content": "Extract what text to speak. Reply with ONLY the text to speak.",
-                },
-                {"role": "user", "content": task["task"]},
-            ])
+            text = await chat_completion(
+                [
+                    {
+                        "role": "system",
+                        "content": "Extract what text to speak. Reply with ONLY the text to speak.",
+                    },
+                    {"role": "user", "content": task["task"]},
+                ]
+            )
             _call("speech", "speech_say", {"text": text})
             return {"handler": "speech", "success": True, "message": "Speech dispatched"}
 
@@ -112,16 +116,18 @@ async def execute_recurring_task(task: dict[str, Any]) -> dict[str, Any]:
 
         from ..llm_client import chat_completion
 
-        route = await chat_completion([
-            {
-                "role": "system",
-                "content": (
-                    "You are a task router. Output JSON: "
-                    '{"server":"...","tool":"...","args":{...}}'
-                ),
-            },
-            {"role": "user", "content": task["task"]},
-        ])
+        route = await chat_completion(
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a task router. Output JSON: "
+                        '{"server":"...","tool":"...","args":{...}}'
+                    ),
+                },
+                {"role": "user", "content": task["task"]},
+            ]
+        )
         return {"handler": "router", "success": True, "message": route[:200]}
 
     except Exception as exc:

@@ -20,7 +20,7 @@ _START_TIME = time.time()
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def heartbeat_status(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Agent health check — uptime, active workflows, task count, memory stats.
 
@@ -72,7 +72,7 @@ async def pipeline_liveness_check(
         int,
         Field(description="Max hours since last feed poll before flagging stale.", ge=1),
     ] = 48,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Probe arxiv-mcp + aiwatcher-mcp open-weight pipeline liveness.
 
@@ -104,7 +104,17 @@ async def pipeline_liveness_check(
 
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def heartbeat_wake(
-    ctx: Context = None,
+    start_workflow: Annotated[
+        str | None,
+        Field(
+            description=(
+                "Optional workflow name to auto-start when none is active "
+                "(e.g. 'coworker'). Bridges the scheduler gap: cron → "
+                "heartbeat_wake(start_workflow='coworker') → workflow running."
+            )
+        ),
+    ] = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Agent wake-up routine — check state machine, get current task, suggest next action.
 
@@ -116,6 +126,7 @@ async def heartbeat_wake(
 
     ## Notes
     - Checks active workflow first (state machine has priority)
+    - If no active workflow and start_workflow is given, starts it
     - If no active workflow, checks pending tasks
     - Returns the next recommended action for a sub-agent to execute
     """
@@ -139,14 +150,39 @@ async def heartbeat_wake(
             "message": f"Active workflow: {instance.workflow_name} -> {instance.current_node}.",
         }
 
+    # No active workflow — auto-start requested workflow if any
+    if start_workflow:
+        try:
+            started = sm.start(start_workflow)
+            task = sm.get_current_task()
+            return {
+                "success": True,
+                "mode": "workflow_started",
+                "workflow": start_workflow,
+                "current_node": started.current_node,
+                "task": task,
+                "action": f"Execute node '{started.current_node}': {task}",
+                "message": f"Started workflow '{start_workflow}' at '{started.current_node}'.",
+            }
+        except ValueError as e:
+            return {
+                "success": False,
+                "mode": "workflow_start_failed",
+                "workflow": start_workflow,
+                "error": str(e),
+                "message": f"Could not start workflow '{start_workflow}': {e}",
+            }
+
     # No active workflow — check pending tasks
     tasks = store.todo_list(status="pending")
     if tasks:
         priority_order = {"high": 0, "medium": 1, "low": 2}
-        tasks.sort(key=lambda t: (
-            priority_order.get(t.get("priority", "medium"), 1),
-            t.get("created_at", ""),
-        ))
+        tasks.sort(
+            key=lambda t: (
+                priority_order.get(t.get("priority", "medium"), 1),
+                t.get("created_at", ""),
+            )
+        )
         next_task = tasks[0]
         return {
             "success": True,
@@ -160,8 +196,7 @@ async def heartbeat_wake(
             "total_pending": len(tasks),
             "action": f"Execute highest-priority task: '{next_task['task'][:80]}'",
             "message": (
-                f"No active workflow. {len(tasks)} pending tasks. "
-                f"Top: '{next_task['task'][:80]}'."
+                f"No active workflow. {len(tasks)} pending tasks. Top: '{next_task['task'][:80]}'."
             ),
         }
 
@@ -169,10 +204,10 @@ async def heartbeat_wake(
     return {
         "success": True,
         "mode": "idle",
-            "action": (
-                "Run memory_lint() to clean up knowledge base, "
-                "or pulse_stale() to find forgotten tasks."
-            ),
+        "action": (
+            "Run memory_lint() to clean up knowledge base, "
+            "or pulse_stale() to find forgotten tasks."
+        ),
         "suggestions": [
             "workflow_autodiscover() to register workflows",
             "memory_lint() to check knowledge base health",

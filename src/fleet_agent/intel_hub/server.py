@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import base64
+import hmac
 import os
+from datetime import UTC, datetime
 
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
@@ -16,6 +19,11 @@ from .store import get_report_html, hub_meta, list_reports, publish_report
 DEFAULT_PORT = 11027
 DEFAULT_HOST = "0.0.0.0"
 
+# Paths reachable without credentials. /health stays open for the watchdog and
+# fleet probes; /public is the deliberately harmless page for public funnel
+# access. Everything else (index, reports, API) requires HTTP Basic auth.
+PUBLIC_PATHS = ("/public", "/health")
+
 
 def hub_host() -> str:
     return os.environ.get("INTEL_REPORTS_HUB_HOST", DEFAULT_HOST)
@@ -27,6 +35,68 @@ def hub_port() -> int:
         return int(raw)
     except ValueError:
         return DEFAULT_PORT
+
+
+def hub_auth_credentials() -> tuple[str, str] | None:
+    """Return (user, password) when HTTP Basic auth is configured.
+
+    Auth is enabled when either INTEL_REPORTS_HUB_USER or INTEL_REPORTS_HUB_PASS
+    is set. If neither is set, the hub serves unauthenticated and logs a loud
+    warning at startup - never silently assume auth is on.
+    """
+    user = os.environ.get("INTEL_REPORTS_HUB_USER", "").strip()
+    password = os.environ.get("INTEL_REPORTS_HUB_PASS", "").strip()
+    if user or password:
+        return user, password
+    return None
+
+
+def _unauthorized() -> JSONResponse:
+    return JSONResponse(
+        {"success": False, "error": "unauthorized"},
+        status_code=401,
+        headers={"WWW-Authenticate": 'Basic realm="Fleet Intel Reports"'},
+    )
+
+
+class _BasicAuthMiddleware:
+    """HTTP Basic auth gate for the hub.
+
+    Only enforces when credentials are configured; PUBLIC_PATHS bypass it.
+    """
+
+    def __init__(self, app, credentials: tuple[str, str] | None):
+        self.app = app
+        self.credentials = credentials
+
+    async def __call__(self, scope, receive, send) -> None:
+        if scope["type"] != "http" or self.credentials is None:
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if any(path == p or path.startswith(p + "/") for p in PUBLIC_PATHS):
+            await self.app(scope, receive, send)
+            return
+
+        headers = {k.lower(): v for k, v in scope.get("headers", [])}
+        header = headers.get(b"authorization", b"")
+        expected_user, expected_pass = self.credentials
+        authorized = False
+        if header.lower().startswith(b"basic "):
+            try:
+                decoded = base64.b64decode(header.split(b" ", 1)[1]).decode("utf-8")
+                user, _, password = decoded.partition(":")
+                authorized = hmac.compare_digest(user, expected_user) and hmac.compare_digest(
+                    password, expected_pass
+                )
+            except Exception:
+                authorized = False
+
+        if not authorized:
+            await _unauthorized()(scope, receive, send)
+            return
+        await self.app(scope, receive, send)
 
 
 async def api_health(request: Request) -> JSONResponse:
@@ -58,7 +128,10 @@ async def api_reports_publish(request: Request) -> JSONResponse:
 
     if not html_body and markdown:
         html_body = wrap_markdown_report(
-            title=title, source=source, markdown=markdown, summary=summary,
+            title=title,
+            source=source,
+            markdown=markdown,
+            summary=summary,
         )
     if not html_body:
         return JSONResponse(
@@ -84,6 +157,39 @@ async def page_index(request: Request) -> HTMLResponse:
     return HTMLResponse(render_index_page(reports))
 
 
+async def page_public(request: Request) -> HTMLResponse:
+    """Deliberately harmless public page (funnel-friendly): no report content."""
+    meta = hub_meta()
+    now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    return HTMLResponse(
+        f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fleet Intel — Public</title>
+<style>
+  body {{ margin:0; background:#0f1419; color:#e6e6e6; font-family:system-ui,sans-serif;
+         display:flex; align-items:center; justify-content:center; min-height:100vh; }}
+  .card {{ background:#1a2332; border:1px solid #2a3648; border-radius:12px;
+           padding:2rem; max-width:420px; text-align:center; }}
+  h1 {{ font-size:1.25rem; margin:0 0 .5rem; }}
+  p {{ color:#9aa7b8; font-size:.9rem; margin:.25rem 0; }}
+  a {{ color:#58a6ff; text-decoration:none; }}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Fleet Intel Reports</h1>
+  <p>Service operational — {meta.get("reports_count", 0)} reports stored.</p>
+  <p>Generated {now}</p>
+  <p><a href="/">Sign in to view reports</a></p>
+</div>
+</body>
+</html>"""
+    )
+
+
 async def page_report(request: Request) -> HTMLResponse:
     report_id = request.path_params["report_id"]
     html_content = get_report_html(report_id)
@@ -96,6 +202,7 @@ def build_app() -> Starlette:
     app = Starlette(
         routes=[
             Route("/", page_index),
+            Route("/public", page_public),
             Route("/health", api_health),
             Route("/api/health", api_health),
             Route("/api/reports", api_reports_list),
@@ -103,6 +210,7 @@ def build_app() -> Starlette:
             Route("/reports/{report_id}", page_report),
         ],
     )
+    app.add_middleware(_BasicAuthMiddleware, credentials=hub_auth_credentials())
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -118,7 +226,14 @@ def main() -> None:
     app = build_app()
     port = hub_port()
     host = hub_host()
-    print(f"Intel Reports Hub on http://{host}:{port}")
+    credentials = hub_auth_credentials()
+    if credentials:
+        print(f"Intel Reports Hub on http://{host}:{port} (HTTP Basic auth: user={credentials[0]})")
+    else:
+        print(
+            "WARNING: Intel Reports Hub serving WITHOUT authentication - set "
+            "INTEL_REPORTS_HUB_USER/INTEL_REPORTS_HUB_PASS to enable HTTP Basic auth"
+        )
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 

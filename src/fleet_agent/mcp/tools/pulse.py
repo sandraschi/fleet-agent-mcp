@@ -38,7 +38,7 @@ async def pulse_add(
         str | None,
         Field(description="ID of a script to run when this task fires."),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Add a task to the unified TODO list.
 
@@ -59,17 +59,23 @@ async def pulse_add(
     # Validate task feasibility via LLM
     try:
         from ...llm_client import chat_completion
-        validation = await chat_completion([
-            {"role": "system", "content": (
-                "You check if a task is physically or logically possible. "
-                "If possible, reply ONLY with 'OK'. "
-                "If impossible (perpetual motion, squaring the circle, time travel, "
-                "making 1+1=3, etc.), reply with a SHORT humorous refusal "
-                "(max 100 chars), referencing what they asked. "
-                "Be witty but not mean."
-            )},
-            {"role": "user", "content": f"Is this task possible? '{task}'"},
-        ])
+
+        validation = await chat_completion(
+            [
+                {
+                    "role": "system",
+                    "content": (
+                        "You check if a task is physically or logically possible. "
+                        "If possible, reply ONLY with 'OK'. "
+                        "If impossible (perpetual motion, squaring the circle, time travel, "
+                        "making 1+1=3, etc.), reply with a SHORT humorous refusal "
+                        "(max 100 chars), referencing what they asked. "
+                        "Be witty but not mean."
+                    ),
+                },
+                {"role": "user", "content": f"Is this task possible? '{task}'"},
+            ]
+        )
         if validation.strip() != "OK":
             return {
                 "success": False,
@@ -112,7 +118,7 @@ async def pulse_list(
         str | None,
         Field(description="Filter by status: 'pending', 'done', 'cancelled'."),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List all tasks, optionally filtered by group or status.
 
@@ -143,7 +149,7 @@ async def pulse_list(
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def pulse_complete(
     task_id: Annotated[str, Field(description="ID of the task to mark as complete.")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Mark a task as complete.
 
@@ -173,7 +179,7 @@ async def pulse_complete(
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def pulse_delete(
     task_id: Annotated[str, Field(description="ID of the task to delete (DESTRUCTIVE).")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Delete a task permanently.
 
@@ -196,7 +202,7 @@ async def pulse_stale(
         int,
         Field(description="Number of days without updates to flag as stale.", ge=1),
     ] = 3,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Find tasks untouched for >= N days.
 
@@ -219,7 +225,7 @@ async def pulse_stale(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def pulse_align(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Display tasks sorted by strategic alignment with north star goals.
 
@@ -235,10 +241,12 @@ async def pulse_align(
 
     # Sort: high priority first, then by age (oldest first)
     priority_order = {"high": 0, "medium": 1, "low": 2}
-    tasks.sort(key=lambda t: (
-        priority_order.get(t.get("priority", "medium"), 1),
-        t.get("created_at", ""),
-    ))
+    tasks.sort(
+        key=lambda t: (
+            priority_order.get(t.get("priority", "medium"), 1),
+            t.get("created_at", ""),
+        )
+    )
 
     recommendations = tasks[:5]
     return {

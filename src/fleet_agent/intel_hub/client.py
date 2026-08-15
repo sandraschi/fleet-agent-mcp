@@ -19,6 +19,15 @@ def hub_base_url() -> str:
     return os.environ.get("INTEL_REPORTS_HUB_URL", f"http://127.0.0.1:{hub_port()}").rstrip("/")
 
 
+def _hub_auth() -> httpx.BasicAuth | None:
+    """Return Basic auth credentials if the hub is configured with auth enabled."""
+    user = os.environ.get("INTEL_REPORTS_HUB_USER", "").strip()
+    password = os.environ.get("INTEL_REPORTS_HUB_PASS", "").strip()
+    if user or password:
+        return httpx.BasicAuth(user, password)
+    return None
+
+
 async def publish_to_hub(
     *,
     title: str,
@@ -43,8 +52,11 @@ async def publish_to_hub(
 
     url = f"{hub_base_url()}/api/reports/publish"
     try:
+        auth = _hub_auth()
         async with httpx.AsyncClient(timeout=8.0) as client:
-            resp = await client.post(url, json=payload)
+            resp = await client.post(
+                url, json=payload, auth=auth if auth is not None else httpx.USE_CLIENT_DEFAULT
+            )
             if resp.status_code == 200:
                 data = resp.json()
                 data["via"] = "http"

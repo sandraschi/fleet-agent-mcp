@@ -26,13 +26,16 @@ nodes:
     next: execute
 
   execute:
+    node_type: agent
     task: |
-      PRELIMINARY — execute node.
-      1. Synthesize gathered data OR code_generate/file_write for fixes.
-      2. For code paths: run tests if repo available.
-      3. Produce deliverable: markdown report, HTML, or PR branch.
-      4. High-stakes actions (email send, PR merge, deploy): STOP and pulse_add group=human.
-      5. LOG via evolution_record if corrections were needed.
+      Synthesize the gathered data into the final deliverable.
+      1. Combine the structured gather results (from the 'gather' step context)
+         into a coherent, well-organized report in markdown.
+      2. Write the report to the artifacts directory: ~/.fleet-agent/artifacts/.
+      3. Include links, diffs, or attachment paths in the report body.
+      4. If high-stakes actions are required (email send, PR merge, deploy),
+         do NOT perform them — note them as follow-ups in the report.
+      5. End with a short '## Summary' section (3 bullets max).
     next: deliver
 
   deliver:

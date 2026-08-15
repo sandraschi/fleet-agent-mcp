@@ -45,8 +45,7 @@ class Identity:
             "human": human,
             "soul_preview": self.soul[:300] + "..." if len(self.soul) > 300 else self.soul,
             "north_star_preview": (
-                self.north_star[:200] + "..." if len(self.north_star) > 200
-                else self.north_star
+                self.north_star[:200] + "..." if len(self.north_star) > 200 else self.north_star
             ),
         }
 

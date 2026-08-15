@@ -49,8 +49,16 @@ def _log_errors(max_lines: int = 200) -> list[str]:
 
 
 def _pending_digests() -> tuple[list[str], list[str]]:
-    vault = sorted(p.name for p in VAULT_INBOX.glob("*session-scribe*.md")) if VAULT_INBOX.is_dir() else []
-    aiw = sorted(p.name for p in AIWATCHER_INBOX.glob("*session-scribe*.md")) if AIWATCHER_INBOX.is_dir() else []
+    vault = (
+        sorted(p.name for p in VAULT_INBOX.glob("*session-scribe*.md"))
+        if VAULT_INBOX.is_dir()
+        else []
+    )
+    aiw = (
+        sorted(p.name for p in AIWATCHER_INBOX.glob("*session-scribe*.md"))
+        if AIWATCHER_INBOX.is_dir()
+        else []
+    )
     return vault, aiw
 
 
@@ -70,7 +78,10 @@ async def run_scribe_watch(*, deliver: bool = True) -> dict[str, Any]:
         headline = "scribe state file missing/unreadable - has the scribe ever run?"
     elif age > STALE_HOURS:
         status = "red"
-        headline = f"scribe stale: last run {age:.1f}h ago (threshold {STALE_HOURS}h) - scheduled task likely broken"
+        headline = (
+            f"scribe stale: last run {age:.1f}h ago "
+            f"(threshold {STALE_HOURS}h) - scheduled task likely broken"
+        )
     elif errors:
         status = "yellow"
         headline = f"scribe running but log shows {len(errors)} error line(s)"
@@ -79,7 +90,10 @@ async def run_scribe_watch(*, deliver: bool = True) -> dict[str, Any]:
         headline = f"{len(missing_copies)} digest(s) missing from aiwatcher inbox copy"
     else:
         status = "green"
-        headline = f"scribe healthy: last run {age:.1f}h ago, {len(vault_digests)} digest(s) awaiting review"
+        headline = (
+            f"scribe healthy: last run {age:.1f}h ago, "
+            f"{len(vault_digests)} digest(s) awaiting review"
+        )
 
     report_lines = [
         f"# Scribe Watch — {datetime.now(UTC).isoformat()}",

@@ -94,12 +94,16 @@ async def run_docs_drift(*, deliver: bool = True) -> dict[str, Any]:
     pulse_date = now_label(tz_name)
 
     repos_root = Path(settings.get("fleet_repos_root", "D:/Dev/repos"))
-    watched = settings.get("docs_drift_repos") or settings.get("fleet_pulse_repos") or [
-        "fleet-agent-mcp",
-        "mcp-central-docs",
-        "email-mcp",
-        "notion-mcp",
-    ]
+    watched = (
+        settings.get("docs_drift_repos")
+        or settings.get("fleet_pulse_repos")
+        or [
+            "fleet-agent-mcp",
+            "mcp-central-docs",
+            "email-mcp",
+            "notion-mcp",
+        ]
+    )
 
     repo_rows: list[dict[str, Any]] = []
     for name in watched:

@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS instances (
     history_json TEXT DEFAULT '[]',
     archived INTEGER DEFAULT 0,
     last_verdict TEXT,
-    gate_results_json TEXT DEFAULT '[]'
+    gate_results_json TEXT DEFAULT '[]',
+    node_outputs_json TEXT DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS execution_log (
@@ -124,6 +125,7 @@ class SqliteStore:
             for migration in (
                 "ALTER TABLE instances ADD COLUMN last_verdict TEXT",
                 "ALTER TABLE instances ADD COLUMN gate_results_json TEXT DEFAULT '[]'",
+                "ALTER TABLE instances ADD COLUMN node_outputs_json TEXT DEFAULT '{}'",
             ):
                 try:
                     conn.execute(migration)
@@ -134,6 +136,7 @@ class SqliteStore:
 
     def save_workflow(self, wf: object) -> None:
         from .workflow_loader import Workflow
+
         wf_data: Workflow = wf  # type: ignore[assignment]
         with self._connect() as conn:
             conn.execute(
@@ -157,6 +160,7 @@ class SqliteStore:
 
     def get_workflow(self, name: str) -> Any | None:
         from .workflow_loader import Branch, Workflow, WorkflowNode
+
         with self._connect() as conn:
             row = conn.execute(
                 "SELECT definition_json FROM workflows WHERE name = ?", (name,)
@@ -187,26 +191,49 @@ class SqliteStore:
 
     def save_instance(self, instance: object) -> None:
         from .state_machine import WorkflowInstance
+
         inst: WorkflowInstance = instance  # type: ignore[assignment]
         with self._connect() as conn:
-            conn.execute(
-                """INSERT OR REPLACE INTO instances
-                   (workflow_name, current_node, started_at, updated_at,
-                    history_json, archived, last_verdict, gate_results_json)
-                   VALUES (?, ?, ?, ?, ?, 0, ?, ?)""",
+            # The instances table has no primary key — UPDATE the active row
+            # (identified by workflow + start time) instead of INSERT OR REPLACE,
+            # which would append a duplicate row on every save.
+            cursor = conn.execute(
+                """UPDATE instances SET
+                     current_node = ?, updated_at = ?, history_json = ?,
+                     last_verdict = ?, gate_results_json = ?, node_outputs_json = ?
+                   WHERE workflow_name = ? AND started_at = ? AND archived = 0""",
                 (
-                    inst.workflow_name,
                     inst.current_node,
-                    inst.started_at,
                     inst.updated_at,
                     json.dumps(inst.history),
                     inst.last_verdict,
                     json.dumps(inst.gate_results),
+                    json.dumps(inst.node_outputs),
+                    inst.workflow_name,
+                    inst.started_at,
                 ),
             )
+            if cursor.rowcount == 0:
+                conn.execute(
+                    """INSERT INTO instances
+                       (workflow_name, current_node, started_at, updated_at,
+                        history_json, archived, last_verdict, gate_results_json, node_outputs_json)
+                       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)""",
+                    (
+                        inst.workflow_name,
+                        inst.current_node,
+                        inst.started_at,
+                        inst.updated_at,
+                        json.dumps(inst.history),
+                        inst.last_verdict,
+                        json.dumps(inst.gate_results),
+                        json.dumps(inst.node_outputs),
+                    ),
+                )
 
     def get_active_instance(self) -> Any | None:
         from .state_machine import WorkflowInstance
+
         with self._connect() as conn:
             row = conn.execute(
                 "SELECT * FROM instances WHERE archived = 0 ORDER BY updated_at DESC LIMIT 1"
@@ -215,13 +242,21 @@ class SqliteStore:
                 return None
             # Compatibility: handle missing columns gracefully (older DB)
             try:
-                gate_results = json.loads(row["gate_results_json"]) if row["gate_results_json"] else []
+                gate_results = (
+                    json.loads(row["gate_results_json"]) if row["gate_results_json"] else []
+                )
             except (KeyError, json.JSONDecodeError):
                 gate_results = []
             try:
                 last_verdict = row["last_verdict"] or None
             except KeyError:
                 last_verdict = None
+            try:
+                node_outputs = (
+                    json.loads(row["node_outputs_json"]) if row["node_outputs_json"] else {}
+                )
+            except (KeyError, json.JSONDecodeError):
+                node_outputs = {}
             return WorkflowInstance(
                 workflow_name=row["workflow_name"],
                 current_node=row["current_node"],
@@ -230,6 +265,7 @@ class SqliteStore:
                 history=json.loads(row["history_json"]),
                 last_verdict=last_verdict,
                 gate_results=gate_results,
+                node_outputs=node_outputs,
             )
 
     def list_active_instances(self) -> list[dict[str, Any]]:
@@ -242,6 +278,7 @@ class SqliteStore:
 
     def archive_instance(self, instance: object) -> None:
         from .state_machine import WorkflowInstance
+
         inst: WorkflowInstance = instance  # type: ignore[assignment]
         with self._connect() as conn:
             conn.execute(
@@ -323,9 +360,12 @@ class SqliteStore:
 
     # ── Scripts ────────────────────────────────────────────
 
-    def script_create(self, name: str, content: str, language: str = "python", description: str = "") -> dict[str, Any]:
+    def script_create(
+        self, name: str, content: str, language: str = "python", description: str = ""
+    ) -> dict[str, Any]:
         now = datetime.now(UTC).isoformat()
         import uuid
+
         item = {
             "id": str(uuid.uuid4())[:8],
             "name": name,
@@ -338,7 +378,15 @@ class SqliteStore:
         with self._connect() as conn:
             conn.execute(
                 "INSERT INTO scripts (id, name, description, language, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (item["id"], item["name"], item["description"], item["language"], item["content"], item["created_at"], item["updated_at"]),
+                (
+                    item["id"],
+                    item["name"],
+                    item["description"],
+                    item["language"],
+                    item["content"],
+                    item["created_at"],
+                    item["updated_at"],
+                ),
             )
         return item
 
@@ -358,7 +406,14 @@ class SqliteStore:
         with self._connect() as conn:
             conn.execute(
                 "UPDATE scripts SET name=?, description=?, language=?, content=?, updated_at=? WHERE id=?",
-                (existing["name"], existing["description"], existing["language"], existing["content"], existing["updated_at"], script_id),
+                (
+                    existing["name"],
+                    existing["description"],
+                    existing["language"],
+                    existing["content"],
+                    existing["updated_at"],
+                    script_id,
+                ),
             )
         return existing
 
@@ -374,8 +429,19 @@ class SqliteStore:
 
     # ── Contribution Log ───────────────────────────────────
 
-    def contrib_create(self, repo: str, title: str, issue_url: str = "", pr_url: str = "", pr_number: str = "", status: str = "open", steps: list[dict] | None = None, error: str = "") -> dict[str, Any]:
+    def contrib_create(
+        self,
+        repo: str,
+        title: str,
+        issue_url: str = "",
+        pr_url: str = "",
+        pr_number: str = "",
+        status: str = "open",
+        steps: list[dict] | None = None,
+        error: str = "",
+    ) -> dict[str, Any]:
         import uuid
+
         now = datetime.now(UTC).isoformat()
         item = {
             "id": str(uuid.uuid4())[:8],
@@ -393,13 +459,27 @@ class SqliteStore:
         with self._connect() as conn:
             conn.execute(
                 "INSERT INTO contribution_log (id, repo, issue_url, pr_url, pr_number, status, title, error, steps_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (item["id"], item["repo"], item["issue_url"], item["pr_url"], item["pr_number"], item["status"], item["title"], item["error"], json.dumps(item["steps"]), item["created_at"], item["updated_at"]),
+                (
+                    item["id"],
+                    item["repo"],
+                    item["issue_url"],
+                    item["pr_url"],
+                    item["pr_number"],
+                    item["status"],
+                    item["title"],
+                    item["error"],
+                    json.dumps(item["steps"]),
+                    item["created_at"],
+                    item["updated_at"],
+                ),
             )
         return item
 
     def contrib_list(self, limit: int = 50) -> list[dict[str, Any]]:
         with self._connect() as conn:
-            rows = conn.execute("SELECT * FROM contribution_log ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+            rows = conn.execute(
+                "SELECT * FROM contribution_log ORDER BY created_at DESC LIMIT ?", (limit,)
+            ).fetchall()
             items = []
             for r in rows:
                 item = dict(r)
@@ -412,7 +492,9 @@ class SqliteStore:
 
     def contrib_get(self, contrib_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
-            row = conn.execute("SELECT * FROM contribution_log WHERE id = ?", (contrib_id,)).fetchone()
+            row = conn.execute(
+                "SELECT * FROM contribution_log WHERE id = ?", (contrib_id,)
+            ).fetchone()
             if not row:
                 return None
             item = dict(row)
@@ -434,7 +516,15 @@ class SqliteStore:
         with self._connect() as conn:
             conn.execute(
                 "UPDATE contribution_log SET pr_url=?, pr_number=?, status=?, error=?, steps_json=?, updated_at=? WHERE id=?",
-                (existing["pr_url"], existing["pr_number"], existing["status"], existing["error"], steps_str, existing["updated_at"], contrib_id),
+                (
+                    existing["pr_url"],
+                    existing["pr_number"],
+                    existing["status"],
+                    existing["error"],
+                    steps_str,
+                    existing["updated_at"],
+                    contrib_id,
+                ),
             )
         return existing
 
@@ -517,9 +607,7 @@ class SqliteStore:
 
     def card_get(self, card_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
-            row = conn.execute(
-                "SELECT * FROM memory_cards WHERE id = ?", (card_id,)
-            ).fetchone()
+            row = conn.execute("SELECT * FROM memory_cards WHERE id = ?", (card_id,)).fetchone()
             if row is None:
                 return None
             d = dict(row)
@@ -545,9 +633,7 @@ class SqliteStore:
 
     def cards_list(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT * FROM memory_cards ORDER BY updated_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM memory_cards ORDER BY updated_at DESC").fetchall()
             results = []
             for r in rows:
                 d = dict(r)
@@ -580,9 +666,7 @@ class SqliteStore:
 
     def project_list(self) -> list[dict[str, Any]]:
         with self._connect() as conn:
-            rows = conn.execute(
-                "SELECT * FROM memory_projects ORDER BY updated_at DESC"
-            ).fetchall()
+            rows = conn.execute("SELECT * FROM memory_projects ORDER BY updated_at DESC").fetchall()
             results = []
             for r in rows:
                 d = dict(r)
@@ -634,8 +718,7 @@ class SqliteStore:
                    GROUP BY lesson HAVING cnt > 1"""
             ).fetchall()
             return [
-                {"type": "duplicate_lesson", "lesson": r["lesson"], "count": r["cnt"]}
-                for r in rows
+                {"type": "duplicate_lesson", "lesson": r["lesson"], "count": r["cnt"]} for r in rows
             ]
 
 

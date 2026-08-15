@@ -16,7 +16,7 @@ from typing import Any, Literal
 from .sqlite_store import get_store
 from .workflow_loader import Workflow, load_workflow
 
-NodeType = Literal["discussion", "build", "review", "execute", "gate"]
+NodeType = Literal["discussion", "build", "review", "execute", "gate", "agent"]
 
 
 @dataclass
@@ -28,6 +28,7 @@ class WorkflowInstance:
     history: list[dict[str, Any]] = field(default_factory=list)
     last_verdict: str | None = None
     gate_results: list[dict[str, Any]] = field(default_factory=list)
+    node_outputs: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -38,6 +39,7 @@ class WorkflowInstance:
             "history": self.history,
             "last_verdict": self.last_verdict,
             "gate_count": len(self.gate_results),
+            "node_outputs": self.node_outputs,
         }
 
 
@@ -52,12 +54,14 @@ class StateMachine:
 
     def register_workflow_from_json(self, json_path: str) -> Workflow:
         from .workflow_loader import load_workflow_from_json
+
         wf = load_workflow_from_json(json_path)
         self._store.save_workflow(wf)
         return wf
 
     def register_workflow_from_dict(self, data: dict[str, Any]) -> Workflow:
         from .workflow_loader import workflow_from_dict
+
         wf = workflow_from_dict(data)
         self._store.save_workflow(wf)
         return wf
@@ -129,7 +133,8 @@ class StateMachine:
             return None
 
         # Verdict-based routing (gate + review + any node with branches_map)
-        verdict_map = node.branches_map if hasattr(node, 'branches_map') and node.branches_map else {}
+        branches_map = getattr(node, "branches_map", None) or {}
+        verdict_map = branches_map
         if verdict and verdict in verdict_map:
             next_node = verdict_map[verdict]
             branch_label = verdict
@@ -157,12 +162,14 @@ class StateMachine:
         if verdict:
             history_entry["verdict"] = verdict
             instance.last_verdict = verdict
-            instance.gate_results.append({
-                "node": instance.current_node,
-                "verdict": verdict,
-                "eval_count": len(evals) if evals else 0,
-                "timestamp": now,
-            })
+            instance.gate_results.append(
+                {
+                    "node": instance.current_node,
+                    "verdict": verdict,
+                    "eval_count": len(evals) if evals else 0,
+                    "timestamp": now,
+                }
+            )
 
         instance.history.append(history_entry)
         instance.current_node = next_node
@@ -224,6 +231,21 @@ class StateMachine:
         if instance is None:
             return []
         return instance.gate_results
+
+    def get_node_outputs(self) -> dict[str, Any]:
+        """Return outputs recorded by agent/gate steps of the active instance."""
+        instance = self._store.get_active_instance()
+        if instance is None:
+            return {}
+        return instance.node_outputs
+
+    def record_node_output(self, node_name: str, output: Any) -> None:
+        """Persist a step's output on the active instance (agent steps etc.)."""
+        instance = self._store.get_active_instance()
+        if instance is None:
+            return
+        instance.node_outputs[node_name] = output
+        self._store.save_instance(instance)
 
     def execution_log(self, limit: int = 50) -> list[dict[str, Any]]:
         return self._store.get_execution_log(limit)

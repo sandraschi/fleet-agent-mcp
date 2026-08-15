@@ -2,8 +2,6 @@
 
 from typing import Any
 
-from fastmcp import FastMCP
-
 from ..registry import mcp
 
 _READ_ONLY = {"readOnly": True}
@@ -34,7 +32,7 @@ async def query_logs(
     await query_logs(source="heartbeat", limit=5)
     await query_logs(search="offline")
     """
-    from ..log_store import get_log_store
+    from ...log_store import get_log_store
 
     store = get_log_store()
     all_logs = store.recent(5000)
@@ -73,13 +71,14 @@ async def check_log_errors(
     ## Examples
     await check_log_errors()
     """
-    from ..log_store import get_log_store
+    from ...log_store import get_log_store
 
     store = get_log_store()
     all_logs = store.recent(5000)
 
     errors = [
-        e for e in all_logs
+        e
+        for e in all_logs
         if e.get("level") in ("error", "critical")
         or any(kw in e.get("message", "").lower() for kw in ERROR_KEYWORDS)
     ]

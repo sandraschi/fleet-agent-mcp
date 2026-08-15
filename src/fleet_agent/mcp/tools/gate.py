@@ -40,18 +40,21 @@ def _finding_from_dict(d: dict[str, Any]) -> Finding:
 async def gate_evaluate(
     evaluations: Annotated[
         list[dict[str, Any]],
-        Field(description=(
-            "List of evaluation reports. Each dict:\n"
-            "  role (str): Reviewer role name (e.g. 'security', 'frontend').\n"
-            "  findings (list[dict]): Structured findings with:\n"
-            "    severity (str): 'critical'🔴 | 'warning'🟡 | 'suggestion'🔵 | 'blocked'⛔ | 'info'ℹ️\n"
-            "    message (str): Description.\n"
-            "    file_ref (str, optional): File path reference.\n"
-            "    line (int, optional): Line number.\n"
-            "    code (str, optional): Rule/category code.\n"
-            "  summary (str, optional): One-line summary.\n"
-            "  raw_text (str, optional): Markdown text for emoji-severity parsing."
-        )),
+        Field(
+            description=(
+                "List of evaluation reports. Each dict:\n"
+                "  role (str): Reviewer role name (e.g. 'security', 'frontend').\n"
+                "  findings (list[dict]): Structured findings with:\n"
+                "    severity (str): 'critical'🔴 | 'warning'🟡 | 'suggestion'🔵 "
+                "| 'blocked'⛔ | 'info'ℹ️\n"
+                "    message (str): Description.\n"
+                "    file_ref (str, optional): File path reference.\n"
+                "    line (int, optional): Line number.\n"
+                "    code (str, optional): Rule/category code.\n"
+                "  summary (str, optional): One-line summary.\n"
+                "  raw_text (str, optional): Markdown text for emoji-severity parsing."
+            )
+        ),
     ],
 ) -> dict[str, Any]:
     """Compute a mechanical gate verdict from evaluation reports.
@@ -69,22 +72,26 @@ async def gate_evaluate(
     ## Examples
     gate_evaluate(evaluations=[
         {"role": "security", "findings": [
-            {"severity": "warning", "message": "Missing input validation", "file_ref": "auth.py", "line": 42}
+            {"severity": "warning", "message": "Missing input validation",
+             "file_ref": "auth.py", "line": 42}
         ]}
     ])
     gate_evaluate(evaluations=[
-        {"role": "frontend", "raw_text": "🔴 Critical: XSS in search form\\n🟡 Warning: ARIA labels missing"}
+        {"role": "frontend",
+         "raw_text": "🔴 Critical: XSS in search form\\n🟡 Warning: ARIA labels missing"}
     ])
     """
     evals: list[EvalReport] = []
     for e in evaluations:
         findings = [_finding_from_dict(f) for f in e.get("findings", [])]
-        evals.append(EvalReport(
-            role=e.get("role", "unknown"),
-            findings=findings,
-            summary=e.get("summary", ""),
-            raw_text=e.get("raw_text", ""),
-        ))
+        evals.append(
+            EvalReport(
+                role=e.get("role", "unknown"),
+                findings=findings,
+                summary=e.get("summary", ""),
+                raw_text=e.get("raw_text", ""),
+            )
+        )
 
     result = synthesize(evals)
     return {
@@ -93,13 +100,23 @@ async def gate_evaluate(
         "summary": result.summary,
         "findings_breakdown": result.findings_breakdown,
         "failures": [
-            {"severity": f.severity, "message": f.message,
-             "file_ref": f.file_ref, "line": f.line, "code": f.code}
+            {
+                "severity": f.severity,
+                "message": f.message,
+                "file_ref": f.file_ref,
+                "line": f.line,
+                "code": f.code,
+            }
             for f in result.failures
         ],
         "warnings": [
-            {"severity": f.severity, "message": f.message,
-             "file_ref": f.file_ref, "line": f.line, "code": f.code}
+            {
+                "severity": f.severity,
+                "message": f.message,
+                "file_ref": f.file_ref,
+                "line": f.line,
+                "code": f.code,
+            }
             for f in result.warnings
         ],
         "detail": result.detail,
@@ -146,12 +163,14 @@ async def gate_verify(
     evals: list[EvalReport] = []
     for e in evaluations:
         findings = [_finding_from_dict(f) for f in e.get("findings", [])]
-        evals.append(EvalReport(
-            role=e.get("role", "unknown"),
-            findings=findings,
-            summary=e.get("summary", ""),
-            raw_text=e.get("raw_text", ""),
-        ))
+        evals.append(
+            EvalReport(
+                role=e.get("role", "unknown"),
+                findings=findings,
+                summary=e.get("summary", ""),
+                raw_text=e.get("raw_text", ""),
+            )
+        )
 
     # 1. Independence
     ind_result = check_independence(evals)
@@ -161,6 +180,7 @@ async def gate_verify(
 
     # 3. Oscillation (simulate previous verdict from string)
     from ...harness.gate_engine import GateVerdict
+
     prev = None
     if previous_verdict and previous_verdict in ("PASS", "FAIL", "ITERATE", "BLOCKED"):
         prev = GateVerdict(verdict=previous_verdict, summary="")
@@ -168,6 +188,7 @@ async def gate_verify(
 
     # 4. Tier coverage
     from ...harness.gate_engine import check_tier_coverage as _tier_check
+
     tier_result = _tier_check(artifact_types or [], tier or "functional")
 
     return {
@@ -196,9 +217,12 @@ async def gate_verify(
             "missing": tier_result.missing,
             "message": tier_result.message,
         },
-        "message": f"Gate: {syn_result.verdict} | Independence: {'PASS' if ind_result.passed else 'FAIL'} | "
-        f"Oscillation: {'WARN' if osc_result.oscillating else 'OK'} | "
-        f"Tier: {'PASS' if tier_result.passed else 'FAIL'}",
+        "message": (
+            f"Gate: {syn_result.verdict} | "
+            f"Independence: {'PASS' if ind_result.passed else 'FAIL'} | "
+            f"Oscillation: {'WARN' if osc_result.oscillating else 'OK'} | "
+            f"Tier: {'PASS' if tier_result.passed else 'FAIL'}"
+        ),
     }
 
 
@@ -226,7 +250,10 @@ async def criteria_lint(
      "warnings": list[str], "criteria_count": int, "message": str}
 
     ## Examples
-    criteria_lint(criteria_text="## Acceptance Criteria\\n- Search returns results in 2s\\n## Return Format\\n...")
+    criteria_lint(
+        criteria_text="## Acceptance Criteria\\n- Search returns results in 2s"
+        "\\n## Return Format\\n..."
+    )
     """
     result = lint_criteria(criteria_text)
 

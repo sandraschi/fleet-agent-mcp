@@ -349,7 +349,6 @@ async def run_activity_pulse(deliver: bool = True) -> dict[str, Any]:
             source="fritz",
             summary=f"{len(stale_tasks)} stale, {len(heartbeat_firings)} recent",
             tags=["fritz", "activity-pulse"],
-            report_id="fritz-activity",
         )
         hub_url = hub_base_url()
         return {

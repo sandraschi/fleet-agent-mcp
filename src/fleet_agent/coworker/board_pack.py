@@ -47,7 +47,9 @@ def _plain_lines(text: str) -> str:
 
 
 async def run_board_pack(
-    *, deliver: bool = True, template: str = "fleet-board-pack.odt",
+    *,
+    deliver: bool = True,
+    template: str = "fleet-board-pack.odt",
 ) -> dict[str, Any]:
     """Build board pack from Fleet Pulse data via libreoffice template merge."""
     store_settings = get_settings_store()
@@ -119,7 +121,8 @@ async def run_board_pack(
             "placeholders": placeholders,
         }
 
-    lo_data = inner.get("data") if isinstance(inner.get("data"), dict) else inner
+    raw_data = inner.get("data")
+    lo_data: dict = raw_data if isinstance(raw_data, dict) else inner
     if not lo_data.get("success", inner.get("success")):
         return {
             "success": False,
@@ -144,7 +147,9 @@ async def run_board_pack(
         f"- Generated: {pulse_date}\n"
     )
     log_project_note(
-        BOARD_PACK_PROJECT, pulse_date, summary,
+        BOARD_PACK_PROJECT,
+        pulse_date,
+        summary,
         tags=["coworker", "office", "board-pack"],
     )
 

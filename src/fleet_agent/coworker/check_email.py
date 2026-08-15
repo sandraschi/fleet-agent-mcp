@@ -32,14 +32,31 @@ CHECK_EMAIL_PROJECT = "check-email"
 
 # Security-relevant subject patterns — emails that should alert Fritz
 _SECURITY_PATTERNS = (
-    "password reset", "password changed", "account access",
-    "security alert", "unusual sign-in", "suspicious login",
-    "new device", "sign-in from", "2fa", "two-factor",
-    "authentication", "security code", "verify your",
-    "account recovery", "account locked", "account suspended",
-    "breach", "data leak", "your password",
-    "billing alert", "payment failed", "subscription canceled",
-    "service outage", "incident report", "downtime",
+    "password reset",
+    "password changed",
+    "account access",
+    "security alert",
+    "unusual sign-in",
+    "suspicious login",
+    "new device",
+    "sign-in from",
+    "2fa",
+    "two-factor",
+    "authentication",
+    "security code",
+    "verify your",
+    "account recovery",
+    "account locked",
+    "account suspended",
+    "breach",
+    "data leak",
+    "your password",
+    "billing alert",
+    "payment failed",
+    "subscription canceled",
+    "service outage",
+    "incident report",
+    "downtime",
 )
 
 
@@ -82,14 +99,16 @@ def format_check_report(
         lines.append(f"  - Date: {alert.get('date', '?')}")
         lines.append("")
 
-    lines.extend([
-        "## Actions required",
-        "",
-        "1. Review security alerts above — do not click links in suspicious emails.",
-        "2. If password reset was not requested, change credentials immediately.",
-        "3. Check services dashboard to verify account status.",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Actions required",
+            "",
+            "1. Review security alerts above — do not click links in suspicious emails.",
+            "2. If password reset was not requested, change credentials immediately.",
+            "3. Check services dashboard to verify account status.",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -116,11 +135,13 @@ async def run_check_email(*, deliver: bool = True) -> dict[str, Any]:
     for msg in inbox.get("emails") or []:
         subject = msg.get("subject") or msg.get("title") or ""
         if _is_security_relevant(subject):
-            security_hits.append({
-                "subject": subject,
-                "from": msg.get("from") or msg.get("sender") or "?",
-                "date": msg.get("date") or "?",
-            })
+            security_hits.append(
+                {
+                    "subject": subject,
+                    "from": msg.get("from") or msg.get("sender") or "?",
+                    "date": msg.get("date") or "?",
+                }
+            )
 
     report = format_check_report(
         pulse_date=pulse_date,
@@ -129,15 +150,22 @@ async def run_check_email(*, deliver: bool = True) -> dict[str, Any]:
     )
 
     artifact_path = save_artifact("check-email", report, tz_name)
-    log_project_note(CHECK_EMAIL_PROJECT, pulse_date, report, tags=["coworker", "email", "security"])
+    log_project_note(
+        CHECK_EMAIL_PROJECT, pulse_date, report, tags=["coworker", "email", "security"]
+    )
 
     has_hits = bool(security_hits)
-    subject = f"Email Security: {len(security_hits)} alerts" if has_hits else "Email Security: clean"
+    if has_hits:
+        subject = f"Email Security: {len(security_hits)} alerts"
+    else:
+        subject = "Email Security: clean"
     delivery = {"email": await deliver_report(report, subject, deliver=deliver and has_hits)}
 
     return {
         "success": inbox.get("success", False),
-        "message": f"Email security scan: {len(security_hits)} alerts from {inbox.get('count', 0)} unread",
+        "message": (
+            f"Email security scan: {len(security_hits)} alerts from {inbox.get('count', 0)} unread"
+        ),
         "security_hits": len(security_hits),
         "total_scanned": inbox.get("count", 0),
         "report": report,

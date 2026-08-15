@@ -139,7 +139,10 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_recurrence": "2h",
         "enabled_setting": "coworker_scribe_watch_enabled",
         "default_enabled": True,
-        "description": "advanced-memory session scribe: freshness, log errors, aiwatcher copies; RED email if capture stopped",
+        "description": (
+            "advanced-memory session scribe: freshness, log errors, aiwatcher "
+            "copies; RED email if capture stopped"
+        ),
     },
     "check_email": {
         "id": "coworker-check-email",

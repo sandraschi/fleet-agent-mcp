@@ -21,7 +21,7 @@ from ..registry import mcp
 @mcp.tool(annotations={"readOnly": False}, version="0.2.0")
 async def workflow_define(
     file_path: Annotated[str, Field(description="Path to workflow YAML or JSON file.")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Register a workflow from a YAML or JSON file.
 
@@ -40,6 +40,7 @@ async def workflow_define(
     sm = get_state_machine()
     try:
         import os.path
+
         ext = os.path.splitext(file_path)[1].lower()
         if ext == ".json":
             wf = sm.register_workflow_from_json(file_path)
@@ -52,9 +53,7 @@ async def workflow_define(
                 "description": wf.description,
                 "node_count": len(wf.nodes),
                 "start": wf.start,
-                "has_gate_nodes": any(
-                    n.node_type == "gate" for n in wf.nodes.values()
-                ),
+                "has_gate_nodes": any(n.node_type == "gate" for n in wf.nodes.values()),
             },
             "message": (
                 f"Workflow '{wf.name}' registered with {len(wf.nodes)} nodes"
@@ -69,7 +68,7 @@ async def workflow_define(
 
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def workflow_autodiscover(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Auto-discover and register all YAML workflows from ./workflows/
     and ~/.fleet-agent/workflows/.
@@ -104,12 +103,14 @@ async def workflow_start(
     name: Annotated[str, Field(description="Name of the registered workflow to start.")],
     criteria_text: Annotated[
         str | None,
-        Field(description=(
-            "Optional acceptance criteria markdown for pre-flight linting. "
-            "If provided and lint fails, start is blocked."
-        )),
+        Field(
+            description=(
+                "Optional acceptance criteria markdown for pre-flight linting. "
+                "If provided and lint fails, start is blocked."
+            )
+        ),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Start a new workflow instance.
 
@@ -117,12 +118,17 @@ async def workflow_start(
     If criteria_text fails lint, the workflow is not started.
 
     ## Return Format
-    {"success": bool, "instance": dict, "first_task": str, "criteria_lint": dict|null, "message": str}
+    {"success": bool, "instance": dict, "first_task": str,
+     "criteria_lint": dict|null, "message": str}
 
     ## Examples
     workflow_start("daily")
-    workflow_start("build-verify",
-        criteria_text="Feature: user login\\n- Email/password validation\\n- Session persists across refresh\\n## Return Format\\n{\\"success\\": bool}")
+    workflow_start(
+        "build-verify",
+        criteria_text="Feature: user login\\n- Email/password validation"
+        "\\n- Session persists across refresh\\n## Return Format"
+        "\\n{\\"success\\": bool}",
+    )
     """
     sm = get_state_machine()
 
@@ -130,6 +136,7 @@ async def workflow_start(
     lint_result = None
     if criteria_text:
         from ...harness.gate_engine import lint_criteria as _lint
+
         lint_result = _lint(criteria_text)
         if not lint_result.passed:
             return {
@@ -141,7 +148,7 @@ async def workflow_start(
                     "criteria_count": lint_result.criteria_count,
                 },
                 "message": f"Criteria lint FAILED ({len(lint_result.errors)} error(s)). "
-                           f"Fix criteria before starting workflow.",
+                f"Fix criteria before starting workflow.",
             }
 
     try:
@@ -155,7 +162,8 @@ async def workflow_start(
             "first_task": task,
             "node_type": node_type,
             "message": (
-                f"Workflow '{name}' started at node '{instance.current_node}' ({node_type or 'build'})."
+                f"Workflow '{name}' started at node '{instance.current_node}' "
+                f"({node_type or 'build'})."
                 f" Current task: {task}"
             ),
         }
@@ -172,7 +180,7 @@ async def workflow_start(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.2.0")
 async def workflow_status(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Get current workflow instance status — node, type, task, branches, gate state.
 
@@ -197,11 +205,12 @@ async def workflow_status(
     node_type = sm.get_current_node_type()
     last_verdict = sm.get_last_verdict()
     gate_results = sm.get_gate_results()
+    node_outputs = sm.get_node_outputs()
 
     wf = sm.get_workflow(instance.workflow_name)
     node = wf.nodes.get(instance.current_node) if wf else None
     is_terminal = node.terminal if node else False
-    branches_map = node.branches_map if node and hasattr(node, 'branches_map') else {}
+    branches_map = node.branches_map if node and hasattr(node, "branches_map") else {}
 
     return {
         "success": True,
@@ -216,6 +225,7 @@ async def workflow_status(
         "last_verdict": last_verdict,
         "gate_count": len(gate_results),
         "gate_results": gate_results,
+        "node_outputs": node_outputs,
         "history_length": len(instance.history),
         "requires_evals": node_type in ("review", "gate") if node_type else False,
         "message": (
@@ -230,26 +240,32 @@ async def workflow_status(
 async def workflow_next(
     branch: Annotated[
         int | None,
-        Field(description=(
-            "Branch index to take (0-based) for branch-based nodes. "
-            "Required if current node has branches and no verdict is given."
-        )),
+        Field(
+            description=(
+                "Branch index to take (0-based) for branch-based nodes. "
+                "Required if current node has branches and no verdict is given."
+            )
+        ),
     ] = None,
     verdict: Annotated[
         str | None,
-        Field(description=(
-            "Gate verdict for review/gate nodes: 'PASS' | 'FAIL' | 'ITERATE' | 'BLOCKED'. "
-            "When provided, routes via the node's branches_map (PASS→next, FAIL→loopback)."
-        )),
+        Field(
+            description=(
+                "Gate verdict for review/gate nodes: 'PASS' | 'FAIL' | 'ITERATE' | 'BLOCKED'. "
+                "When provided, routes via the node's branches_map (PASS→next, FAIL→loopback)."
+            )
+        ),
     ] = None,
     evaluations: Annotated[
         list[dict[str, Any]] | None,
-        Field(description=(
-            "Eval artifacts from reviewer agents. Stored in workflow history for "
-            "gate auditing. Each dict: {role, findings: [{severity, message, ...}]}."
-        )),
+        Field(
+            description=(
+                "Eval artifacts from reviewer agents. Stored in workflow history for "
+                "gate auditing. Each dict: {role, findings: [{severity, message, ...}]}."
+            )
+        ),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Complete current node and advance to the next step.
 
@@ -305,15 +321,14 @@ async def workflow_next(
         "next_task": task,
         "verdict_applied": verdict,
         "message": (
-            f"Advanced to '{instance.current_node}'."
-            f"{' Verdict: ' + verdict if verdict else ''}"
+            f"Advanced to '{instance.current_node}'.{' Verdict: ' + verdict if verdict else ''}"
         ),
     }
 
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def workflow_log(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """View execution history for the current workflow instance.
 
@@ -340,7 +355,7 @@ async def workflow_log(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def workflow_list(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List all registered workflows.
 
@@ -362,7 +377,7 @@ async def workflow_list(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def workflow_active(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List all active workflow instances.
 
@@ -385,7 +400,7 @@ async def workflow_active(
 @mcp.tool(annotations={"readOnly": True}, version="0.2.0")
 async def workflow_nodes(
     name: Annotated[str, Field(description="Name of the registered workflow to inspect.")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """List all nodes in a registered workflow with their types and connections.
 
@@ -415,9 +430,7 @@ async def workflow_nodes(
         if node.next_node:
             entry["next"] = node.next_node
         if node.branches:
-            entry["branches"] = [
-                {"condition": b.condition, "next": b.next} for b in node.branches
-            ]
+            entry["branches"] = [{"condition": b.condition, "next": b.next} for b in node.branches]
         if node.branches_map:
             entry["branches_map"] = node.branches_map
         nodes_list.append(entry)
@@ -431,13 +444,13 @@ async def workflow_nodes(
         "nodes": nodes_list,
         "has_gate_nodes": has_gate,
         "start_node": wf.start,
-        "message": f"Workflow '{name}': {len(nodes_list)} nodes, {len(nodes_list)} start='{wf.start}'.",
+        "message": (f"Workflow '{name}': {len(nodes_list)} nodes, start='{wf.start}'."),
     }
 
 
 @mcp.tool(annotations={"readOnly": False}, version="0.1.0")
 async def workflow_reset(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Reset the current workflow instance back to its start node.
 

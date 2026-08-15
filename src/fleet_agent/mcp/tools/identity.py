@@ -10,7 +10,7 @@ from ..registry import mcp
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def identity_whoami(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Return the agent's self-introduction — name, human partner, and purpose preview.
 
@@ -25,15 +25,14 @@ async def identity_whoami(
         "success": True,
         "identity": ident.whoami(),
         "message": (
-            f"I am {ident.whoami()['name']}, "
-            f"an AI agent partnered with {ident.whoami()['human']}."
+            f"I am {ident.whoami()['name']}, an AI agent partnered with {ident.whoami()['human']}."
         ),
     }
 
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def identity_soul(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Read the agent's full SOUL.md — core identity, personality, and constraints.
 
@@ -49,8 +48,7 @@ async def identity_soul(
         return {
             "success": False,
             "message": (
-                "SOUL.md not found. "
-                "Create identity/SOUL.md or ~/.fleet-agent/identity/SOUL.md."
+                "SOUL.md not found. Create identity/SOUL.md or ~/.fleet-agent/identity/SOUL.md."
             ),
         }
     return {
@@ -63,7 +61,7 @@ async def identity_soul(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def identity_north_star(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Read the agent's NORTH_STAR.md — purpose, long-term goals, guiding principles.
 
@@ -95,7 +93,7 @@ async def identity_north_star(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def identity_user(
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Read USER.md — information about the agent's human partner.
 
@@ -111,8 +109,7 @@ async def identity_user(
         return {
             "success": False,
             "message": (
-                "USER.md not found. "
-                "Create identity/USER.md or ~/.fleet-agent/identity/USER.md."
+                "USER.md not found. Create identity/USER.md or ~/.fleet-agent/identity/USER.md."
             ),
         }
     return {

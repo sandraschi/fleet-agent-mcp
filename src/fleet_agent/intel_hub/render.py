@@ -203,7 +203,7 @@ def render_index_page(reports: list[dict[str, Any]], *, hub_name: str = "Fleet I
             f'<a class="card" href="/reports/{rid}">'
             f"<h2>{title}</h2>"
             f'<div class="meta">{badge}{created}</div>'
-            f'{"<div class=summary>" + summary + "</div>" if summary else ""}'
+            f"{'<div class=summary>' + summary + '</div>' if summary else ''}"
             f"</a>"
         )
 

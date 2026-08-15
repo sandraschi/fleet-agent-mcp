@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -82,7 +83,9 @@ def markdown_to_plain(md: str, *, max_chars: int = 8000) -> str:
 
 
 async def fleet_call(
-    server: str, tool: str, arguments: dict[str, Any] | None = None,
+    server: str,
+    tool: str,
+    arguments: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     from ..mcp.tools.fleet_bridge import fleet_call_tool
 
@@ -120,8 +123,10 @@ def extract_libreoffice_output(result: dict[str, Any]) -> str | None:
     return None
 
 
-def now_label(tz_name: str) -> str:
-    return datetime.now(ZoneInfo(tz_name)).strftime("%Y-%m-%d %H:%M %Z")
+def now_label(tz_name: str | None = None) -> str:
+    """Current local timestamp label; defaults to the fleet agent timezone."""
+    tz = tz_name or os.environ.get("FLEET_AGENT_TZ", "Europe/Vienna")
+    return datetime.now(ZoneInfo(tz)).strftime("%Y-%m-%d %H:%M %Z")
 
 
 def save_artifact(slug: str, report: str, tz_name: str) -> str:
@@ -145,14 +150,16 @@ def log_project_note(project: str, title: str, body: str, tags: list[str] | None
             existing["tags"] = list(set((existing.get("tags") or []) + tags))
         store.project_upsert(existing)
     else:
-        store.project_upsert({
-            "id": project,
-            "project_name": project,
-            "content": f"# {project}\n\n### {title}\n\n{snippet}",
-            "tags": tags or ["coworker"],
-            "created_at": now,
-            "updated_at": now,
-        })
+        store.project_upsert(
+            {
+                "id": project,
+                "project_name": project,
+                "content": f"# {project}\n\n### {title}\n\n{snippet}",
+                "tags": tags or ["coworker"],
+                "created_at": now,
+                "updated_at": now,
+            }
+        )
 
 
 async def publish_intel_report(

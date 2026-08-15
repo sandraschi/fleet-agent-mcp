@@ -1,0 +1,26 @@
+name: agent-demo
+description: |
+  P1 gate demo — exercises the flowforge 'agent' step type.
+  gather (exec) -> agent (muse-glimmer via cline-mcp) -> report (terminal).
+start: gather
+
+nodes:
+  gather:
+    task: |
+      Prepare context for the agent step. Call fleet_discover() and
+      record the count of online servers as your output.
+    next: agent
+  agent:
+    node_type: agent
+    task: |
+      You are the Sandrafleetbot reasoning step. Based on the gathered
+      context, write a short three-bullet fleet health summary.
+      1. Restate the gathered facts (server count).
+      2. Note anything suspicious.
+      3. Suggest one next action.
+    next: report
+  report:
+    task: |
+      Deliverable node. Read the agent step's output (it is in the
+      workflow node_outputs context) and present it as the final result.
+    terminal: true

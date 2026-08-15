@@ -1,4 +1,5 @@
 """Email notification tool + background scheduler for recurring tasks."""
+
 from __future__ import annotations
 
 import asyncio
@@ -96,13 +97,17 @@ async def notify_email(
     {"success": bool, "message": str}
     """
     from ...settings_store import get_settings_store
+
     s = get_settings_store()
     host = s.get("smtp_host", "")
     port = s.get("smtp_port", 587)
     user = s.get("smtp_user", "")
     pwd = s.get("smtp_pass", "")
     if not host or not user:
-        return {"success": False, "message": "SMTP not configured. Set smtp_host, smtp_user in /api/settings"}
+        return {
+            "success": False,
+            "message": "SMTP not configured. Set smtp_host, smtp_user in /api/settings",
+        }
     return await _send_email_smtp(to, subject, body, host, port, user, pwd)
 
 
@@ -121,6 +126,7 @@ async def _scheduler_loop():
     while True:
         try:
             from ...engine.sqlite_store import get_store
+
             store = get_store()
             settings = get_settings_store()
             tz_name = settings.get("coworker_timezone", "Europe/Vienna")

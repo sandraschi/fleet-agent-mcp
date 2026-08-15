@@ -44,19 +44,21 @@ def ensure_coworker_tasks() -> dict[str, Any]:
             continue
 
         recurrence = settings.get(spec["recurrence_setting"], spec["default_recurrence"])
-        store.todo_upsert({
-            "id": task_id,
-            "task": spec["task"],
-            "group": "self",
-            "group_name": "self",
-            "priority": "high",
-            "status": "pending",
-            "created_at": now,
-            "updated_at": backdate,
-            "completed_at": None,
-            "recurrence": recurrence,
-            "metadata": {"coworker": flow_key},
-        })
+        store.todo_upsert(
+            {
+                "id": task_id,
+                "task": spec["task"],
+                "group": "self",
+                "group_name": "self",
+                "priority": "high",
+                "status": "pending",
+                "created_at": now,
+                "updated_at": backdate,
+                "completed_at": None,
+                "recurrence": recurrence,
+                "metadata": {"coworker": flow_key},
+            }
+        )
         seeded.append(flow_key)
         logger.info("Seeded coworker flow %s (%s)", flow_key, recurrence)
 

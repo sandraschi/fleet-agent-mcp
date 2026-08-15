@@ -22,7 +22,9 @@ _LANG_MAP = {"python": "py", "shell": "bat", "powershell": "ps1"}
 async def script_create(
     name: Annotated[str, Field(description="Human-readable script name.")],
     content: Annotated[str, Field(description="Script source code.")],
-    language: Annotated[str, Field(description="Language: python, shell, or powershell.")] = "python",
+    language: Annotated[
+        str, Field(description="Language: python, shell, or powershell.")
+    ] = "python",
     description: Annotated[str, Field(description="What this script does.")] = "",
 ) -> dict[str, Any]:
     """Create a new task script.
@@ -34,8 +36,14 @@ async def script_create(
     script_create(name="Fleet Health Check", content="...", language="python")
     """
     store = get_store()
-    script = store.script_create(name=name, content=content, language=language, description=description)
-    return {"success": True, "script": script, "message": f"Script '{name}' created (id: {script['id']})."}
+    script = store.script_create(
+        name=name, content=content, language=language, description=description
+    )
+    return {
+        "success": True,
+        "script": script,
+        "message": f"Script '{name}' created (id: {script['id']}).",
+    }
 
 
 @mcp.tool(annotations={"readonly": True}, version="0.1.0")
@@ -68,7 +76,16 @@ async def script_update(
     {"success": bool, "script": dict, "message": str}
     """
     store = get_store()
-    kwargs = {k: v for k, v in [("name", name), ("description", description), ("content", content), ("language", language)] if v is not None}
+    kwargs = {
+        k: v
+        for k, v in [
+            ("name", name),
+            ("description", description),
+            ("content", content),
+            ("language", language),
+        ]
+        if v is not None
+    }
     script = store.script_update(script_id, **kwargs)
     if not script:
         return {"success": False, "message": f"Script '{script_id}' not found."}
@@ -110,8 +127,10 @@ async def script_list() -> dict[str, Any]:
 @mcp.tool(annotations={"readonly": False}, version="0.1.0")
 async def script_run(
     script_id: Annotated[str, Field(description="Script ID to execute.")],
-    args: Annotated[str | None, Field(description="Optional JSON arguments passed to script execution context.")] = None,
-    ctx: Context = None,
+    args: Annotated[
+        str | None, Field(description="Optional JSON arguments passed to script execution context.")
+    ] = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Run a script and return its output.
 
@@ -150,7 +169,10 @@ async def script_run(
             tool_name = spec.get("tool", "")
             params = spec.get("params", {})
             from .fleet_bridge import fleet_call_tool
-            call_result = await fleet_call_tool(server=server_name, tool=tool_name, arguments=params)
+
+            call_result = await fleet_call_tool(
+                server=server_name, tool=tool_name, arguments=params
+            )
             stdout_buf.append(json.dumps(call_result.get("data", {}), indent=2))
             result = call_result
             ec = 0 if call_result.get("success") else 1
@@ -160,11 +182,20 @@ async def script_run(
             if llm_prompt and call_result.get("success"):
                 try:
                     from ...llm_client import chat_completion
+
                     tool_output = json.dumps(call_result, indent=2)
-                    analysis = await chat_completion([
-                        {"role": "system", "content": "You are Fritz, a fleet conductor agent. Analyze the following tool output concisely and provide actionable insights."},
-                        {"role": "user", "content": f"Tool: {tool_name} on {server_name}\n\nResult:\n{tool_output}\n\nTask: {llm_prompt}"},
-                    ])
+                    analysis = await chat_completion(
+                        [
+                            {
+                                "role": "system",
+                                "content": "You are Fritz, a fleet conductor agent. Analyze the following tool output concisely and provide actionable insights.",
+                            },
+                            {
+                                "role": "user",
+                                "content": f"Tool: {tool_name} on {server_name}\n\nResult:\n{tool_output}\n\nTask: {llm_prompt}",
+                            },
+                        ]
+                    )
                     stdout_buf.append(f"\n--- AI Analysis ---\n{analysis}")
                     result = {"tool_result": call_result, "analysis": analysis}
                 except Exception as llm_err:
@@ -183,7 +214,10 @@ async def script_run(
             result = _result
         elif lang == "powershell":
             proc = await asyncio.create_subprocess_exec(
-                "pwsh", "-NoProfile", "-Command", content,
+                "pwsh",
+                "-NoProfile",
+                "-Command",
+                content,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -193,7 +227,14 @@ async def script_run(
                 stderr_buf = err.decode("utf-8", errors="replace").splitlines()
             except TimeoutError:
                 proc.kill()
-                return {"success": False, "stdout": "", "stderr": "Timeout (30s)", "result": None, "exit_code": -1, "message": "Script timed out"}
+                return {
+                    "success": False,
+                    "stdout": "",
+                    "stderr": "Timeout (30s)",
+                    "result": None,
+                    "exit_code": -1,
+                    "message": "Script timed out",
+                }
         else:
             proc = await asyncio.create_subprocess_shell(
                 content,
@@ -206,7 +247,14 @@ async def script_run(
                 stderr_buf = err.decode("utf-8", errors="replace").splitlines()
             except TimeoutError:
                 proc.kill()
-                return {"success": False, "stdout": "", "stderr": "Timeout (30s)", "result": None, "exit_code": -1, "message": "Script timed out"}
+                return {
+                    "success": False,
+                    "stdout": "",
+                    "stderr": "Timeout (30s)",
+                    "result": None,
+                    "exit_code": -1,
+                    "message": "Script timed out",
+                }
         ec = 0
     except Exception as e:
         stderr_buf.append(f"{type(e).__name__}: {e}")
@@ -225,7 +273,9 @@ async def script_run(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def script_generate(
-    prompt: Annotated[str, Field(description="Natural language description of what the script should do.")],
+    prompt: Annotated[
+        str, Field(description="Natural language description of what the script should do.")
+    ],
 ) -> dict[str, Any]:
     """Use the LLM to generate a task script from a natural language prompt.
 
@@ -267,18 +317,35 @@ async def script_generate(
     )
 
     try:
-        response = await chat_completion([
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt},
-        ])
+        response = await chat_completion(
+            [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt},
+            ]
+        )
     except Exception as e:
-        return {"success": False, "message": f"LLM unavailable: {e}", "name": "", "description": "", "language": "python", "content": ""}
+        return {
+            "success": False,
+            "message": f"LLM unavailable: {e}",
+            "name": "",
+            "description": "",
+            "language": "python",
+            "content": "",
+        }
 
     import json as _json
     import re as _re
+
     match = _re.search(r"\{.*\}", response, _re.DOTALL)
     if not match:
-        return {"success": False, "message": "LLM did not return valid JSON", "name": "", "description": "", "language": "python", "content": response[:1000]}
+        return {
+            "success": False,
+            "message": "LLM did not return valid JSON",
+            "name": "",
+            "description": "",
+            "language": "python",
+            "content": response[:1000],
+        }
 
     try:
         result = _json.loads(match.group(0))
@@ -287,7 +354,9 @@ async def script_generate(
         lang = result.get("language", "python")
         content_raw = result.get("content", "")
         if lang == "mcp_call":
-            content_out = content_raw if isinstance(content_raw, str) else _json.dumps(content_raw, indent=2)
+            content_out = (
+                content_raw if isinstance(content_raw, str) else _json.dumps(content_raw, indent=2)
+            )
         else:
             content_out = str(content_raw)
         return {
@@ -299,4 +368,11 @@ async def script_generate(
             "message": f"Generated '{name}' ({lang}).",
         }
     except (_json.JSONDecodeError, KeyError) as e:
-        return {"success": False, "message": f"Failed to parse LLM output: {e}", "name": "", "description": "", "language": "python", "content": response[:1000]}
+        return {
+            "success": False,
+            "message": f"Failed to parse LLM output: {e}",
+            "name": "",
+            "description": "",
+            "language": "python",
+            "content": response[:1000],
+        }

@@ -49,13 +49,15 @@ def format_cursor_spend_report(*, pulse_date: str, payload: dict[str, Any]) -> s
         lines.append("")
         lines.append("_Add CURSOR_ADMIN_API_KEY on cursor-mcp for full spend/events API._")
 
-    lines.extend([
-        "",
-        "## Dashboard",
-        "",
-        "https://cursor.com/dashboard",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Dashboard",
+            "",
+            "https://cursor.com/dashboard",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 

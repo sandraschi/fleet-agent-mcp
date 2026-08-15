@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 # ── Data types ──────────────────────────────────────────────────────────────
 
@@ -159,7 +159,7 @@ def synthesize(
     """
     all_findings: list[Finding] = []
     lines: list[str] = []
-    flattened = _flatten_artifacts(evals)
+    _ = _flatten_artifacts(evals)  # validation side effect (raises on malformed)
 
     for report in evals:
         all_findings.extend(report.findings)
@@ -267,7 +267,10 @@ def check_independence(evals: list[EvalReport]) -> IndependenceResult:
                 return IndependenceResult(
                     passed=False,
                     eval_count=len(evals),
-                    message=f"Non-independent evaluation detected: identical finding '{key[1]}' appears across multiple roles",
+                    message=(
+                        f"Non-independent evaluation detected: identical finding "
+                        f"'{key[1]}' appears across multiple roles"
+                    ),
                     overlap_warning=f"Duplicate '{key[1]}' flagged as potential role collusion",
                 )
             seen_pairs.add(key)
@@ -399,7 +402,9 @@ def lint_criteria(text: str) -> CriteriaLintResult:
 
     # ── Deferral language ──
     deferral_matches = _DEFERRAL_PATTERNS.findall(text)
-    matched_terms = {m[0].strip() if isinstance(m, tuple) else str(m).strip() for m in deferral_matches}
+    matched_terms = {
+        m[0].strip() if isinstance(m, tuple) else str(m).strip() for m in deferral_matches
+    }
     matched_terms = {t for t in matched_terms if t}
     if matched_terms:
         warnings.append(
@@ -504,9 +509,7 @@ _EMOJI_SEVERITY: dict[str, Severity] = {
     "ℹ️": "info",
 }
 
-_EVAL_LINE_PATTERN = re.compile(
-    r"^(?P<emoji>[🔴🟡🔵⛔ℹ️])\s*(?P<message>.+)"
-)
+_EVAL_LINE_PATTERN = re.compile(r"^(?P<emoji>[🔴🟡🔵⛔ℹ️])\s*(?P<message>.+)")
 
 
 def _parse_eval_markdown(text: str) -> tuple[list[Finding], list[str]]:
@@ -533,11 +536,15 @@ def _parse_eval_markdown(text: str) -> tuple[list[Finding], list[str]]:
         m = _EVAL_LINE_PATTERN.match(line)
         if not m:
             # Check for severity keyword prefixes
-            for prefix, sev in [("critical:", "critical"), ("warning:", "warning"),
-                                ("suggestion:", "suggestion"), ("blocked:", "blocked"),
-                                ("info:", "info")]:
+            for prefix, sev in [
+                ("critical:", "critical"),
+                ("warning:", "warning"),
+                ("suggestion:", "suggestion"),
+                ("blocked:", "blocked"),
+                ("info:", "info"),
+            ]:
                 if line.lower().startswith(prefix):
-                    rest = line[len(prefix):].strip()
+                    rest = line[len(prefix) :].strip()
                     file_ref = None
                     line_num = None
                     code = None
@@ -551,13 +558,15 @@ def _parse_eval_markdown(text: str) -> tuple[list[Finding], list[str]]:
                             line_num = int(flm.group(2))
                             rest = parts[0]
 
-                    findings.append(Finding(
-                        severity=sev,
-                        message=rest,
-                        file_ref=file_ref,
-                        line=line_num,
-                        code=code,
-                    ))
+                    findings.append(
+                        Finding(
+                            severity=cast(Severity, sev),
+                            message=rest,
+                            file_ref=file_ref,
+                            line=line_num,
+                            code=code,
+                        )
+                    )
                     break
             continue
 
@@ -584,13 +593,15 @@ def _parse_eval_markdown(text: str) -> tuple[list[Finding], list[str]]:
                 line_num = int(flm.group(2))
                 message = parts[0]
 
-        findings.append(Finding(
-            severity=severity,
-            message=message,
-            file_ref=file_ref,
-            line=line_num,
-            code=code,
-        ))
+        findings.append(
+            Finding(
+                severity=severity,
+                message=message,
+                file_ref=file_ref,
+                line=line_num,
+                code=code,
+            )
+        )
 
     return findings, errors
 
@@ -607,12 +618,14 @@ def _flatten_artifacts(evals: list[EvalReport]) -> list[dict[str, Any]]:
     artifacts = []
     for report in evals:
         for finding in report.findings:
-            artifacts.append({
-                "role": report.role,
-                "severity": finding.severity,
-                "message": finding.message,
-                "file_ref": finding.file_ref,
-                "line": finding.line,
-                "code": finding.code,
-            })
+            artifacts.append(
+                {
+                    "role": report.role,
+                    "severity": finding.severity,
+                    "message": finding.message,
+                    "file_ref": finding.file_ref,
+                    "line": finding.line,
+                    "code": finding.code,
+                }
+            )
     return artifacts

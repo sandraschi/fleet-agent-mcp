@@ -34,8 +34,7 @@ def format_inbox_briefing(
         lines.append(f"- **Status:** failed — {err}")
         lines.append("")
         lines.append(
-            "Start email-mcp on port 10813 or check "
-            "`/api/settings` → `inbox_briefing_service`."
+            "Start email-mcp on port 10813 or check `/api/settings` → `inbox_briefing_service`."
         )
         return "\n".join(lines)
 
@@ -61,15 +60,17 @@ def format_inbox_briefing(
         if len(emails) > 20:
             lines.append(f"\n_…and {len(emails) - 20} more._")
 
-    lines.extend([
-        "",
-        "## Suggested actions",
-        "",
-        "1. Reply to urgent senders first (human gate — Fritz does not send without approval).",
-        "2. Move newsletters to archive if `mailing_list_latest` covers them.",
-        "3. `pulse_add` follow-ups for anything needing work this week.",
-        "",
-    ])
+    lines.extend(
+        [
+            "",
+            "## Suggested actions",
+            "",
+            "1. Reply to urgent senders first (human gate — Fritz does not send without approval).",
+            "2. Move newsletters to archive if `mailing_list_latest` covers them.",
+            "3. `pulse_add` follow-ups for anything needing work this week.",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 

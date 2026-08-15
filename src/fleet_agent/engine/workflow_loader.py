@@ -17,7 +17,7 @@ from typing import Any, Literal
 
 import yaml
 
-NodeType = Literal["discussion", "build", "review", "execute", "gate"]
+NodeType = Literal["discussion", "build", "review", "execute", "gate", "agent"]
 
 # Node types that require eval artifacts before advancement
 GATE_NODE_TYPES: set[NodeType] = {"review", "gate"}
@@ -43,9 +43,7 @@ class WorkflowNode:
         if self.next_node:
             d["next"] = self.next_node
         if self.branches:
-            d["branches"] = [
-                {"condition": b.condition, "next": b.next} for b in self.branches
-            ]
+            d["branches"] = [{"condition": b.condition, "next": b.next} for b in self.branches]
         if self.terminal:
             d["terminal"] = True
         if self.node_type:
@@ -89,7 +87,7 @@ def _build_node(node_name: str, node_config: dict[str, Any]) -> WorkflowNode:
     terminal = node_config.get("terminal", False)
     node_type_str = node_config.get("node_type")
     node_type: NodeType | None = None
-    if node_type_str and node_type_str in ("discussion", "build", "review", "execute", "gate"):
+    if node_type_str in ("discussion", "build", "review", "execute", "gate", "agent"):
         node_type = node_type_str  # type: ignore[assignment]
 
     branches: list[Branch] = []
@@ -137,7 +135,7 @@ def load_workflow(yaml_path: str) -> Workflow:
 # ── JSON loader ──────────────────────────────────────────────────────────────
 
 # Valid node types for JSON flow templates
-_VALID_NODE_TYPES = frozenset({"discussion", "build", "review", "execute", "gate"})
+_VALID_NODE_TYPES = frozenset({"discussion", "build", "review", "execute", "gate", "agent"})
 _RESERVED_NAMES = frozenset({"__proto__", "constructor", "prototype"})
 
 
@@ -206,13 +204,10 @@ def workflow_from_dict(
             raise ValueError(f"Invalid node name: '{node_name}'")
 
     nodes: dict[str, WorkflowNode] = {}
-    has_gate = False
 
     for node_name, node_config in nodes_data.items():
         node = _build_node(node_name, node_config)
         nodes[node_name] = node
-        if node.node_type == "gate" or node_config.get("node_type") == "gate":
-            has_gate = True
 
         # Validate node_type
         nt = node_config.get("node_type")
@@ -222,9 +217,7 @@ def workflow_from_dict(
     # Validate all edge targets
     for node_name, node in nodes.items():
         if node.next_node and node.next_node not in nodes and node.next_node is not None:
-            raise ValueError(
-                f"Node '{node_name}' has next='{node.next_node}' which does not exist"
-            )
+            raise ValueError(f"Node '{node_name}' has next='{node.next_node}' which does not exist")
         for b in node.branches:
             if b.next not in nodes and b.next is not None:
                 raise ValueError(

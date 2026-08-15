@@ -15,7 +15,7 @@ _PROVIDER_CHAIN: list[tuple[str, str]] = [
 
 def _get_provider_chain(preferred: str) -> list[tuple[str, str]]:
     """Return ordered list of (provider, base_url) to try, preferred first."""
-    return sorted(_PROVIDER_CHAIN, key=lambda p: (0 if p[0] == preferred else 1))
+    return sorted(_PROVIDER_CHAIN, key=lambda p: 0 if p[0] == preferred else 1)
 
 
 def _build_payload(
@@ -38,7 +38,12 @@ def _build_payload(
 
 def _get_config() -> tuple[str, str, int, str]:
     store = get_settings_store()
-    return store.get("base_url"), store.get("model", ""), store.get("timeout", 120), store.get("provider", "ollama")
+    return (
+        store.get("base_url"),
+        store.get("model", ""),
+        store.get("timeout", 120),
+        store.get("provider", "ollama"),
+    )
 
 
 def _api_path(provider: str, endpoint: str) -> str:

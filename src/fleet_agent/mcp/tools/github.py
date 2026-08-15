@@ -37,6 +37,7 @@ def _git(repo_path: str, *args: str) -> str:
 async def _call_git_server(tool: str, args: dict[str, Any]) -> dict[str, Any]:
     """Call a tool on git-github-mcp via HTTP."""
     import httpx
+
     payload = {
         "jsonrpc": "2.0",
         "method": "tools/call",
@@ -78,7 +79,9 @@ async def github_create_branch(
 async def github_commit(
     repo_path: Annotated[str, Field(description="Absolute path to the local repo")],
     message: Annotated[str, Field(description="Commit message")],
-    files: Annotated[list[str] | None, Field(description="Files to stage (omit for all changed)")] = None,
+    files: Annotated[
+        list[str] | None, Field(description="Files to stage (omit for all changed)")
+    ] = None,
 ) -> dict[str, Any]:
     """Stage files and commit with a message.
 
@@ -94,7 +97,8 @@ async def github_commit(
         sha = _git(repo_path, "rev-parse", "HEAD")
         count = (
             len(_git(repo_path, "diff", "--cached", "--name-only").splitlines())
-            if not files else len(files)
+            if not files
+            else len(files)
         )
         msg = f"Committed {count} files: {sha[:8]}"
         return {"success": True, "commit_hash": sha, "files_changed": count, "message": msg}
@@ -154,16 +158,19 @@ async def github_create_pr(
     )
     """
     # Try git-github-mcp first
-    result = await _call_git_server("github_ops", {
-        "operation": "pr_create",
-        "owner": owner,
-        "repo": repo,
-        "title": title,
-        "body": body,
-        "head_branch": head,
-        "base_branch": base,
-        "draft": draft,
-    })
+    result = await _call_git_server(
+        "github_ops",
+        {
+            "operation": "pr_create",
+            "owner": owner,
+            "repo": repo,
+            "title": title,
+            "body": body,
+            "head_branch": head,
+            "base_branch": base,
+            "draft": draft,
+        },
+    )
     if "error" not in result:
         return {
             "success": True,
@@ -175,13 +182,21 @@ async def github_create_pr(
     # Fallback: gh CLI
     try:
         import subprocess
+
         cmd = [
-            "gh", "pr", "create",
-            "--repo", f"{owner}/{repo}",
-            "--title", title,
-            "--body", body,
-            "--head", head,
-            "--base", base,
+            "gh",
+            "pr",
+            "create",
+            "--repo",
+            f"{owner}/{repo}",
+            "--title",
+            title,
+            "--body",
+            body,
+            "--head",
+            head,
+            "--base",
+            base,
         ]
         if draft:
             cmd.append("--draft")
@@ -212,10 +227,22 @@ async def github_list_prs(
     """
     try:
         result = subprocess.run(
-            ["gh", "pr", "list", "--repo", f"{owner}/{repo}", "--state", state,
-             "--json", "number,title,author,state,mergeable,headRefName,baseRefName,createdAt",
-             "--limit", str(limit)],
-            capture_output=True, text=True, timeout=15,
+            [
+                "gh",
+                "pr",
+                "list",
+                "--repo",
+                f"{owner}/{repo}",
+                "--state",
+                state,
+                "--json",
+                "number,title,author,state,mergeable,headRefName,baseRefName,createdAt",
+                "--limit",
+                str(limit),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         if result.returncode == 0:
             prs = json.loads(result.stdout)
@@ -246,9 +273,19 @@ async def github_get_pr(
     try:
         # Get PR info
         r = subprocess.run(
-            ["gh", "pr", "view", str(number), "--repo", f"{owner}/{repo}",
-             "--json", "number,title,body,state,mergeable,headRefName,baseRefName,author,createdAt,mergedBy,reviews"],
-            capture_output=True, text=True, timeout=15,
+            [
+                "gh",
+                "pr",
+                "view",
+                str(number),
+                "--repo",
+                f"{owner}/{repo}",
+                "--json",
+                "number,title,body,state,mergeable,headRefName,baseRefName,author,createdAt,mergedBy,reviews",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         if r.returncode != 0:
             return {"success": False, "message": f"gh CLI: {r.stderr.strip()}"}
@@ -257,14 +294,20 @@ async def github_get_pr(
         # Get changed files
         r2 = subprocess.run(
             ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}", "--name-only"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
-        files = [f for f in r2.stdout.strip().splitlines() if f.strip()] if r2.returncode == 0 else []
+        files = (
+            [f for f in r2.stdout.strip().splitlines() if f.strip()] if r2.returncode == 0 else []
+        )
 
         # Get full diff
         r3 = subprocess.run(
             ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         diff = r3.stdout[:5000] if r3.returncode == 0 else ""
 
@@ -299,7 +342,15 @@ async def github_review_pr(
     try:
         cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--approve"]
         if action == "request-changes":
-            cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--request-changes"]
+            cmd = [
+                "gh",
+                "pr",
+                "review",
+                str(number),
+                "--repo",
+                f"{owner}/{repo}",
+                "--request-changes",
+            ]
         elif action == "comment":
             cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--comment"]
         if body:

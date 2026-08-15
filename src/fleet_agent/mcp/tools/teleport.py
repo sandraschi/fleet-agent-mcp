@@ -34,12 +34,11 @@ async def teleport_pack(
         str | None,
         Field(
             description=(
-                "Output path for .soul file. "
-                "Defaults to ~/.fleet-agent/{name}_{date}.soul."
+                "Output path for .soul file. Defaults to ~/.fleet-agent/{name}_{date}.soul."
             ),
         ),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Pack agent identity, memory, workflows, and config into a portable .soul archive.
 
@@ -57,7 +56,7 @@ async def teleport_pack(
     name = settings.agent_name.lower()
     soul_path = output_path or str(Path.home() / ".fleet-agent" / f"{name}_{date_str}.soul")
 
-    manifest = {
+    manifest: dict[str, Any] = {
         "agent_name": settings.agent_name,
         "human_name": settings.human_name,
         "version": "0.1.0",
@@ -107,6 +106,7 @@ async def teleport_pack(
         # Write manifest
         manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
         import io
+
         manifest_tarinfo = tarfile.TarInfo(name="manifest.json")
         manifest_tarinfo.size = len(manifest_bytes)
         tar.addfile(manifest_tarinfo, io.BytesIO(manifest_bytes))
@@ -128,7 +128,7 @@ async def teleport_pack(
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def teleport_inspect(
     soul_path: Annotated[str, Field(description="Path to .soul file to inspect.")],
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Inspect a .soul archive without unpacking — show manifest and file listing.
 
@@ -142,7 +142,7 @@ async def teleport_inspect(
         with tarfile.open(soul_path, "r:gz") as tar:
             files = [m.name for m in tar.getmembers() if m.name != "manifest.json"]
 
-            manifest = {}
+            manifest: dict[str, Any] = {}
             try:
                 mf = tar.extractfile("manifest.json")
                 if mf:
@@ -169,13 +169,10 @@ async def teleport_unpack(
     target_dir: Annotated[
         str | None,
         Field(
-            description=(
-                "Target directory for unpacking. "
-                "Defaults to ~/.fleet-agent/."
-            ),
+            description=("Target directory for unpacking. Defaults to ~/.fleet-agent/."),
         ),
     ] = None,
-    ctx: Context = None,
+    ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Unpack a .soul archive — restore agent identity, memory, workflows, and database.
 

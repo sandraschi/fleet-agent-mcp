@@ -44,6 +44,7 @@ def _sh_shell(cmd: str, timeout: int = 60) -> str:
 def _mcp(tool: str, args: dict) -> dict:
     """Call a Fritz MCP tool. Falls back to dict with error."""
     import httpx
+
     payload = {
         "jsonrpc": "2.0",
         "method": "tools/call",
@@ -66,7 +67,15 @@ def _pick_lint_target(repo_path: str, severity: str = "S701,S110,E722,F401") -> 
     rules = severity.split(",")
     for rule in rules:
         out = _sh(
-            ["C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe", "check", repo_path, "--select", rule, "--output-format", "json"],
+            [
+                "C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe",
+                "check",
+                repo_path,
+                "--select",
+                rule,
+                "--output-format",
+                "json",
+            ],
             timeout=30,
         )
         if not out or out.startswith("<error"):
@@ -99,7 +108,9 @@ def _pick_fix_strategy(findings: list[dict], repo_path: str) -> dict | None:
 @mcp.tool(version="0.1.0")
 async def fritz_contribute(
     repo_url: Annotated[str, Field(description="Full GitHub repo URL to contribute to")],
-    dry_run: Annotated[bool, Field(description="If true, inspect and plan but don't create PR")] = False,
+    dry_run: Annotated[
+        bool, Field(description="If true, inspect and plan but don't create PR")
+    ] = False,
 ) -> dict[str, Any]:
     """Autonomous contribution: inspect repo, find issue, file issue, fix, commit, PR.
 
@@ -134,7 +145,15 @@ async def fritz_contribute(
     # 2. Run ruff to find issues
     step("ruff", "Scanning for lint errors...")
     out = _sh(
-        ["C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe", "check", str(work_dir / "src"), "--select", "S701,S110,E722,F401", "--output-format", "json"],
+        [
+            "C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe",
+            "check",
+            str(work_dir / "src"),
+            "--select",
+            "S701,S110,E722,F401",
+            "--output-format",
+            "json",
+        ],
         timeout=30,
     )
     findings = json.loads(out) if out and not out.startswith("<error") else []
@@ -161,14 +180,19 @@ async def fritz_contribute(
         f"Read the file content below. Determine the EXACT old_string and new_string "
         f"for a Python string replacement (file_edit).\n"
         f"Output ONLY valid JSON, no markdown:\n"
-        f"{{\"old_string\": \"...exact text to replace...\", \"new_string\": \"...replacement text...\", \"title\": \"...PR title...\", \"issue_body\": \"...issue description...\"}}"
+        f'{{"old_string": "...exact text to replace...", "new_string": "...replacement text...", "title": "...PR title...", "issue_body": "...issue description..."}}'
     )
     file_content = Path(file_path).read_text(encoding="utf-8")[:2000]
     try:
-        llm_result = await chat_completion([
-            {"role": "system", "content": sys_prompt},
-            {"role": "user", "content": f"File:\n```\n{file_content}\n```\n\nFix the {code} error."},
-        ])
+        llm_result = await chat_completion(
+            [
+                {"role": "system", "content": sys_prompt},
+                {
+                    "role": "user",
+                    "content": f"File:\n```\n{file_content}\n```\n\nFix the {code} error.",
+                },
+            ]
+        )
         # Strip markdown code fences if present
         if "```json" in llm_result:
             llm_result = llm_result.split("```json")[1].split("```")[0]
@@ -197,12 +221,22 @@ async def fritz_contribute(
         return {"success": False, "steps": steps, "message": "LLM returned incomplete fix spec"}
 
     # 5. File issue via gh
-    issue_url = _sh([
-        "gh", "issue", "create", "--repo", f"{owner}/{repo_name}",
-        "--title", title[:80],
-        "--body", issue_body[:500],
-        "--label", "bug",
-    ], timeout=15)
+    issue_url = _sh(
+        [
+            "gh",
+            "issue",
+            "create",
+            "--repo",
+            f"{owner}/{repo_name}",
+            "--title",
+            title[:80],
+            "--body",
+            issue_body[:500],
+            "--label",
+            "bug",
+        ],
+        timeout=15,
+    )
     step("issue", issue_url)
 
     # 6. Create branch
@@ -221,7 +255,9 @@ async def fritz_contribute(
     bak_path.write_text(content, encoding="utf-8")
     new_content = content.replace(old_str, new_str)
     fix_path.write_text(new_content, encoding="utf-8")
-    verified = old_str not in fix_path.read_text(encoding="utf-8") and new_str in fix_path.read_text(encoding="utf-8")
+    verified = old_str not in fix_path.read_text(
+        encoding="utf-8"
+    ) and new_str in fix_path.read_text(encoding="utf-8")
     bak_path.unlink()  # remove backup before commit — only the fix should ship
     step("fix", verified)
 
@@ -232,19 +268,33 @@ async def fritz_contribute(
 
     # 9. Push to fork
     _sh(["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
-    _sh(["git", "remote", "add", "fork", f"https://github.com/sandraschi/{repo_name}.git"], cwd=str(work_dir))
+    _sh(
+        ["git", "remote", "add", "fork", f"https://github.com/sandraschi/{repo_name}.git"],
+        cwd=str(work_dir),
+    )
     _sh(["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30)
     step("pushed", branch)
 
     # 10. PR
     if not dry_run:
-        pr_url = _sh([
-            "gh", "pr", "create", "--repo", f"{owner}/{repo_name}",
-            "--title", title[:80],
-            "--body", issue_body[:500],
-            "--head", f"sandraschi:{branch}",
-            "--base", "main",
-        ], timeout=15)
+        pr_url = _sh(
+            [
+                "gh",
+                "pr",
+                "create",
+                "--repo",
+                f"{owner}/{repo_name}",
+                "--title",
+                title[:80],
+                "--body",
+                issue_body[:500],
+                "--head",
+                f"sandraschi:{branch}",
+                "--base",
+                "main",
+            ],
+            timeout=15,
+        )
         step("pr", pr_url or "PR created")
     else:
         pr_url = None
@@ -253,16 +303,23 @@ async def fritz_contribute(
     # Log contribution to database
     try:
         from ...engine.sqlite_store import get_store
+
         pr_num = ""
         if pr_url:
             import re as _re
+
             m = _re.search(r"/pull/(\d+)", pr_url)
             if m:
                 pr_num = m.group(1)
         status = "dry_run" if dry_run else ("open" if pr_url else "failed")
         get_store().contrib_create(
-            repo=f"{owner}/{repo_name}", title=title, issue_url=issue_url or "",
-            pr_url=pr_url or "", pr_number=pr_num, status=status, steps=steps,
+            repo=f"{owner}/{repo_name}",
+            title=title,
+            issue_url=issue_url or "",
+            pr_url=pr_url or "",
+            pr_number=pr_num,
+            status=status,
+            steps=steps,
         )
     except Exception as log_e:
         logger.warning("Failed to log contribution: %s", log_e)
@@ -278,7 +335,9 @@ async def fritz_contribute(
 
 @mcp.tool(annotations={"readOnly": True}, version="0.1.0")
 async def fritz_find_contributions(
-    query: Annotated[str, Field(description="GitHub search query, e.g. 'language:python label:good-first-issue'")] = "language:python label:good-first-issue,help-wanted",
+    query: Annotated[
+        str, Field(description="GitHub search query, e.g. 'language:python label:good-first-issue'")
+    ] = "language:python label:good-first-issue,help-wanted",
     limit: Annotated[int, Field(description="Max results", ge=1, le=50)] = 10,
 ) -> dict[str, Any]:
     """Search GitHub for open-source contribution opportunities.
@@ -296,14 +355,25 @@ async def fritz_find_contributions(
     fritz_find_contributions(query="user:sandraschi label:help-wanted")
     """
     try:
-        result = _sh([
-            "gh", "search", "issues",
-            "--json=repository,title,url,labels,state,number",
-            f"-L{limit}",
-            "--", query,
-        ], timeout=15)
+        result = _sh(
+            [
+                "gh",
+                "search",
+                "issues",
+                "--json=repository,title,url,labels,state,number",
+                f"-L{limit}",
+                "--",
+                query,
+            ],
+            timeout=15,
+        )
         if not result or result.startswith("<error"):
-            return {"success": False, "message": "gh search issues failed. Is gh CLI installed?", "opportunities": [], "count": 0}
+            return {
+                "success": False,
+                "message": "gh search issues failed. Is gh CLI installed?",
+                "opportunities": [],
+                "count": 0,
+            }
 
         items = json.loads(result)
         opportunities = []
@@ -314,14 +384,16 @@ async def fritz_find_contributions(
                 continue
             seen_repos.add(repo_full)
             labels = [lb.get("name", "") for lb in item.get("labels", [])]
-            opportunities.append({
-                "repo": repo_full,
-                "repo_url": f"https://github.com/{repo_full}",
-                "issue_title": item.get("title", ""),
-                "issue_url": item.get("url", ""),
-                "state": item.get("state", ""),
-                "labels": labels,
-            })
+            opportunities.append(
+                {
+                    "repo": repo_full,
+                    "repo_url": f"https://github.com/{repo_full}",
+                    "issue_title": item.get("title", ""),
+                    "issue_url": item.get("url", ""),
+                    "state": item.get("state", ""),
+                    "labels": labels,
+                }
+            )
             if len(opportunities) >= limit:
                 break
 
@@ -340,7 +412,9 @@ def _gogetajob(args: list[str], timeout: int = 60) -> str:
     try:
         r = subprocess.run(
             ["npx", "--yes", "@kagura-agent/gogetajob", *args],
-            capture_output=True, text=True, timeout=timeout,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
         )
         return r.stdout.strip()
     except FileNotFoundError:
@@ -368,7 +442,12 @@ async def gogetajob_scan(
         return {"success": False, "message": out, "issues": [], "count": 0}
     try:
         issues = json.loads(out)
-        return {"success": True, "issues": issues, "count": len(issues) if isinstance(issues, list) else 0, "raw": out[:500]}
+        return {
+            "success": True,
+            "issues": issues,
+            "count": len(issues) if isinstance(issues, list) else 0,
+            "raw": out[:500],
+        }
     except json.JSONDecodeError:
         return {"success": True, "issues": [], "count": 0, "raw": out[:500]}
 
@@ -388,7 +467,12 @@ async def gogetajob_feed() -> dict[str, Any]:
         return {"success": False, "message": out, "jobs": [], "count": 0}
     try:
         jobs = json.loads(out)
-        return {"success": True, "jobs": jobs, "count": len(jobs) if isinstance(jobs, list) else 0, "raw": out[:500]}
+        return {
+            "success": True,
+            "jobs": jobs,
+            "count": len(jobs) if isinstance(jobs, list) else 0,
+            "raw": out[:500],
+        }
     except json.JSONDecodeError:
         return {"success": True, "jobs": [], "count": 0, "raw": out[:500]}
 

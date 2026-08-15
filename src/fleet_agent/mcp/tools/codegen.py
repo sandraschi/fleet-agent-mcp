@@ -20,10 +20,16 @@ logger = logging.getLogger("fleet_agent.tools.codegen")
 
 @mcp.tool(version="0.1.0")
 async def code_generate(
-    spec: Annotated[str, Field(description="Spec of code to write. Include file name, language, patterns.")],
+    spec: Annotated[
+        str, Field(description="Spec of code to write. Include file name, language, patterns.")
+    ],
     repo_path: Annotated[str, Field(description="Absolute path to the repo root")],
-    file_path: Annotated[str, Field(description="Relative path from repo root (e.g. src/foo/bar.py)")],
-    context: Annotated[str | None, Field(description="Conventions, relevant code, lint rules, etc.")] = None,
+    file_path: Annotated[
+        str, Field(description="Relative path from repo root (e.g. src/foo/bar.py)")
+    ],
+    context: Annotated[
+        str | None, Field(description="Conventions, relevant code, lint rules, etc.")
+    ] = None,
 ) -> dict[str, Any]:
     """Generate code via LLM and write it to the repo.
 
@@ -128,7 +134,10 @@ async def file_write(
 @mcp.tool(version="0.1.1")
 async def file_edit(
     path: Annotated[str, Field(description="Absolute path to the file to edit")],
-    old_string: Annotated[str, Field(description="The exact text to replace. Must match exactly, including whitespace.")],
+    old_string: Annotated[
+        str,
+        Field(description="The exact text to replace. Must match exactly, including whitespace."),
+    ],
     new_string: Annotated[str, Field(description="The replacement text.")],
 ) -> dict[str, Any]:
     """Edit a file by replacing an exact string. Creates a .bak backup first.

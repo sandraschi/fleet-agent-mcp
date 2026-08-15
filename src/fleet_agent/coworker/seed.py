@@ -138,6 +138,7 @@ Shipped PRs: discord-mcp (#2, #4), GrandOrgue (#2497, #2498), edge-bookmark-mcp-
 def seed_cards_and_scripts() -> dict[str, Any]:
     """Idempotently seed starter memory cards and example scripts."""
     import json as _json
+
     store = get_store()
     seeded_cards = 0
     seeded_scripts = 0
@@ -149,15 +150,21 @@ def seed_cards_and_scripts() -> dict[str, Any]:
         title = card_data["title"]
         if title in existing_titles:
             continue
-        store.card_upsert({
-            "id": f"seed-{title.lower().replace(' ', '-')[:20]}",
-            "title": title,
-            "content": card_data["content"],
-            "tags": card_data.get("tags", ""),
-            "category": card_data.get("category", "general"),
-            "created_at": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
-            "updated_at": __import__("datetime").datetime.now(__import__("datetime").UTC).isoformat(),
-        })
+        store.card_upsert(
+            {
+                "id": f"seed-{title.lower().replace(' ', '-')[:20]}",
+                "title": title,
+                "content": card_data["content"],
+                "tags": card_data.get("tags", ""),
+                "category": card_data.get("category", "general"),
+                "created_at": __import__("datetime")
+                .datetime.now(__import__("datetime").UTC)
+                .isoformat(),
+                "updated_at": __import__("datetime")
+                .datetime.now(__import__("datetime").UTC)
+                .isoformat(),
+            }
+        )
         seeded_cards += 1
 
     # Seed a few example scripts if none exist
@@ -168,67 +175,84 @@ def seed_cards_and_scripts() -> dict[str, Any]:
                 "name": "Fleet Health Summary",
                 "description": "Check all fleet server health and summarize",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "fleet-agent",
-                    "tool": "heartbeat_status",
-                    "params": {},
-                    "llm_analyze": "Summarize the health status concisely",
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "fleet-agent",
+                        "tool": "heartbeat_status",
+                        "params": {},
+                        "llm_analyze": "Summarize the health status concisely",
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Pending Tasks Report",
                 "description": "List pending high-priority tasks",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "fleet-agent",
-                    "tool": "pulse_list",
-                    "params": {"status": "pending"},
-                    "llm_analyze": "Group the pending tasks by priority and suggest which to do first",
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "fleet-agent",
+                        "tool": "pulse_list",
+                        "params": {"status": "pending"},
+                        "llm_analyze": "Group the pending tasks by priority and suggest which to do first",
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Pipeline Liveness Check",
                 "description": "Check arxiv + aiwatcher pipeline health",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "fleet-agent",
-                    "tool": "pipeline_liveness_check",
-                    "params": {"stale_hours": 48},
-                    "llm_analyze": "If the pipeline is degraded, explain what's stale and what to do",
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "fleet-agent",
+                        "tool": "pipeline_liveness_check",
+                        "params": {"stale_hours": 48},
+                        "llm_analyze": "If the pipeline is degraded, explain what's stale and what to do",
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Send Fleet Pulse Email",
                 "description": "Run fleet pulse and email the report",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "fleet-agent",
-                    "tool": "coworker_execute",
-                    "params": {"flow": "fleet_pulse", "deliver": True},
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "fleet-agent",
+                        "tool": "coworker_execute",
+                        "params": {"flow": "fleet_pulse", "deliver": True},
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Search GitHub Open PRs",
                 "description": "List open PRs needing review across the fleet",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "git-github",
-                    "tool": "list_prs",
-                    "params": {"state": "open"},
-                    "llm_analyze": "Summarize which PRs need urgent attention",
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "git-github",
+                        "tool": "list_prs",
+                        "params": {"state": "open"},
+                        "llm_analyze": "Summarize which PRs need urgent attention",
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Check Devices Safety",
                 "description": "Check devices-mcp for CO/smoke alerts",
                 "language": "mcp_call",
-                "content": _json.dumps({
-                    "server": "fleet-agent",
-                    "tool": "coworker_execute",
-                    "params": {"flow": "surveillance_watch", "deliver": False},
-                    "params": {"flow": "devices_watch", "deliver": False},
-                    "llm_analyze": "Are there any critical safety alerts?",
-                }, indent=2),
+                "content": _json.dumps(
+                    {
+                        "server": "fleet-agent",
+                        "tool": "coworker_execute",
+                        "params": {"flow": "devices_watch", "deliver": False},
+                        "llm_analyze": "Are there any critical safety alerts?",
+                    },
+                    indent=2,
+                ),
             },
             {
                 "name": "Disk Usage Report (Python)",
