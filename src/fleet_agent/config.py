@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     # Fleet registry (mcp-federation-hub bridge) for dynamic server discovery
     fleet_hub_url: str = "http://127.0.0.1:10857"
 
+    # Bearer token for hub board/inbox + management endpoints (empty = no auth)
+    fleet_hub_token: str = ""
+
     def ensure_dirs(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("cards").mkdir(parents=True, exist_ok=True)

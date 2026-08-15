@@ -4,6 +4,7 @@ All tool modules must be imported here for FastMCP discovery during server boot.
 """
 
 from . import (
+    board,
     codegen,
     contribute,
     coworker,
@@ -38,6 +39,7 @@ __all__ = [
     "contribute",
     "notify",
     "coworker",
+    "board",
     "intel_hub",
     "voice",
     "scripts",
