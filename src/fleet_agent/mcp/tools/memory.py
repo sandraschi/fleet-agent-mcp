@@ -6,7 +6,7 @@ update related pages), and lint (stale, orphan, contradiction detection).
 """
 
 from datetime import UTC
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastmcp import Context
 from pydantic import Field
@@ -16,7 +16,7 @@ from ...memory.wiki import get_wiki
 from ..registry import mcp
 
 
-@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
+@mcp.tool(annotations={"readOnly": False}, version="0.1.1")
 async def memory_card_create(
     title: Annotated[str, Field(description="Card title.")],
     content: Annotated[str, Field(description="Card content (Markdown).")],
@@ -27,12 +27,21 @@ async def memory_card_create(
         str,
         Field(description="Category: general, pattern, project, mistake, reference."),
     ] = "general",
+    card_type: Annotated[
+        Literal["knowledge", "skill"],
+        Field(
+            description="knowledge = reference card; skill = executable skill memory "
+            "(auto-tagged type:skill, category 'skill')."
+        ),
+    ] = "knowledge",
     ctx: Context | None = None,
 ) -> dict[str, Any]:
     """Create a knowledge card in the wiki.
 
     Each card captures a concept, pattern, lesson, or reference.
     Cards should be cross-linked for compound knowledge growth.
+    card_type=skill stores executable skill memory - a repeatable procedure
+    (step list, tool usage, prompts) that the agent can reuse verbatim.
 
     ## Return Format
     {"success": bool, "card": dict, "message": str}
@@ -43,13 +52,25 @@ async def memory_card_create(
         "WAL provides concurrent reads...",
         tags=["sqlite", "performance"],
     )
+    memory_card_create(
+        "Weekly fleet pulse procedure",
+        "1. run coworker fleet_pulse\n2. crosspost to #fleet-pulse\n3. log diary entry",
+        tags=["fleet", "cron"],
+        card_type="skill",
+    )
     """
+    effective_category = "skill" if card_type == "skill" else category
+    effective_tags = list(tags or [])
+    if card_type == "skill" and "type:skill" not in effective_tags:
+        effective_tags.append("type:skill")
     wiki = get_wiki()
-    card = wiki.create_card(title=title, content=content, tags=tags, category=category)
+    card = wiki.create_card(
+        title=title, content=content, tags=effective_tags, category=effective_category
+    )
     return {
         "success": True,
         "card": card,
-        "message": f"Card '{title}' created (id: {card['id']}).",
+        "message": f"Card '{title}' created (id: {card['id']}, type: {card_type}).",
     }
 
 
@@ -247,3 +268,38 @@ async def memory_project_notes(
         "count": len(notes),
         "message": f"{len(notes)} project note(s).",
     }
+
+
+@mcp.tool(annotations={"readonly": True}, version="0.1.0")
+async def suggestion_list(
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """List proactive cron suggestions (P4): repeated manual runs that qualify for a schedule.
+
+    ## Return Format
+    {"suggestions": [...], "count": int}
+
+    ## Examples
+    suggestion_list()
+    """
+    from ...memory.suggestions import list_suggestions
+
+    return list_suggestions()
+
+
+@mcp.tool(annotations={"readonly": False}, version="0.1.0")
+async def suggestion_ack(
+    key: Annotated[str, Field(description="Suggestion key (e.g. coworker:fleet_pulse).")],
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Acknowledge/remove a cron suggestion after it was acted on or declined.
+
+    ## Return Format
+    {"success": bool, "key": str}
+
+    ## Examples
+    suggestion_ack(key="coworker:fleet_pulse")
+    """
+    from ...memory.suggestions import ack_suggestion
+
+    return ack_suggestion(key)

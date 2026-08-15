@@ -130,6 +130,15 @@ async def heartbeat_wake(
     - If no active workflow, checks pending tasks
     - Returns the next recommended action for a sub-agent to execute
     """
+    # P4: repeated manual wake-ups with a workflow auto-start suggest a cron.
+    if start_workflow:
+        try:
+            from ...memory.suggestions import record_manual_usage
+
+            record_manual_usage(f"wake:{start_workflow}", kind="workflow")
+        except Exception:
+            pass
+
     sm = get_state_machine()
     store = get_store()
 

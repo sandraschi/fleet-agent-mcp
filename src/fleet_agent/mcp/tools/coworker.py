@@ -61,6 +61,14 @@ async def coworker_execute(
     coworker_execute(flow="fleet_pulse")
     coworker_execute(flow="board_pack", deliver=True, template="fleet-board-pack.odt")
     """
+    # P4: repeated manual flow runs suggest a cron schedule (one-time).
+    from ...memory.suggestions import record_manual_usage
+
+    try:
+        record_manual_usage(f"coworker:{flow}", kind="flow")
+    except Exception:
+        pass
+
     runners = {
         "fleet_pulse": lambda: run_fleet_pulse(deliver=deliver),
         "inbox_briefing": lambda: run_inbox_briefing(deliver=deliver),
