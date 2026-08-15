@@ -36,6 +36,8 @@ target-version = "py312"
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
+# console.py embeds an HTML/CSS template - long CSS lines are intentional.
+"src/fleet_agent/console.py" = ["E501"]
 "src/fleet_agent/mcp/tools/codegen.py" = ["E501"]
 "src/fleet_agent/mcp/tools/github.py" = ["E501"]
 "src/fleet_agent/server.py" = ["E501"]
