@@ -222,7 +222,39 @@ async def crosspost_event(
             discord_error = str(exc)
             logger.warning("sfb crosspost: discord leg failed (%s) - board+diary still posted", exc)
 
-    # 3. Diary entry (metrics carry the trace ids)
+    # 3. Bluesky leg (P6 channel): draft via bluesky-mcp outbox - the human
+    # approves in the outbox before anything is published. Best effort, and
+    # disabled unless BLUESKY_MCP_URL is configured.
+    bluesky_outbox_id: int | None = None
+    bluesky_error: str | None = None
+    if not dry_run and settings.bluesky_mcp_url:
+        try:
+            from fastmcp import Client
+            from fastmcp.client.transports import StreamableHttpTransport
+
+            async with Client(
+                StreamableHttpTransport(f"{settings.bluesky_mcp_url.rstrip('/')}/mcp")
+            ) as client:
+                result = await client.call_tool(
+                    "bluesky_social",
+                    {
+                        "operation": "outbox_enqueue",
+                        "status_text": _sanitize(title)[:280],
+                        "source": "fritz-surveil",
+                    },
+                )
+                text = str(result)
+                if '"success": true' in text:
+                    import re
+
+                    m = re.search(r'"outbox_id"\s*:\s*(\d+)', text)
+                    if m:
+                        bluesky_outbox_id = int(m.group(1))
+        except Exception as exc:
+            bluesky_error = str(exc)
+            logger.warning("sfb crosspost: bluesky leg failed (%s) - other legs unaffected", exc)
+
+    # 4. Diary entry (metrics carry the trace ids)
     metrics: dict[str, Any] = {
         "outcome": "posted",
         "target": target,
@@ -232,6 +264,10 @@ async def crosspost_event(
         metrics["board_post_id"] = board_post_id
     if discord_message_id:
         metrics["discord_message_id"] = discord_message_id
+    if bluesky_outbox_id:
+        metrics["bluesky_outbox_id"] = bluesky_outbox_id
+    if bluesky_error:
+        metrics["bluesky_error"] = bluesky_error
     if discord_error:
         metrics["discord_error"] = discord_error
     if task_id:
