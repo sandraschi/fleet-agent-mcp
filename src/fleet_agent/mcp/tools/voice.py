@@ -67,10 +67,16 @@ async def fritz_voice_agent(
     spoken = False
     if speak and output.strip():
         try:
-            from .fleet_bridge import fleet_call_tool
+            import httpx
 
-            reply = await fleet_call_tool("speech", "speech_say", {"text": output[:500]})
-            spoken = bool(reply.get("success")) if isinstance(reply, dict) else False
+            from ...config import settings
+
+            resp = await httpx.AsyncClient(timeout=15).post(
+                f"{settings.speech_mcp_url.rstrip('/')}/api/v1/tts",
+                json={"text": output[:500], "provider": "windows"},
+            )
+            resp.raise_for_status()
+            spoken = True
         except Exception as exc:
             logger.warning("fritz_voice_agent: speak failed: %s", exc)
 

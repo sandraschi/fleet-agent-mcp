@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     }
     vla_notebooks_db: str = "D:/Dev/repos/vla-mcp/data/notebooks/notebooks.sqlite3"
 
+    # Speech-mcp REST (P5 voice loop): TTS via /api/v1/tts (provider windows = SAPI5)
+    speech_mcp_url: str = "http://127.0.0.1:10909"
+
     def ensure_dirs(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self.data_dir.joinpath("cards").mkdir(parents=True, exist_ok=True)
