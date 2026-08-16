@@ -10,15 +10,16 @@ Pretty HTML reports from **any fleet member**, served on a lightweight hub for i
 | Fritz backend | 10996 | publishes + ingests to AIWatcher |
 | AIWatcher backend | 10946 | publishes digests to hub |
 
-## Access matrix (2026-08-15)
+## Access matrix (2026-08-16)
 
 | Surface | URL | Access |
 |---------|-----|--------|
-| Hub (full) | `https://goliath.tailfab45.ts.net:11027/` | Tailnet only |
-| Hub (full) | `https://goliath.tailfab45.ts.net/` | **Public internet (Funnel) — HTTP Basic auth required** |
-| Harmless page | `https://goliath.tailfab45.ts.net/public` | **Public — no auth** (name + report count only) |
-| Health | `/health` | Public (watchdog probes) |
+| Hub (full) | `https://goliath.tailfab45.ts.net/intel/` | **Public internet (Funnel) - HTTP Basic auth required** |
+| Harmless page | `https://goliath.tailfab45.ts.net/intel/public` | **Public - no auth** (name + report count only) |
+| Hub (full) | `https://goliath.tailfab45.ts.net:11027/` | Tailnet only (direct port route) |
+| Health | `/health` (or `/intel/health` via funnel) | Public (watchdog probes) |
 | Legacy 10900 route | `https://goliath.tailfab45.ts.net:10443/` | Tailnet only |
+| Funnel landing | `https://goliath.tailfab45.ts.net/` | Public landing page (links to this hub) |
 
 ## HTTP Basic auth (Funnel hardening)
 
@@ -39,27 +40,38 @@ and `/health` is gated by HTTP Basic auth:
 
 ## Funnel
 
-Funnel exposes the hub on the public internet: `https://goliath.tailfab45.ts.net/`
-(443) → `127.0.0.1:11027`. Requires the `funnel` node attribute in the tailnet
-ACL (granted to goliath) and HTTPS (already on).
+Funnel exposes the hub on the public internet at **`/intel/`** (subpage of
+the fleet hub, not the root - the root is the landing page).
+Canonical funnel policy: `mcp-central-docs/operations/TailscaleFunnel.md`.
+
+The hub runs with `INTEL_REPORTS_HUB_ROOT_PATH=/intel` (default in
+`scripts/start-intel-hub.ps1`): uvicorn strips the prefix before routing, so
+all routes (`/public`, `/health`, `/reports/*`) keep working unchanged.
+Paths that do not start with the prefix (tailnet direct access on :11027)
+pass through untouched.
+
+Route + publish (see the canonical doc for the full checklist):
 
 ```powershell
-tailscale funnel --bg --https=443 http://127.0.0.1:11027   # enable
-tailscale funnel --https=443 off                            # kill switch
-tailscale funnel status
+tailscale serve --bg --set-path /intel/ http://127.0.0.1:11027
+tailscale funnel --bg --set-path /intel/ http://127.0.0.1:11027   # publish
+tailscale serve status
 ```
 
 Traffic flows browser → Tailscale relay → goliath; no port forwarding needed.
 Funnel is public by design — no ACLs, no rate limiting — which is why the hub
-carries its own auth gate.
+carries its own auth gate. Unauthenticated visitors to `/intel/` get a **401
+challenge** (never a redirect - a 302 would break the browser auth dialog);
+after login they see the index. The open subtree is `/intel/public` for
+devices that cannot answer Basic auth (iPads, chatbot webviews).
 
-**Verified 2026-08-15 from an iPad with Tailscale fully disabled:**
+**Verified 2026-08-16:**
 
 | Check | Result |
 |-------|--------|
-| `goliath.tailfab45.ts.net` resolves via public DNS (Google resolver) | ✅ A records → Tailscale relay IPs (185.40.x.x) |
-| `https://goliath.tailfab45.ts.net/public` (no Tailscale) | ✅ 200 — harmless page |
-| `https://goliath.tailfab45.ts.net/` (no Tailscale) | ✅ 401 → login prompt → 200 with creds |
+| `goliath.tailfab45.ts.net` resolves via public DNS | ✅ A records → Tailscale relay IPs |
+| `https://goliath.tailfab45.ts.net/intel/public` (no Tailscale) | ✅ 200 — harmless page |
+| `https://goliath.tailfab45.ts.net/intel/` (no Tailscale) | ✅ 401 → auth dialog → 200 with creds |
 
 Key fact: once Funnel is on, the `.ts.net` hostname resolves **publicly** —
 no MagicDNS needed, so any device anywhere reaches the hub.

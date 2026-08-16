@@ -11,7 +11,7 @@ from pathlib import Path
 from starlette.applications import Starlette
 from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.responses import HTMLResponse, JSONResponse
 from starlette.routing import Route
 
 from .render import render_index_page, wrap_markdown_report
@@ -36,6 +36,13 @@ def hub_port() -> int:
         return int(raw)
     except ValueError:
         return DEFAULT_PORT
+
+
+def hub_root_path() -> str:
+    """URL prefix uvicorn strips before routing (e.g. '/intel' when the hub
+    sits behind a tailscale funnel subpath). Empty string = no prefix.
+    """
+    return os.environ.get("INTEL_REPORTS_HUB_ROOT_PATH", "").strip()
 
 
 def hub_auth_credentials() -> tuple[str, str] | None:
@@ -95,13 +102,11 @@ class _BasicAuthMiddleware:
                 authorized = False
 
         if not authorized:
-            # Funnel visitors hitting the root land on the public site; only
-            # authenticated requests reach the private index. Other private
-            # paths (reports, API) stay hard-401.
-            if path == "/":
-                response = RedirectResponse("/public", status_code=302)
-                await response(scope, receive, send)
-                return
+            # 401 with WWW-Authenticate (no redirect): the browser pops the
+            # Basic auth dialog and retries WITH credentials, so authenticated
+            # visitors can reach / (the index) from outside the tailnet too.
+            # Anyone without credentials goes to /public explicitly - the
+            # landing page links there. PUBLIC_PATHS stay open above.
             await _unauthorized()(scope, receive, send)
             return
         await self.app(scope, receive, send)
@@ -242,6 +247,7 @@ def main() -> None:
     app = build_app()
     port = hub_port()
     host = hub_host()
+    root_path = hub_root_path()
     credentials = hub_auth_credentials()
     if credentials:
         print(f"Intel Reports Hub on http://{host}:{port} (HTTP Basic auth: user={credentials[0]})")
@@ -250,7 +256,9 @@ def main() -> None:
             "WARNING: Intel Reports Hub serving WITHOUT authentication - set "
             "INTEL_REPORTS_HUB_USER/INTEL_REPORTS_HUB_PASS to enable HTTP Basic auth"
         )
-    uvicorn.run(app, host=host, port=port, log_level="info")
+    if root_path:
+        print(f"root_path: {root_path} (paths stripped before routing - tailscale funnel subpath)")
+    uvicorn.run(app, host=host, port=port, root_path=root_path, log_level="info")
 
 
 if __name__ == "__main__":

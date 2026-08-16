@@ -38,6 +38,11 @@ $env:INTEL_REPORTS_HUB_HOST = if ($env:INTEL_REPORTS_HUB_HOST) { $env:INTEL_REPO
 # /public and /health). Override via env before launching if you want different
 # values. Without these the hub logs a WARNING and serves unauthenticated.
 $env:INTEL_REPORTS_HUB_USER = if ($env:INTEL_REPORTS_HUB_USER) { $env:INTEL_REPORTS_HUB_USER } else { "fleet" }
+# Public tailscale funnel serves the hub under /intel/; uvicorn strips the
+# prefix before routing, so all routes (/public, /health, /reports/*) keep
+# working. Tailnet-direct access on :11027 is unaffected (paths that do not
+# start with the prefix pass through unchanged).
+$env:INTEL_REPORTS_HUB_ROOT_PATH = if ($env:INTEL_REPORTS_HUB_ROOT_PATH) { $env:INTEL_REPORTS_HUB_ROOT_PATH } else { "/intel" }
 $env:INTEL_REPORTS_HUB_PASS = if ($env:INTEL_REPORTS_HUB_PASS) { $env:INTEL_REPORTS_HUB_PASS } else { "intel" }
 
 Write-Host "Starting Intel Reports Hub on :$Port (auth user: $env:INTEL_REPORTS_HUB_USER) ..." -ForegroundColor Cyan
