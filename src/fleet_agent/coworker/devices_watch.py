@@ -165,33 +165,79 @@ async def ensure_devices_mcp() -> str | None:
         return f"Failed to launch devices-mcp: {e}"
 
 
+def _ago(iso: str | None, now: datetime | None = None) -> str:
+    """Human-relative age of an ISO timestamp (e.g. '3m ago')."""
+    if not iso:
+        return ""
+    try:
+        from datetime import datetime as _dt
+
+        parsed = _dt.fromisoformat(iso.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=UTC)
+        now = now or datetime.now(UTC)
+        seconds = max(0, int((now - parsed).total_seconds()))
+        if seconds < 60:
+            return f"{seconds}s ago"
+        if seconds < 3600:
+            return f"{seconds // 60}m ago"
+        if seconds < 86400:
+            return f"{seconds // 3600}h ago"
+        return f"{seconds // 86400}d ago"
+    except Exception:
+        return ""
+
+
 def format_devices_report(payload: dict[str, Any], *, new_incidents: list[dict[str, Any]]) -> str:
+    scanned = payload.get("timestamp") or payload.get("scanned_at") or "?"
     lines = [
         "# Devices Priority Watch",
         "",
-        f"- Scanned: {payload.get('timestamp', '?')}",
+        f"- Scanned: {scanned} ({_ago(scanned)})",
         f"- Total incidents: {payload.get('incident_count', 0)}",
         f"- Critical: {payload.get('critical_count', 0)}",
         f"- Highest urgency: {payload.get('highest_urgency', 0)}",
+        "- Dashboard: http://127.0.0.1:10716",
         "",
     ]
     if new_incidents:
         lines.append("## New incidents")
         lines.append("")
         for inc in new_incidents:
-            lines.append(
-                f"- **[{inc.get('urgency', '?')}]** {inc.get('title', '?')} "
-                f"(`{inc.get('kind', '?')}` / {inc.get('source', '?')})"
-            )
+            title = str(inc.get("title", "?"))
+            kind = str(inc.get("kind", "?"))
+            src = str(inc.get("source", "?"))
+            urgency = str(inc.get("urgency", "?"))
+            lines.append(f"- **[{urgency}]** {title} (`{kind}` / {src})")
             if inc.get("description"):
                 lines.append(f"  {inc['description'][:200]}")
         lines.append("")
+
     all_inc = payload.get("incidents") or []
     if all_inc:
         lines.append("## Active (all sources)")
         lines.append("")
-        for inc in all_inc[:12]:
-            lines.append(f"- [{inc.get('urgency', '?')}] {inc.get('title', '?')}")
+        seen_titles: set[str] = set()
+        shown = 0
+        for inc in all_inc:
+            title = str(inc.get("title", "")).strip()
+            if not title or title in seen_titles:
+                continue
+            seen_titles.add(title)
+            if shown >= 12:
+                break
+            shown += 1
+            kind = str(inc.get("kind", ""))
+            src = str(inc.get("source", ""))
+            desc = str(inc.get("description", "") or "")[:120]
+            meta = f" ({kind} / {src})" if kind or src else ""
+            lines.append(f"- **[{inc.get('urgency', '?')}]** {title}{meta}")
+            if desc:
+                lines.append(f"  {desc}")
+        remaining = len(all_inc) - shown
+        if remaining > 0:
+            lines.append("")
+            lines.append(f"_...and {remaining} more._")
     else:
         lines.append("_No active priority incidents._")
     return "\n".join(lines)
@@ -264,9 +310,9 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
     ingest_results: list[dict[str, Any]] = []
 
     if new_incidents and deliver:
-        title = f"Devices Alert — {len(new_incidents)} new"
+        title = f"Devices Alert - {len(new_incidents)} new"
         if critical_new:
-            title = f"🚨 Devices URGENT — {len(critical_new)} critical"
+            title = f"[URGENT] Devices - {len(critical_new)} critical"
 
         hub_result = await publish_intel_report(
             title=title,
