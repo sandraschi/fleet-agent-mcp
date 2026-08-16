@@ -59,6 +59,23 @@ def hub_auth_credentials() -> tuple[str, str] | None:
     return None
 
 
+def _ascii_normalize(text: str) -> str:
+    """Normalize LLM-prose punctuation to ASCII (fleet hygiene rule).
+
+    Em/en dashes and mojibake replacement chars -> plain hyphen; smart
+    quotes -> straight quotes. Everything else is kept.
+    """
+    return (
+        text.replace("\u2014", "-")
+        .replace("\u2013", "-")
+        .replace("\ufffd", "-")
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
+    )
+
+
 def _unauthorized() -> JSONResponse:
     return JSONResponse(
         {"success": False, "error": "unauthorized"},
@@ -129,11 +146,14 @@ async def api_reports_publish(request: Request) -> JSONResponse:
     except Exception:
         return JSONResponse({"success": False, "error": "invalid JSON"}, status_code=400)
 
-    title = (body.get("title") or "").strip()
+    # Boundary hygiene (fleet rule: generated prose MUST be ASCII): em/en
+    # dashes, smart quotes, and mojibake replacement chars (U+FFFD, which
+    # appears when an em dash survives a bad decode) become plain ASCII.
+    title = _ascii_normalize((body.get("title") or "").strip())
     source = (body.get("source") or "fleet").strip()
     html_body = body.get("html") or ""
     markdown = body.get("markdown") or ""
-    summary = (body.get("summary") or "")[:500]
+    summary = _ascii_normalize((body.get("summary") or "")[:500])
     tags = body.get("tags") if isinstance(body.get("tags"), list) else []
 
     if not title:
