@@ -265,6 +265,17 @@ async def api_tasks_delete(request: Request) -> JSONResponse:
     return JSONResponse(r)
 
 
+async def api_workflows_list(request: Request) -> JSONResponse:
+    """List registered workflows for the Automaton page diagram."""
+    try:
+        from .engine.sqlite_store import get_store
+
+        workflows = get_store().list_workflows()
+        return JSONResponse({"workflows": workflows, "count": len(workflows)})
+    except Exception as exc:
+        return JSONResponse({"workflows": [], "count": 0, "error": str(exc)})
+
+
 async def api_voice_intent(request: Request) -> JSONResponse:
     """Voice Command Bus ingress (speech-mcp POSTs here after wake + STT)."""
     from .voice_router import route_voice_intent
@@ -537,6 +548,7 @@ def build_app() -> Starlette:
             Route("/api/tasks", endpoint=api_tasks_add, methods=["POST"]),
             Route("/api/tasks/complete", endpoint=api_tasks_complete, methods=["POST"]),
             Route("/api/tasks/delete", endpoint=api_tasks_delete, methods=["POST"]),
+            Route("/api/workflows", endpoint=api_workflows_list),
             Route("/api/voice/intent", endpoint=api_voice_intent, methods=["POST"]),
             Route("/api/scripts", endpoint=api_scripts_list),
             Route("/api/scripts", endpoint=api_scripts_create, methods=["POST"]),

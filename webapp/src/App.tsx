@@ -1,4 +1,5 @@
 import { AppLayout } from "@/components/layout/app-layout";
+import Automaton from "@/pages/Automaton";
 import { ChatPage } from "@/pages/chat";
 import { ContributionsPage } from "@/pages/contributions";
 import { Dashboard } from "@/pages/dashboard";
@@ -24,6 +25,7 @@ function App() {
 			<AppLayout>
 				<Routes>
 					<Route path="/" element={<Dashboard />} />
+					<Route path="/automaton" element={<Automaton />} />
 					<Route path="/chat" element={<ChatPage />} />
 					<Route path="/help" element={<Help />} />
 					<Route path="/tools" element={<Tools />} />

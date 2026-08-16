@@ -11,6 +11,7 @@ import {
 	HelpCircle,
 	LayoutDashboard,
 	ListChecks,
+	Network,
 	Settings2,
 	Terminal,
 	TrendingUp,
@@ -24,6 +25,7 @@ interface SidebarProps {
 
 const navItems = [
 	{ href: "/", label: "Dashboard", icon: LayoutDashboard },
+	{ href: "/automaton", label: "Automaton", icon: Network },
 	{ href: "/chat", label: "Chat", icon: Bot },
 	{ href: "/tasks", label: "Tasks", icon: ListChecks },
 	{ href: "/contributions", label: "PRs", icon: GitPullRequest },
