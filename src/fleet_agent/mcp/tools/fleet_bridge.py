@@ -168,6 +168,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "category": "robotics",
         "key_tools": ["yahboom_agent_mission", "yahboom_patrol", "yahboom_status"],
     },
+    "dreame": {
+        "url": "http://127.0.0.1:10894/mcp",
+        "description": "dreame-mcp — Dreame D20 Pro robot vacuum (status, battery, start_clean, stop, pause, go_home, find_robot)",
+        "category": "smart_home",
+        "key_tools": ["dreame_tool", "dreame_agentic_workflow"],
+    },
     "vla-robotics": {
         "url": "http://127.0.0.1:11024/mcp",
         "description": (

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 from datetime import UTC, datetime
 from typing import Any
 
@@ -77,13 +79,18 @@ async def route_voice_intent(
 
     entity_id, remainder = resolve_entity(text, registry)
     if not entity_id:
-        return {
-            "success": False,
-            "message": "No fleet entity matched (say boomy, alexa, or fritz first)",
-            "transcript": text,
-            "wake": wake,
-            "known_entities": list((registry.get("entities") or {}).keys()),
-        }
+        default = str(((registry.get("router") or {}).get("default_entity")) or "").strip()
+        if default:
+            entity_id = default
+            logger.info("No entity in transcript; using default entity '%s'", default)
+        else:
+            return {
+                "success": False,
+                "message": "No fleet entity matched (say boomy, alexa, or fritz first)",
+                "transcript": text,
+                "wake": wake,
+                "known_entities": list((registry.get("entities") or {}).keys()),
+            }
 
     entity_spec = (registry.get("entities") or {}).get(entity_id) or {}
     server = str(entity_spec.get("server", entity_id))
@@ -111,11 +118,17 @@ async def route_voice_intent(
         tool,
         list(args.keys()),
     )
-    result = await fleet_call_tool(server=server, tool=tool, arguments=args)
+    if server in ("fleet-agent", "self"):
+        # Local tools (dev_ops, pulse_add, fritz_voice_agent, ...) run
+        # in-process — no HTTP round trip to our own /mcp endpoint.
+        result = await _call_local_tool(tool, args)
+    else:
+        result = await fleet_call_tool(server=server, tool=tool, arguments=args)
     ts = timestamp or datetime.now(UTC).isoformat()
+    summary = _bridge_summary(result)
     return {
         "success": bool(result.get("success")),
-        "message": result.get("message", "Delegated"),
+        "message": summary or result.get("message", "Delegated"),
         "next_steps": result.get("next_steps", []),
         "wake": wake,
         "transcript": text,
@@ -127,3 +140,59 @@ async def route_voice_intent(
         "source": source,
         "data": result.get("data", result),
     }
+
+
+def _bridge_summary(result: dict[str, Any]) -> str:
+    """Extract a speakable summary from a fleet_call_tool result.
+
+    Remote tools return their payload as raw content blocks; the generic
+    "Called X on Y" message is useless for spoken replies. This unwraps the
+    first JSON payload (message/summary key) or strips markdown from plain
+    text payloads (e.g. dreame_tool telemetry).
+    """
+    data = result.get("data") if isinstance(result, dict) else None
+    if not isinstance(data, dict):
+        return ""
+    for part in data.get("content") or []:
+        text = part if isinstance(part, str) else None
+        if text is None:
+            continue
+        try:
+            payload = json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            payload = text
+        if isinstance(payload, dict):
+            msg = payload.get("message") or payload.get("summary")
+            if msg:
+                return str(msg)[:200]
+            continue
+        cleaned = re.sub(r"#{1,6}\s*", "", str(payload))
+        cleaned = re.sub(r"\*{1,2}", "", cleaned)
+        cleaned = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", cleaned)
+        cleaned = " ".join(cleaned.split())
+        if cleaned:
+            return cleaned[:200]
+    return ""
+
+
+async def _call_local_tool(tool: str, args: dict[str, Any]) -> dict[str, Any]:
+    """Call a fleet-agent tool in-process and normalize the result dict."""
+    from .mcp.registry import mcp
+
+    try:
+        local = await mcp.call_tool(tool, args)
+        for block in getattr(local, "content", []):
+            text = getattr(block, "text", None)
+            if text is None:
+                continue
+            if isinstance(text, dict):
+                return text
+            try:
+                payload = json.loads(text)
+            except (json.JSONDecodeError, TypeError):
+                payload = {"text": text}
+            return payload if isinstance(payload, dict) else {"text": str(payload)}
+        return {"success": False, "message": f"Local tool '{tool}' returned no content"}
+    except Exception as exc:
+        logger.error("Local voice tool '%s' failed: %s", tool, exc)
+        return {"success": False, "message": f"Local tool '{tool}' failed: {exc}"}

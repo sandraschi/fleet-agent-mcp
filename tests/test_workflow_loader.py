@@ -192,7 +192,8 @@ class TestDiscoverWorkflows:
             "name: yaml-flow\nstart: build\nnodes:\n  build:\n    task: Build\n    terminal: true\n"
         )
         (wf_dir / "wf2.json").write_text(
-            '{"name": "json-flow", "start": "build", "nodes": {"build": {"task": "Build", "terminal": true}}}'
+            '{"name": "json-flow", "start": "build", "nodes": {"build": '
+            '{"task": "Build", "terminal": true}}}'
         )
         (wf_dir / "ignore.txt").write_text("not a workflow")
 

@@ -1,5 +1,5 @@
 
-## [Unreleased] — 2026-07-01
+## [0.2.1] — 2026-08-17
 
 ### Added — Voice Command Bus: dev commands + receivers (2026-08-17)
 - **`dev_ops`** portmanteau — `start_webapp` (Fleet Starts Launcher 10791, direct-spawn fallback), `gpu_status` (nvidia-smi), `invokeai_kick`/`invokeai_status` (11154 REST), `list_webapps`, `opencode_send` (most-recent opencode session via opencode-cli-mcp)

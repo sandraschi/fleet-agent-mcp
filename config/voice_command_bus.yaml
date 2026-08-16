@@ -16,6 +16,9 @@ capture:
 
 router:
   default_url: "http://127.0.0.1:10996/api/voice/intent"
+  # Bare commands (no entity word) route to fritz: "set timer twenty minutes",
+  # "opencode assfix devices", "gpu status" all work without a prefix.
+  default_entity: "fritz"
 
 entities:
   boomy:
@@ -27,6 +30,22 @@ entities:
   fritz:
     server: fleet-agent
     aliases: [fritz, lumen]
+  opencode:
+    server: fleet-agent
+    aliases: [opencode, open code]
+    description: Dev IDE - sends tasks to the currently open opencode session
+  dreame:
+    server: dreame
+    aliases: [dreame, dream, vacuum, robohoove, hoover, robovac]
+    description: Dreame D20 Pro robot vacuum
+  calibre:
+    server: fleet-agent
+    aliases: [calibre, caliber, caliper]
+    description: Ebook reader / Calibre library (NLP in voice_assist, tools on calibre-mcp)
+  plexy:
+    server: fleet-agent
+    aliases: [plexy, plexie, plex]
+    description: Movie + audiobook player (plex-mcp via voice_assist)
 
 handlers:
   boomy:
@@ -42,15 +61,123 @@ handlers:
         enable: true
   alexa:
     - default:
-      tool: interact
-      args:
-        command: "{remainder}"
-        wait_for_response: true
-        timeout: 20
+        tool: interact
+        args:
+          command: "{remainder}"
+          wait_for_response: true
+          timeout: 20
   fritz:
-    - default:
+    - keywords: [start webapp, launch webapp, open webapp, boot webapp]
+      tool: dev_ops
+      args:
+        operation: start_webapp
+        repo: "{remainder}"
+    - keywords: [gpu status, gpu stats, gpu info, gpu usage, graphics card]
+      tool: dev_ops
+      args:
+        operation: gpu_status
+    - keywords: [kick invokeai, start invokeai, boot invokeai, launch invokeai]
+      tool: dev_ops
+      args:
+        operation: invokeai_kick
+    - keywords: [invokeai status, invokeai health]
+      tool: dev_ops
+      args:
+        operation: invokeai_status
+    - keywords: [list webapps, list apps, list web apps]
+      tool: dev_ops
+      args:
+        operation: list_webapps
+    - keywords: [opencode]
+      tool: dev_ops
+      args:
+        operation: opencode_send
+        prompt: "{remainder}"
+    - keywords: [set timer, set a timer, start timer, timer for, reminder]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - keywords: [play, watch, listen, pause, stop, resume, next, previous, skip]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - keywords: [search, find, look for, list, what do we have]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - keywords: [pulse, add task, note, remember]
       tool: pulse_add
       args:
         task: "{transcript}"
         group: voice
         priority: medium
+    - default:
+        tool: fritz_voice_agent
+        args:
+          prompt: "{remainder}"
+          speak: true
+  opencode:
+    - default:
+        tool: dev_ops
+        args:
+          operation: opencode_send
+          prompt: "{remainder}"
+  dreame:
+    - keywords: [clean, vacuum, sweep, mop]
+      tool: dreame_tool
+      args:
+        operation: start_clean
+    - keywords: [stop, halt]
+      tool: dreame_tool
+      args:
+        operation: stop
+    - keywords: [pause]
+      tool: dreame_tool
+      args:
+        operation: pause
+    - keywords: [home, dock, charge, go home]
+      tool: dreame_tool
+      args:
+        operation: go_home
+    - keywords: [find, locate, where are you, where is]
+      tool: dreame_tool
+      args:
+        operation: find_robot
+    - keywords: [battery]
+      tool: dreame_tool
+      args:
+        operation: battery
+    - keywords: [map, floor]
+      tool: dreame_tool
+      args:
+        operation: map
+    - default:
+        tool: dreame_tool
+        args:
+          operation: status
+  calibre:
+    - keywords: [find, search, look for, where is, open, read, show, recent, new, latest]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - default:
+        tool: voice_assist
+        args:
+          text: "{remainder}"
+  plexy:
+    - keywords: [play, watch, listen]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - keywords: [pause, stop, resume, continue, next, previous, skip]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - keywords: [search, find, look for, what do we have]
+      tool: voice_assist
+      args:
+        text: "{remainder}"
+    - default:
+        tool: voice_assist
+        args:
+          text: "{remainder}"

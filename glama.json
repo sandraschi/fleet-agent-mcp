@@ -1,6 +1,6 @@
 {
   "name": "fleet-agent-mcp",
-  "version": "0.2.1-pre",
+  "version": "0.2.1",
   "description": "Self-evolving AI fleet conductor agent (Fritz) — state machine, task management, knowledge accumulation, autonomous PR pipeline. 63 FastMCP 3.2 tools across 16 subsystems.",
   "repository": "https://github.com/sandraschi/fleet-agent-mcp",
   "tags": ["ai-agent", "automation", "fleet-orchestrator", "coworker", "state-machine"],

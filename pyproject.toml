@@ -1,6 +1,6 @@
 [project]
 name = "fleet-agent-mcp"
-version = "0.1.0"
+version = "0.2.1"
 description = "Self-evolving AI agent — state machine, task management, knowledge accumulation, identity. Inspired by kagura-agent."
 requires-python = ">=3.12"
 dependencies = [
