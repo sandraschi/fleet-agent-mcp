@@ -15,7 +15,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "task": "Fritz Activity Pulse — coworker:activity_pulse",
         "category": "fleet",
         "recurrence_setting": "activity_pulse_interval",
-        "default_recurrence": "15m",
+        "default_recurrence": "2h",
         "enabled_setting": "coworker_activity_pulse_enabled",
         "default_enabled": True,
         "description": "Periodic status report to Fleet Hub :11027/reports/fritz-activity",
