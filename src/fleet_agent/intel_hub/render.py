@@ -200,7 +200,7 @@ def render_index_page(reports: list[dict[str, Any]], *, hub_name: str = "Fleet I
         created = _fmt_time(str(r.get("created_at", "")))
         badge = _source_badge(str(r.get("source", "")))
         cards.append(
-            f'<a class="card" href="/reports/{rid}">'
+            f'<a class="card" href="reports/{rid}">'
             f"<h2>{title}</h2>"
             f'<div class="meta">{badge}{created}</div>'
             f"{'<div class=summary>' + summary + '</div>' if summary else ''}"
