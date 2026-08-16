@@ -99,8 +99,9 @@ audiobooks), **alexa** (Echo).
 - `dev_ops` — start_webapp (Fleet Starts Launcher 10791), gpu_status
   (nvidia-smi), invokeai_kick/status (11154), list_webapps, opencode_send
   (most-recent opencode session).
-- `voice_assist` — timers (speech-mcp, announces expiry), "play X" (plex-mcp
-  search → streaming), pause/stop/next/resume, media search, calibre
+- `voice_assist` — timers (speech-mcp, announces expiry), "play X" (Plex
+  REST search → direct stream → **VLC**; `FLEET_VLC_PATH` override, Plex
+  client fallback), pause/stop/next/resume, media search, calibre
   book search/open with spoken-verb stripping.
 - Registry (canonical): `mcp-central-docs/config/voice_command_bus.yaml` ·
   Standard: [`VOICE_COMMAND_BUS.md`](https://github.com/sandraschi/mcp-central-docs/blob/main/standards/VOICE_COMMAND_BUS.md).

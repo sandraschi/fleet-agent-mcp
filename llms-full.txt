@@ -123,7 +123,7 @@ Cross-server MCP client. 19 registered servers: opencode, fleet-agent, git-githu
 ### assist (1 tool)
 - voice_assist — Domestic voice intents (clause-split on "then"/"and"):
   - timers: "set timer twenty minutes" → speech-mcp manage_domestic_utility (announces expiry)
-  - playback: "play desguello" → plex-mcp search → plex_streaming play
+  - playback: "play desguello" → Plex REST search → direct part URL (`/library/parts/.../file.mp4`) → VLC (FLEET_VLC_PATH; Plex client fallback)
   - controls: pause / stop / resume / next / previous → plex_streaming
   - media search: "find movie X" → plex-mcp; "find book X" → calibre query_books (verbs stripped)
 

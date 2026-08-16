@@ -4,6 +4,7 @@
 ### Added — Voice Command Bus: dev commands + receivers (2026-08-17)
 - **`dev_ops`** portmanteau — `start_webapp` (Fleet Starts Launcher 10791, direct-spawn fallback), `gpu_status` (nvidia-smi), `invokeai_kick`/`invokeai_status` (11154 REST), `list_webapps`, `opencode_send` (most-recent opencode session via opencode-cli-mcp)
 - **`voice_assist`** portmanteau — clause chains ("set timer twenty minutes, then play desguello"): timers → speech-mcp (announces expiry), playback/search/controls → plex-mcp, book search/open → calibre-mcp (spoken verbs stripped), timer cancel
+- **VLC playback** — `_plex_play` searches Plex via REST and plays the **direct part stream** (`/library/parts/.../file.mp4`, `200 video/mp4`) in VLC — no Plex client needed; HLS transcode endpoint (start.m3u8) returns 400 and is not used. `FLEET_VLC_PATH` override, auto-detect common install paths, Plex client fallback retained
 - **Receiver entities** in `voice_command_bus.yaml` — opencode, dreame (new FLEET_SERVERS entry, 10894), calibre, plexy; `router.default_entity: fritz` enables bare commands
 - **Router**: in-process calls for fleet-agent tools; `_bridge_summary` reads real payloads (markdown/JSON) for spoken replies; fixed `default:` YAML handler blocks (were parsed as null)
 - Env: `FLEET_STARTS_UI_URL`, `FLEET_STARTS_DIR`, `FLEET_DEV_INVOKEAI_URL`
