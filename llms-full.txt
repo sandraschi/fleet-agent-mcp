@@ -108,8 +108,24 @@ Cross-server MCP client. 19 registered servers: opencode, fleet-agent, git-githu
 - intel_reports_list — List reports
 - aiwatcher_push_event — Fleet event → AIWatcher
 
-### voice (1 tool)
-- route_voice_command — Wake-word → fleet MCP routing
+### voice (2 tools)
+- route_voice_command — Wake-word → fleet MCP routing (speech-mcp POST /api/voice/intent)
+- fritz_voice_agent — Voice-in / voice-out loop: cline agent run → spoken reply via speech-mcp
+
+### dev (1 tool)
+- dev_ops — Dev-workflow voice commands (operations):
+  - start_webapp — launch a fleet webapp stack via the Fleet Starts Launcher (10791), local .bat fallback
+  - gpu_status — nvidia-smi snapshot (load, VRAM, temperature per GPU)
+  - invokeai_kick / invokeai_status — start/check the InvokeAI engine (11154)
+  - list_webapps — catalog of startable webapps
+  - opencode_send — send a spoken task to the most recently active opencode session
+
+### assist (1 tool)
+- voice_assist — Domestic voice intents (clause-split on "then"/"and"):
+  - timers: "set timer twenty minutes" → speech-mcp manage_domestic_utility (announces expiry)
+  - playback: "play desguello" → plex-mcp search → plex_streaming play
+  - controls: pause / stop / resume / next / previous → plex_streaming
+  - media search: "find movie X" → plex-mcp; "find book X" → calibre query_books (verbs stripped)
 
 ### scripts (7 tools)
 - script_create — Create a script
@@ -140,6 +156,14 @@ Scripts support three language types:
 
 ## Environment
 All settings via `FLEET_AGENT_` prefixed env vars (see config.py). Copy .env.example to .env.
+
+Voice Command Bus (dev commands):
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `FLEET_STARTS_UI_URL` | `http://127.0.0.1:10791` | Fleet Starts Launcher base URL |
+| `FLEET_STARTS_DIR` | `D:\Dev\repos\mcp-central-docs\starts` | Local fallback scan dir for webapp starts |
+| `FLEET_DEV_INVOKEAI_URL` | `http://127.0.0.1:11154` | invokeai-mcp REST base URL (engine start/status) |
 
 ## Webapp
 React 18 + Vite 5 + Tailwind CSS 3 + React Router 6 + Lucide React. Dark theme only.

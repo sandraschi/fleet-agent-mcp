@@ -4,7 +4,7 @@
 
 Self-evolving AI agent (Fritz) — state machine, task management, coworker workflows, fleet_bridge. Inspired by kagura-agent.
 
-**Voice Command Bus:** `POST /api/voice/intent` and tool `route_voice_command`. Registry: `config/voice_command_bus.yaml` or `FLEET_VOICE_REGISTRY` → mcp-central-docs.
+**Voice Command Bus:** `POST /api/voice/intent` and tool `route_voice_command`. Registry: `config/voice_command_bus.yaml` or `FLEET_VOICE_REGISTRY` → mcp-central-docs. Dev-workflow commands (`fritz gpu status`, `fritz start webapp X`, `fritz kick invokeai`) route in-process to `dev_ops` (`mcp/tools/dev.py`).
 
 **Intel Reports Hub (11027):** `docs/INTEL_REPORTS_HUB.md` — Pulse/Day Prep/devices watch publish HTML; `aiwatcher_push_event` ingests to AIWatcher; urgent email on degradation.
 

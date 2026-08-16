@@ -1,6 +1,13 @@
 
 ## [Unreleased] — 2026-07-01
 
+### Added — Voice Command Bus: dev commands + receivers (2026-08-17)
+- **`dev_ops`** portmanteau — `start_webapp` (Fleet Starts Launcher 10791, direct-spawn fallback), `gpu_status` (nvidia-smi), `invokeai_kick`/`invokeai_status` (11154 REST), `list_webapps`, `opencode_send` (most-recent opencode session via opencode-cli-mcp)
+- **`voice_assist`** portmanteau — clause chains ("set timer twenty minutes, then play desguello"): timers → speech-mcp (announces expiry), playback/search/controls → plex-mcp, book search/open → calibre-mcp (spoken verbs stripped), timer cancel
+- **Receiver entities** in `voice_command_bus.yaml` — opencode, dreame (new FLEET_SERVERS entry, 10894), calibre, plexy; `router.default_entity: fritz` enables bare commands
+- **Router**: in-process calls for fleet-agent tools; `_bridge_summary` reads real payloads (markdown/JSON) for spoken replies; fixed `default:` YAML handler blocks (were parsed as null)
+- Env: `FLEET_STARTS_UI_URL`, `FLEET_STARTS_DIR`, `FLEET_DEV_INVOKEAI_URL`
+
 ### Added — Scripting System (CRUD + Editor + Debugger + MCP Calls + AI Generation)
 - **Script CRUD** — `scripts` SQLite table + MCP tools: `script_create/get/update/delete/list` with REST API
 - **Script execution** — `script_run` supports Python (`exec`), Shell/PowerShell (`subprocess`), and `mcp_call` (fleet server tool calls via `fleet_call_tool`)

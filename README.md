@@ -82,8 +82,28 @@ Three roles, one agent:
 | 12 | **notify** | 3 | Email + cron scheduler | — |
 | 13 | **coworker** | 3 | Portmanteau: execute flow + list + bootstrap | [docs/coworker-plan.md](docs/coworker-plan.md) |
 | 14 | **intel_hub** | 3 | Intel Reports + AIWatcher push | [docs/INTEL_REPORTS_HUB.md](docs/INTEL_REPORTS_HUB.md) |
-| 15 | **voice** | 1 | Wake-word voice command routing | — |
+| 15 | **voice** | 2 | Voice Command Bus: routing + Fritz agent loop | — |
 | 16 | **scripts** | 7 | Script CRUD, run, and AI generation | — |
+| 17 | **dev** | 1 | Dev-workflow voice commands: webapp starts, GPU status, InvokeAI, opencode | [VOICE_COMMAND_BUS.md](https://github.com/sandraschi/mcp-central-docs/blob/main/standards/VOICE_COMMAND_BUS.md) |
+| 18 | **assist** | 1 | Domestic intents: timers, Plex playback, media/book search | [VOICE_COMMAND_BUS.md](https://github.com/sandraschi/mcp-central-docs/blob/main/standards/VOICE_COMMAND_BUS.md) |
+
+## Voice Command Bus
+
+Fritz is the router for the fleet voice bus (`POST /api/voice/intent`): entity
+match (receiver) → keyword handler → in-process tool (fleet-agent) or bridge
+to the owning MCP server. Receivers: **fritz** (universal agent, also the
+`default_entity` for bare commands), **opencode** (dev IDE), **boomy** (Yahboom
+car), **dreame** (robovac), **calibre** (ebooks), **plexy** (movies +
+audiobooks), **alexa** (Echo).
+
+- `dev_ops` — start_webapp (Fleet Starts Launcher 10791), gpu_status
+  (nvidia-smi), invokeai_kick/status (11154), list_webapps, opencode_send
+  (most-recent opencode session).
+- `voice_assist` — timers (speech-mcp, announces expiry), "play X" (plex-mcp
+  search → streaming), pause/stop/next/resume, media search, calibre
+  book search/open with spoken-verb stripping.
+- Registry (canonical): `mcp-central-docs/config/voice_command_bus.yaml` ·
+  Standard: [`VOICE_COMMAND_BUS.md`](https://github.com/sandraschi/mcp-central-docs/blob/main/standards/VOICE_COMMAND_BUS.md).
 
 **Intel & alerts:** Fleet Pulse / Day Prep publish HTML to the [Intel Reports Hub](docs/INTEL_REPORTS_HUB.md) (port **11027**, iPad via Tailscale). Fritz ingests summaries into AIWatcher and sends **urgent email + cursor inbox** on degradation or home-safety incidents (kitchen temp, CO, Ring).
 
