@@ -29,7 +29,7 @@ from ..config import settings
 
 logger = logging.getLogger("fleet_agent.sfb_crosspost")
 
-#: Default SFB Discord channel ids (created 2026-08-15, guild sas1234's server).
+#: Default SFB Discord channel ids (created 2026-08-15, guild Sandra's Fleet HQ).
 DEFAULT_SFB_CHANNELS: dict[str, str] = {
     "work": "1538243264300196031",
     "thoughts": "1538243282759454751",
