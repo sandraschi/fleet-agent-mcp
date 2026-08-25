@@ -1,0 +1,17 @@
+tests/
+.git/
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+target/
+webapp/node_modules/
+webapp/dist/
+node_modules/
+.ruff_cache/
+.pytest_cache/
+*.bak
+*.bak.*
+*.orig
+*.rej

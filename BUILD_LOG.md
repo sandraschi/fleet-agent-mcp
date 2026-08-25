@@ -1,29 +1,37 @@
-# Build Log — fleet-agent-mcp
+# BUILD_LOG.md — fleet-agent-mcp (v0.2.2)
 
-## 2026-07-01 — v0.1.0 NSIS Build
+> **Build Date:** 2026-08-25  
+> **Release:** v0.2.2  
+> **Tier:** T2 (Webapp + MCPB + Tauri NSIS Desktop Installer)
 
-| Metric | Value |
-|--------|-------|
-| Build time | ~8 min (PyInstaller 1min + Rust 2.5min + NSIS) |
-| Installer size | 30.4 MB |
-| Backend exe | 26.9 MB |
-| Frontend | 3.4 KB gzip |
+---
 
-### Gates
-- [x] API_BASE verification (port 10996) — PASS
-- [x] TypeScript lint (tsc --noEmit + tsc -b) — PASS
-- [x] Frontend build (vite) — PASS
-- [x] PyInstaller frozen binary — PASS (26.9 MB)
-- [x] Size gate (>= 5 MB) — PASS (26.9 MB)
-- [x] Frozen binary smoke test — PASS
-- [x] Rust compilation (cargo check) — PASS (2 warnings: unused import, unused mut)
-- [x] NSIS installer — PASS (30.4 MB)
+## Artifacts Produced
 
-### Output
-- `native/target/release/bundle/nsis/Fleet Agent MCP_0.1.0_x64-setup.exe`
-- Staged to `dist/Fleet Agent MCP_0.1.0_x64-setup.exe`
+| Artifact | Path | Size | Description |
+|---|---|---|---|
+| **MCPB Bundle** | `dist/fleet-agent-mcp-v0.2.2.mcpb` | 0.2 MB | Claude Desktop bundle with 3-4-100 SOTA prompts & `src/fleet_agent` layout |
+| **Tauri NSIS Installer** | `dist/Fleet Agent MCP_0.2.2_x64-setup.exe` | ~38 MB | Single NSIS desktop installer embedding PyInstaller frozen sidecar (`fleet-agent-mcp-backend.exe`, 28.7 MB) |
 
-### Notes
-- WSL not enabled for this build; manual build on Windows.
-- PyInstaller `--clean` forces full rebuild each time (no incremental).
-- `beforeBuildCommand` disabled in tauri.conf.json for manual pipeline; re-enable for CI.
+---
+
+## Build History & Regressions Encountered
+
+### 1. MCPB Packaging (`scripts/mcpb-pack.ps1`)
+- **Issue**: Initial `.mcpbignore` had `src/*` which stripped the package source directory.
+- **Fix**: Removed `src/*` from `$ignoreLines` array so `src/fleet_agent` is preserved under `mcpb/src/fleet_agent`.
+- **Verification**: 3-4-100 prompts rule passed (`system.md`: 6,215 words, `user.md`: 7,023 words, `examples.json`: 105 entries). Manifest validation passed. Total 94 files included.
+
+### 2. PyInstaller Frozen Sidecar (`fleet-agent-mcp-backend.spec`)
+- **Issue**: `copy_metadata("fastapi")` threw `PackageNotFoundError: No package metadata was found for fastapi` because `fastapi` was not directly installed in venv.
+- **Fix**: Wrapped `copy_metadata(pkg)` calls in `try...except` block and set `upx=False` per Tauri production pitfalls standard.
+- **Verification**: Frozen backend binary `fleet-agent-mcp-backend.exe` (28.7 MB) built and passed automated launch smoke-test on test port 11999.
+
+### 3. Tauri NSIS Single Installer (`native/build.ps1`)
+- **Issue**: Initial version was `0.2.1` in `native/tauri.conf.json`.
+- **Fix**: Updated `native/tauri.conf.json` to `"version": "0.2.2"` to align with `pyproject.toml` and release tag.
+- **Verification**: `makensis` produced `Fleet Agent MCP_0.2.2_x64-setup.exe` in `native/target/release/bundle/nsis/` and staged to `dist/`.
+
+---
+
+*Log maintained by Antigravity Fleet Operations.*

@@ -17,3 +17,9 @@ webapp/dist/
 *.log
 logs/
 
+# Packaging & Build Staging
+mcpb/src/
+native/target/
+native/binaries/
+native/resources/*.exe
+
