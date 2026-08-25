@@ -1,4 +1,4 @@
-"""Urgent alerts — email (and optional cursor inbox) when thresholds trip."""
+"""Urgent alerts - email (and optional cursor inbox) when thresholds trip."""
 
 from __future__ import annotations
 
@@ -57,11 +57,11 @@ async def deliver_urgent_alert(
         }
 
     link_line = f"\n\nRead on iPad: {hub_url}" if hub_url else ""
-    email_body = f"**Urgent — {reason}**\n\n{body}{link_line}"
+    email_body = f"**Urgent - {reason}**\n\n{body}{link_line}"
 
     email_result = await deliver_report(
         email_body,
-        f"🚨 Fritz — {subject}",
+        f"🚨 Fritz - {subject}",
         deliver=True,
     )
 

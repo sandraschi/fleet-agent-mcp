@@ -1,4 +1,4 @@
-"""Office Day Prep — combine inbox highlights with Fritz task queue."""
+"""Office Day Prep - combine inbox highlights with Fritz task queue."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def format_day_prep(
     human_tasks: list[dict[str, Any]],
 ) -> str:
     lines = [
-        f"# Office Day Prep — {pulse_date}",
+        f"# Office Day Prep - {pulse_date}",
         "",
         "## Today's focus (Fritz pulse)",
         "",
@@ -37,7 +37,7 @@ def format_day_prep(
         for i, t in enumerate(top, 1):
             lines.append(f"{i}. [{t.get('priority', 'medium')}] {t.get('task', '?')[:120]}")
     else:
-        lines.append("_No pending pulse tasks — good day for deep work._")
+        lines.append("_No pending pulse tasks - good day for deep work._")
 
     lines.extend(["", "## Waiting on you (human group)", ""])
     if human_tasks:
@@ -96,7 +96,7 @@ async def run_day_prep(*, deliver: bool = True) -> dict[str, Any]:
     artifact_path = save_artifact("office-day-prep", report, tz_name)
     log_project_note(DAY_PREP_PROJECT, pulse_date, report, tags=["coworker", "office"])
 
-    subject = f"Office Day Prep — {pulse_date.split()[0]}"
+    subject = f"Office Day Prep - {pulse_date.split()[0]}"
     delivery = {"email": await deliver_report(report, subject, deliver=deliver)}
 
     hub_result: dict[str, Any] = {}

@@ -39,10 +39,10 @@ const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
 ];
 
 const TAB_SUBS: Record<Tab, string> = {
-	overview: "69 tools, 15 subsystems — Fritz on FastMCP 3.2",
-	flowforge: "9 tools — YAML state machine, enforced step execution",
+	overview: "71 tools, 18 subsystems — Fritz on FastMCP 3.2",
+	flowforge: "11 tools — YAML state machine, anti-spin failure limits",
 	pulse: "6 tools — task management, north-star alignment",
-	memory: "7 tools — compile-time knowledge wiki, card lint",
+	memory: "8 tools — compile-time knowledge wiki, SKILL.md importer",
 	identity: "4 tools — agent self-definition, SOUL.md, north star",
 	teleport: "3 tools — pack, inspect, unpack .soul archives",
 	evolution: "3 tools — mistake log, correction, lesson extraction",
@@ -177,7 +177,7 @@ function mdToHtml(md: string): string {
 
 const OVERVIEW = `# fleet-agent — Fritz
 
-Self-evolving AI agent. **69 FastMCP 3.2 tools** across **15 subsystems**.
+Self-evolving AI agent. **71 FastMCP 3.2 tools** across **18 subsystems**.
 
 **Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
 
@@ -254,13 +254,15 @@ nodes:
 | Branching | \`branches: [{condition, next}]\` | Multiple paths |
 | Terminal | \`terminal: true\` | End of workflow |
 
-## 9 Tools
+## 11 Tools
 
 - \`workflow_define\` — Register YAML workflow
 - \`workflow_autodiscover\` — Scan ./workflows/ for .yaml files
 - \`workflow_start\` — New instance
-- \`workflow_status\` — Current node, task, branches
+- \`workflow_status\` — Current node, task, branches, blocked state
 - \`workflow_next\` — Advance (pass branch=N for branching)
+- \`workflow_failure_record\` — Record node failure & enforce failure_limit auto-blocking
+- \`workflow_unblock\` — Clear blocked state and reset failure counter
 - \`workflow_log\` — Execution history
 - \`workflow_list\` — All registered workflows
 - \`workflow_active\` — Active instances
@@ -322,9 +324,10 @@ Compile-time knowledge accumulation. Cards integrated at write time, not assembl
 | **Projects** | Per-repo observations | "flowforge: SQLite state survives restarts" |
 | **Evolution** | Mistakes + lessons | "NEVER use shell=True" |
 
-## 7 Tools
+## 8 Tools
 
 - \`memory_card_create(title, content, tags?, category?)\` — New card
+- \`import_external_skill(file_path, tags?)\` — Import SKILL.md from OpenClaw/Anthropic/Hermes
 - \`memory_card_search(query)\` — Full-text search
 - \`memory_card_update(card_id, content, tags?)\` — Update (query-writeback)
 - \`memory_cards_list()\` — All cards

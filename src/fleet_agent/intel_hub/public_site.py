@@ -1,10 +1,10 @@
-"""Public Intel Hub site generator — funnel-facing, PUBLIC-SAFE data only.
+"""Public Intel Hub site generator - funnel-facing, PUBLIC-SAFE data only.
 
 The Tailscale funnel exposes this page to the public internet. Everything it
 renders MUST be derived from genuinely public sources or sanitized aggregates:
 
   - GitHub: public repo metadata from the sandraschi user (name, description,
-    stars, language, last push) — public by definition.
+    stars, language, last push) - public by definition.
   - Dev diary (vla_mcp notebooks): ONLY per-repo aggregates (repo tag, latest
     category + date, entry counts). Never titles, bodies, or authors.
   - AIWatcher: ONLY counts (items in the last window, feed totals, feed error
@@ -69,7 +69,7 @@ async def github_repos() -> list[dict[str, Any]]:
 def diary_digest() -> dict[str, Any]:
     """Per-repo aggregates from the vla_mcp dev diary (public-safe subset).
 
-    Returns only repo tag, latest category, latest date, and counts — never
+    Returns only repo tag, latest category, latest date, and counts - never
     titles, bodies, or authors.
     """
     result: dict[str, Any] = {"repos": {}, "total_entries": 0, "by_category": {}}
@@ -105,7 +105,7 @@ def diary_digest() -> dict[str, Any]:
 
 
 async def aiwatcher_stats() -> dict[str, Any]:
-    """Sanitized AIWatcher counts — never item content."""
+    """Sanitized AIWatcher counts - never item content."""
     out: dict[str, Any] = {"reachable": False}
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
@@ -192,7 +192,7 @@ def render_html(repos: list[dict[str, Any]], diary: dict[str, Any], aiw: dict[st
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sandrafleet — Public</title>
+<title>Sandrafleet - Public</title>
 <style>
   :root {{ color-scheme: dark; }}
   body {{ margin:0; background:#09090b; color:#e4e4e7; font-family:system-ui,sans-serif; }}
@@ -220,7 +220,7 @@ def render_html(repos: list[dict[str, Any]], diary: dict[str, Any], aiw: dict[st
 <body>
 <header>
   <h1>Sandrafleet</h1>
-  <p class="sub">The sandraschi MCP fleet — public window. Generated {now}</p>
+  <p class="sub">The sandraschi MCP fleet - public window. Generated {now}</p>
 </header>
 <main>
   <div class="note">Public-safe aggregates only: GitHub repo metadata, fleet dev-diary

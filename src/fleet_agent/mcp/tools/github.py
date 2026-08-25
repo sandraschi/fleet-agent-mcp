@@ -1,4 +1,4 @@
-"""GitHub PR pipeline tools — branch, commit, push, PR creation.
+"""GitHub PR pipeline tools - branch, commit, push, PR creation.
 
 Delegates git operations to git-github-mcp when available,
 falls back to subprocess git for local operations.
@@ -396,7 +396,7 @@ async def github_merge_pr(
 async def github_status(
     repo_path: Annotated[str, Field(description="Absolute path to the local repo")],
 ) -> dict[str, Any]:
-    """Check git status of a repo — branch, changes, ahead/behind.
+    """Check git status of a repo - branch, changes, ahead/behind.
 
     ## Return Format
     {"success": bool, "branch": str, "changes": int, "ahead": int, "message": str}

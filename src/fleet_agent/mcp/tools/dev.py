@@ -1,4 +1,4 @@
-"""Dev-workflow voice commands — webapp starts, GPU status, InvokeAI engine control.
+"""Dev-workflow voice commands - webapp starts, GPU status, InvokeAI engine control.
 
 Fired by the Voice Command Bus: speech-mcp wake -> STT -> fleet-agent
 ``POST /api/voice/intent`` -> ``fritz`` handlers (voice_command_bus.yaml) -> ``dev_ops``.

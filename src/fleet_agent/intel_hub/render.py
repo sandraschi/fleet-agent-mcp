@@ -1,4 +1,4 @@
-"""HTML rendering for intel reports — iPad-friendly, mobile-first."""
+"""HTML rendering for intel reports - iPad-friendly, mobile-first."""
 
 from __future__ import annotations
 
@@ -221,7 +221,7 @@ def render_index_page(reports: list[dict[str, Any]], *, hub_name: str = "Fleet I
 <div class="wrap">
 <header>
 <h1>{html.escape(hub_name)}</h1>
-<p>Fritz + AIWatcher — readable on iPad via Tailscale or Funnel</p>
+<p>Fritz + AIWatcher - readable on iPad via Tailscale or Funnel</p>
 </header>
 {body}
 <div class="footer">Fleet Intel Reports Hub</div>

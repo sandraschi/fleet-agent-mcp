@@ -1,4 +1,4 @@
-"""Autonomous agent loop — picks up pending tasks and executes them.
+"""Autonomous agent loop - picks up pending tasks and executes them.
 
 This is the core loop that makes Fritz an autonomous agent rather than a
 passive tool provider. It runs every AGENTIC_INTERVAL seconds and:
@@ -157,13 +157,13 @@ async def _handle_workflow_tick() -> None:
             verdict = verdict.strip().upper()
             if verdict not in ("PASS", "FAIL", "ITERATE", "BLOCKED"):
                 logger.warning(
-                    "Gate '%s': LLM returned invalid verdict '%s' — defaulting to PASS",
+                    "Gate '%s': LLM returned invalid verdict '%s' - defaulting to PASS",
                     current_node,
                     verdict,
                 )
                 verdict = "PASS"
         except Exception as exc:
-            logger.error("Gate '%s': LLM call failed — defaulting to PASS: %s", current_node, exc)
+            logger.error("Gate '%s': LLM call failed - defaulting to PASS: %s", current_node, exc)
             verdict = "PASS"
 
         logs.add("info", f"Gate '{current_node}': verdict={verdict}", "agentic")
@@ -205,7 +205,7 @@ async def _handle_workflow_tick() -> None:
             logger.exception("Agent step '%s' raised", current_node)
             sm.record_node_output(current_node, {"success": False, "error": str(exc)})
             logs.add("error", f"Agent step '{current_node}' raised: {exc}", "agentic")
-        # Advance regardless — a failed agent step records the error for the
+        # Advance regardless - a failed agent step records the error for the
         # next node/gate instead of stalling the workflow forever.
         result = await workflow_next()
         if result.get("completed"):
@@ -279,7 +279,7 @@ async def _handle_task_tick() -> None:
                 logs.add(
                     "warning",
                     f"Task failed after {attempt} attempts: {task['task'][:100]} "
-                    f"— {result.get('message', '')[:120]}",
+                    f"- {result.get('message', '')[:120]}",
                     "agentic",
                 )
             else:
@@ -293,7 +293,7 @@ async def _handle_task_tick() -> None:
                 logs.add(
                     "warning",
                     f"Task failed (attempt {attempt}/3): {task['task'][:100]} "
-                    f"— {result.get('message', '')[:120]}",
+                    f"- {result.get('message', '')[:120]}",
                     "agentic",
                 )
 

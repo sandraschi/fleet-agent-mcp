@@ -29,6 +29,9 @@ class WorkflowInstance:
     last_verdict: str | None = None
     gate_results: list[dict[str, Any]] = field(default_factory=list)
     node_outputs: dict[str, Any] = field(default_factory=dict)
+    failure_count: int = 0
+    blocked: bool = False
+    blocked_reason: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -40,6 +43,9 @@ class WorkflowInstance:
             "last_verdict": self.last_verdict,
             "gate_count": len(self.gate_results),
             "node_outputs": self.node_outputs,
+            "failure_count": self.failure_count,
+            "blocked": self.blocked,
+            "blocked_reason": self.blocked_reason,
         }
 
 
@@ -107,6 +113,41 @@ class StateMachine:
             return None
         return node.node_type or "build"
 
+    def failure_record(
+        self, reason: str | None = None, failure_limit: int = 2
+    ) -> WorkflowInstance | None:
+        """Record a failure for the current node on the active workflow instance."""
+        instance = self._store.get_active_instance()
+        if instance is None:
+            return None
+        instance.failure_count += 1
+        now = datetime.now(UTC).isoformat()
+        instance.updated_at = now
+        if instance.failure_count >= failure_limit:
+            instance.blocked = True
+            instance.blocked_reason = (
+                reason
+                or f"Exceeded failure limit ({failure_limit}) at node '{instance.current_node}'"
+            )
+            self._store.log_event(
+                instance.workflow_name, "blocked", f"Reason: {instance.blocked_reason}"
+            )
+        self._store.save_instance(instance)
+        return instance
+
+    def unblock(self) -> WorkflowInstance | None:
+        """Clear blocked state and reset failure count for the active workflow instance."""
+        instance = self._store.get_active_instance()
+        if instance is None:
+            return None
+        instance.blocked = False
+        instance.blocked_reason = None
+        instance.failure_count = 0
+        instance.updated_at = datetime.now(UTC).isoformat()
+        self._store.log_event(instance.workflow_name, "unblocked", "Manually unblocked")
+        self._store.save_instance(instance)
+        return instance
+
     def next(
         self,
         branch: int | None = None,
@@ -116,6 +157,12 @@ class StateMachine:
         instance = self._store.get_active_instance()
         if instance is None:
             return None
+
+        if instance.blocked:
+            raise ValueError(
+                f"Workflow instance '{instance.workflow_name}' is BLOCKED: {instance.blocked_reason}. "
+                "Call workflow_unblock to resolve."
+            )
 
         wf = self._store.get_workflow(instance.workflow_name)
         if wf is None:
@@ -155,6 +202,10 @@ class StateMachine:
             "branch": branch_label,
             "timestamp": now,
         }
+
+        # Reset failure count when moving to a new node
+        if next_node != instance.current_node:
+            instance.failure_count = 0
 
         # Store eval artifacts and verdict in history
         if evals:

@@ -1,4 +1,4 @@
-"""Voice assistant intents — timers, Plex playback, and media search.
+"""Voice assistant intents - timers, Plex playback, and media search.
 
 Fired by the Voice Command Bus: spoken commands like
 "set timer twenty minutes, then play desguello" land here after the router
@@ -227,7 +227,7 @@ def _item_title(item: dict[str, Any], fallback: str) -> str:
 
 
 async def _plex_play(query: str) -> dict[str, Any]:
-    """Search Plex and play the top match — VLC preferred, client fallback."""
+    """Search Plex and play the top match - VLC preferred, client fallback."""
     from .dev import unwrap_bridge
     from .fleet_bridge import fleet_call_tool
 
@@ -494,7 +494,7 @@ async def voice_assist(
     ],
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Execute domestic voice intents — timers, Plex playback, media search.
+    """Execute domestic voice intents - timers, Plex playback, media search.
 
     [RATIONALE]
     One portmanteau parses spoken chains ("set timer twenty minutes, then

@@ -19,9 +19,9 @@ _STARTER_CARDS = [
 Fritz (fleet-agent-mcp) is a self-evolving AI fleet conductor agent.
 
 ## Three-Layer Architecture
-1. **flowforge** — YAML-defined state machine. Defines *what* to do, in *what* order.
-2. **heartbeat** — Coordinator. Wakes on cron, reads state, spawns workers, evaluates, advances.
-3. **coworker** — Worker. Executes scheduled flows.
+1. **flowforge** - YAML-defined state machine. Defines *what* to do, in *what* order.
+2. **heartbeat** - Coordinator. Wakes on cron, reads state, spawns workers, evaluates, advances.
+3. **coworker** - Worker. Executes scheduled flows.
 
 ## Key Concepts
 - **Portmanteau tools**: related operations grouped into one tool with an operation enum
@@ -92,10 +92,10 @@ All flows use the recurrence format: HH:MM (daily), wd:HH:MM (weekdays), sun:HH:
 Scripts are executable tasks that can be triggered manually or on a schedule.
 
 ## Script Types
-1. **Python** — Full Python via exec() with __result, __log, __args context
-2. **Shell** — Windows cmd commands via subprocess (30s timeout)
-3. **PowerShell** — PowerShell scripts via pwsh (30s timeout)
-4. **MCP Call** — JSON: {server, tool, params, llm_analyze?} — calls a tool on a fleet server
+1. **Python** - Full Python via exec() with __result, __log, __args context
+2. **Shell** - Windows cmd commands via subprocess (30s timeout)
+3. **PowerShell** - PowerShell scripts via pwsh (30s timeout)
+4. **MCP Call** - JSON: {server, tool, params, llm_analyze?} - calls a tool on a fleet server
 
 ## MCP Call with AI Analysis
 The `llm_analyze` field is optional. When set, Fritz's LLM interprets the tool result:
@@ -119,16 +119,16 @@ Use the Scripts page's AI Generate button (or the `script_generate` tool) to cre
 
 `fritz_contribute` is a fully autonomous contribution pipeline:
 
-1. **Clone** — git clone the target repo
-2. **Scan** — ruff check --select S701,S110,E722,F401
-3. **Prioritize** — pick highest-severity finding
-4. **LLM Fix** — send file + error to LLM, get old_string/new_string
-5. **File Issue** — gh issue create
-6. **Branch** — git checkout -b fix/{code}
-7. **Apply** — file_edit with backup + verification
-8. **Commit** — git commit -m
-9. **Push** — gh repo fork + git push
-10. **PR** — gh pr create
+1. **Clone** - git clone the target repo
+2. **Scan** - ruff check --select S701,S110,E722,F401
+3. **Prioritize** - pick highest-severity finding
+4. **LLM Fix** - send file + error to LLM, get old_string/new_string
+5. **File Issue** - gh issue create
+6. **Branch** - git checkout -b fix/{code}
+7. **Apply** - file_edit with backup + verification
+8. **Commit** - git commit -m
+9. **Push** - gh repo fork + git push
+10. **PR** - gh pr create
 
 Shipped PRs: discord-mcp (#2, #4), GrandOrgue (#2497, #2498), edge-bookmark-mcp-server (#5).""",
     },

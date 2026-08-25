@@ -1,4 +1,4 @@
-"""Teleport tools — pack agent identity + memory + workflows for migration.
+"""Teleport tools - pack agent identity + memory + workflows for migration.
 
 Inspired by kagura-agent/openclaw-teleport: packs everything that makes an agent
 "that agent" into a single portable file. Unpack on new machine = full restore.
@@ -130,7 +130,7 @@ async def teleport_inspect(
     soul_path: Annotated[str, Field(description="Path to .soul file to inspect.")],
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Inspect a .soul archive without unpacking — show manifest and file listing.
+    """Inspect a .soul archive without unpacking - show manifest and file listing.
 
     ## Return Format
     {"success": bool, "manifest": dict, "files": list[str], "message": str}
@@ -174,10 +174,10 @@ async def teleport_unpack(
     ] = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Unpack a .soul archive — restore agent identity, memory, workflows, and database.
+    """Unpack a .soul archive - restore agent identity, memory, workflows, and database.
 
     WARNING: Overwrites existing files in the target directory.
-    DESTRUCTIVE operation — creates/overwrites database and files.
+    DESTRUCTIVE operation - creates/overwrites database and files.
 
     ## Return Format
     {"success": bool, "files_restored": int, "target_dir": str, "message": str}

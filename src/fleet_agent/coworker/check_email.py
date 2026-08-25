@@ -1,4 +1,4 @@
-"""Check Email — security-focused inbox scan via email-mcp.
+"""Check Email - security-focused inbox scan via email-mcp.
 
 Scans for security-relevant emails (password resets, service alerts, phishing)
 and escalates via Fritz's alert chain. Runs on a tighter interval than the
@@ -30,7 +30,7 @@ logger = logging.getLogger("fleet_agent.coworker.check_email")
 
 CHECK_EMAIL_PROJECT = "check-email"
 
-# Security-relevant subject patterns — emails that should alert Fritz
+# Security-relevant subject patterns - emails that should alert Fritz
 _SECURITY_PATTERNS = (
     "password reset",
     "password changed",
@@ -72,13 +72,13 @@ def format_check_report(
     security_hits: list[dict[str, Any]],
 ) -> str:
     lines = [
-        f"# Email Security Scan — {pulse_date}",
+        f"# Email Security Scan - {pulse_date}",
         "",
     ]
 
     if not inbox.get("success"):
         err = inbox.get("error") or inbox.get("message") or "email-mcp unreachable"
-        lines.append(f"- **Status:** failed — {err}")
+        lines.append(f"- **Status:** failed - {err}")
         lines.append("")
         return "\n".join(lines)
 
@@ -103,7 +103,7 @@ def format_check_report(
         [
             "## Actions required",
             "",
-            "1. Review security alerts above — do not click links in suspicious emails.",
+            "1. Review security alerts above - do not click links in suspicious emails.",
             "2. If password reset was not requested, change credentials immediately.",
             "3. Check services dashboard to verify account status.",
             "",

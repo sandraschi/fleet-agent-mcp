@@ -138,3 +138,45 @@ class TestNodeTypes:
         sm._store.save_workflow(wf)
         sm.start("default-flow")
         assert sm.get_current_node_type() == "build"
+
+
+class TestAntiSpinGuard:
+    def test_failure_record_and_blocking(self):
+        import pytest
+        sm = _reset_sm()
+        data = {
+            "name": "spin-test",
+            "start": "step1",
+            "nodes": {
+                "step1": {"task": "Step 1", "next": "step2"},
+                "step2": {"task": "Step 2", "terminal": True},
+            },
+        }
+        wf = workflow_from_dict(data)
+        sm._store.save_workflow(wf)
+        sm.start("spin-test")
+
+        # First failure
+        inst = sm.failure_record(reason="Fail 1", failure_limit=2)
+        assert inst.failure_count == 1
+        assert not inst.blocked
+
+        # Second failure (hits limit=2)
+        inst = sm.failure_record(reason="Fail 2", failure_limit=2)
+        assert inst.failure_count == 2
+        assert inst.blocked
+        assert "Fail 2" in inst.blocked_reason
+
+        # Attempting to call next() while blocked must raise ValueError
+        with pytest.raises(ValueError, match="BLOCKED"):
+            sm.next()
+
+        # Unblock instance
+        inst = sm.unblock()
+        assert not inst.blocked
+        assert inst.failure_count == 0
+
+        # Now next() succeeds
+        inst = sm.next()
+        assert inst.current_node == "step2"
+

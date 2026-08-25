@@ -27,7 +27,10 @@ CREATE TABLE IF NOT EXISTS instances (
     archived INTEGER DEFAULT 0,
     last_verdict TEXT,
     gate_results_json TEXT DEFAULT '[]',
-    node_outputs_json TEXT DEFAULT '{}'
+    node_outputs_json TEXT DEFAULT '{}',
+    failure_count INTEGER DEFAULT 0,
+    blocked INTEGER DEFAULT 0,
+    blocked_reason TEXT
 );
 
 CREATE TABLE IF NOT EXISTS execution_log (
@@ -126,6 +129,9 @@ class SqliteStore:
                 "ALTER TABLE instances ADD COLUMN last_verdict TEXT",
                 "ALTER TABLE instances ADD COLUMN gate_results_json TEXT DEFAULT '[]'",
                 "ALTER TABLE instances ADD COLUMN node_outputs_json TEXT DEFAULT '{}'",
+                "ALTER TABLE instances ADD COLUMN failure_count INTEGER DEFAULT 0",
+                "ALTER TABLE instances ADD COLUMN blocked INTEGER DEFAULT 0",
+                "ALTER TABLE instances ADD COLUMN blocked_reason TEXT",
             ):
                 try:
                     conn.execute(migration)
@@ -194,13 +200,14 @@ class SqliteStore:
 
         inst: WorkflowInstance = instance  # type: ignore[assignment]
         with self._connect() as conn:
-            # The instances table has no primary key — UPDATE the active row
+            # The instances table has no primary key - UPDATE the active row
             # (identified by workflow + start time) instead of INSERT OR REPLACE,
             # which would append a duplicate row on every save.
             cursor = conn.execute(
                 """UPDATE instances SET
                      current_node = ?, updated_at = ?, history_json = ?,
-                     last_verdict = ?, gate_results_json = ?, node_outputs_json = ?
+                     last_verdict = ?, gate_results_json = ?, node_outputs_json = ?,
+                     failure_count = ?, blocked = ?, blocked_reason = ?
                    WHERE workflow_name = ? AND started_at = ? AND archived = 0""",
                 (
                     inst.current_node,
@@ -209,6 +216,9 @@ class SqliteStore:
                     inst.last_verdict,
                     json.dumps(inst.gate_results),
                     json.dumps(inst.node_outputs),
+                    inst.failure_count,
+                    1 if inst.blocked else 0,
+                    inst.blocked_reason,
                     inst.workflow_name,
                     inst.started_at,
                 ),
@@ -217,8 +227,9 @@ class SqliteStore:
                 conn.execute(
                     """INSERT INTO instances
                        (workflow_name, current_node, started_at, updated_at,
-                        history_json, archived, last_verdict, gate_results_json, node_outputs_json)
-                       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)""",
+                        history_json, archived, last_verdict, gate_results_json, node_outputs_json,
+                        failure_count, blocked, blocked_reason)
+                       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)""",
                     (
                         inst.workflow_name,
                         inst.current_node,
@@ -228,6 +239,9 @@ class SqliteStore:
                         inst.last_verdict,
                         json.dumps(inst.gate_results),
                         json.dumps(inst.node_outputs),
+                        inst.failure_count,
+                        1 if inst.blocked else 0,
+                        inst.blocked_reason,
                     ),
                 )
 
@@ -257,6 +271,19 @@ class SqliteStore:
                 )
             except (KeyError, json.JSONDecodeError):
                 node_outputs = {}
+            try:
+                failure_count = row["failure_count"] or 0
+            except KeyError:
+                failure_count = 0
+            try:
+                blocked = bool(row["blocked"])
+            except KeyError:
+                blocked = False
+            try:
+                blocked_reason = row["blocked_reason"] or None
+            except KeyError:
+                blocked_reason = None
+
             return WorkflowInstance(
                 workflow_name=row["workflow_name"],
                 current_node=row["current_node"],
@@ -266,6 +293,9 @@ class SqliteStore:
                 last_verdict=last_verdict,
                 gate_results=gate_results,
                 node_outputs=node_outputs,
+                failure_count=failure_count,
+                blocked=blocked,
+                blocked_reason=blocked_reason,
             )
 
     def list_active_instances(self) -> list[dict[str, Any]]:

@@ -3,7 +3,7 @@
 Inspired by karpathy's LLM Wiki and kagura-agent/wiki:
   - Compile-time knowledge accumulation > runtime RAG retrieval
   - Knowledge is integrated at write time, not assembled at query time
-  - Good answers compound — they feed back into the wiki
+  - Good answers compound - they feed back into the wiki
   - Lint catches orphans, contradictions, stale content
 """
 

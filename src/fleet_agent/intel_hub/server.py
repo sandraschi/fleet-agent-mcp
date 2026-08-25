@@ -1,4 +1,4 @@
-"""Mini HTTP server for Fleet Intel Reports — iPad / Tailscale access."""
+"""Mini HTTP server for Fleet Intel Reports - iPad / Tailscale access."""
 
 from __future__ import annotations
 
@@ -191,7 +191,7 @@ async def page_index(request: Request) -> HTMLResponse:
 
 
 async def page_public(request: Request) -> HTMLResponse:
-    """Public funnel page — serves the generated public site when present,
+    """Public funnel page - serves the generated public site when present,
     otherwise the minimal status card."""
     public_index = Path.home() / ".fleet-intel" / "public" / "index.html"
     if public_index.is_file():

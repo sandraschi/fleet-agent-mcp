@@ -1,4 +1,4 @@
-"""Inbox Briefing — unread email digest via email-mcp."""
+"""Inbox Briefing - unread email digest via email-mcp."""
 
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ def format_inbox_briefing(
     email_status: dict[str, Any] | None,
 ) -> str:
     lines = [
-        f"# Inbox Briefing — {pulse_date}",
+        f"# Inbox Briefing - {pulse_date}",
         "",
         "## Summary",
         "",
     ]
     if not inbox.get("success"):
         err = inbox.get("error") or inbox.get("message") or "email-mcp unreachable"
-        lines.append(f"- **Status:** failed — {err}")
+        lines.append(f"- **Status:** failed - {err}")
         lines.append("")
         lines.append(
             "Start email-mcp on port 10813 or check `/api/settings` → `inbox_briefing_service`."
@@ -48,7 +48,7 @@ def format_inbox_briefing(
     lines.extend(["", "## Messages", ""])
 
     if not emails:
-        lines.append("_No unread messages — inbox zero._")
+        lines.append("_No unread messages - inbox zero._")
     else:
         for i, msg in enumerate(emails[:20], 1):
             subject = msg.get("subject") or "(no subject)"
@@ -65,7 +65,7 @@ def format_inbox_briefing(
             "",
             "## Suggested actions",
             "",
-            "1. Reply to urgent senders first (human gate — Fritz does not send without approval).",
+            "1. Reply to urgent senders first (human gate - Fritz does not send without approval).",
             "2. Move newsletters to archive if `mailing_list_latest` covers them.",
             "3. `pulse_add` follow-ups for anything needing work this week.",
             "",
@@ -105,7 +105,7 @@ async def run_inbox_briefing(*, deliver: bool = True) -> dict[str, Any]:
     artifact_path = save_artifact("inbox-briefing", report, tz_name)
     log_project_note(INBOX_PROJECT, pulse_date, report, tags=["coworker", "office", "email"])
 
-    subject = f"Inbox Briefing — {pulse_date.split()[0]}"
+    subject = f"Inbox Briefing - {pulse_date.split()[0]}"
     delivery = {"email": await deliver_report(report, subject, deliver=deliver)}
 
     count = inbox.get("count", 0) if isinstance(inbox, dict) else 0

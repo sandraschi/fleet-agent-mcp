@@ -1,4 +1,4 @@
-"""Fleet bridge tools — cross-server MCP client for calling other fleet MCP servers.
+"""Fleet bridge tools - cross-server MCP client for calling other fleet MCP servers.
 
 Enables the fleet agent to delegate work to specialized servers:
   - opencode-cli-mcp → run opencode agents for repo inspection
@@ -27,77 +27,77 @@ from ..registry import mcp
 
 logger = logging.getLogger("fleet_agent.tools.fleet_bridge")
 
-# Legacy aliases — bare "vla" means vla-mcp (robotics), NOT vienna-life-assistant.
+# Legacy aliases - bare "vla" means vla-mcp (robotics), NOT vienna-life-assistant.
 FLEET_SERVER_ALIASES: dict[str, str] = {
     "vla": "vla-robotics",
 }
 
 # ── Fleet MCP Server Registry ────────────────────────────────────────────────
 # Each entry maps a server alias to its streamable HTTP MCP endpoint.
-# Ports from WEBAPP_PORTS.md — all servers use /mcp path for Streamable HTTP.
+# Ports from WEBAPP_PORTS.md - all servers use /mcp path for Streamable HTTP.
 
 FLEET_SERVERS: dict[str, dict[str, Any]] = {
     "opencode": {
         "daemon": False,  # launched on demand with opencode
         "url": "http://127.0.0.1:10951/mcp",
-        "description": "opencode-cli-mcp — AI coding agents, sessions, provider config",
+        "description": "opencode-cli-mcp - AI coding agents, sessions, provider config",
         "category": "code",
         "key_tools": ["opencode_run_agent", "opencode_list_sessions", "opencode_get_project"],
     },
     "fleet-agent": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10996/mcp/",
-        "description": "fleet-agent-mcp (Lumen) — state machine, tasks, memory, identity",
+        "description": "fleet-agent-mcp (Lumen) - state machine, tasks, memory, identity",
         "category": "orchestration",
         "key_tools": ["heartbeat_status", "pulse_list", "memory_card_search"],
     },
     "git-github": {
         "url": "http://127.0.0.1:10702/mcp",
-        "description": "git-github-mcp — GitHub API: repos, issues, PRs, branches, commits",
+        "description": "git-github-mcp - GitHub API: repos, issues, PRs, branches, commits",
         "category": "code",
         "key_tools": ["list_repos", "list_issues", "list_prs"],
     },
     "docs": {
         "url": "http://127.0.0.1:10795/mcp",
-        "description": "documentation-mcp — federated RAG: semantic search, ask, reindex",
+        "description": "documentation-mcp - federated RAG: semantic search, ask, reindex",
         "category": "knowledge",
         "key_tools": ["search_docs", "ask_docs", "get_document"],
     },
     "memory": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10732/mcp",
-        "description": "advanced-memory-mcp — persistent agent memory, knowledge graphs, embedding",
+        "description": "advanced-memory-mcp - persistent agent memory, knowledge graphs, embedding",
         "category": "knowledge",
         "key_tools": ["store_memory", "recall_memory", "search_knowledge"],
     },
     "discord": {
         "url": "http://127.0.0.1:10756/mcp",
-        "description": "discord-mcp — Discord bot integration, messages, channels, guilds",
+        "description": "discord-mcp - Discord bot integration, messages, channels, guilds",
         "category": "communication",
         "key_tools": ["discord_send", "discord_read", "discord_list_channels"],
     },
     "robofang": {
         "url": "http://127.0.0.1:10871/mcp",
-        "description": "robofang — AI fleet command center, robotics orchestration, alerting",
+        "description": "robofang - AI fleet command center, robotics orchestration, alerting",
         "category": "orchestration",
         "key_tools": ["robofang_status", "robofang_trigger", "robofang_agents"],
     },
     "plex": {
         "url": "http://127.0.0.1:10740/mcp",
-        "description": "plex-mcp — Plex media: libraries, streaming, users, playlists, RAG (22 tools)",  # noqa: E501
+        "description": "plex-mcp - Plex media: libraries, streaming, users, playlists, RAG (22 tools)",  # noqa: E501
         "category": "media",
         "key_tools": ["plex_library", "plex_search", "plex_streaming", "plex_rag"],
     },
     "calibre": {
         "url": "http://127.0.0.1:10720/mcp",
-        "description": "calibre-mcp — Ebook library: books, authors, fulltext search, LanceDB RAG (30+ tools)",  # noqa: E501
+        "description": "calibre-mcp - Ebook library: books, authors, fulltext search, LanceDB RAG (30+ tools)",  # noqa: E501
         "category": "media",
         "key_tools": ["query_books", "search_fulltext", "manage_libraries", "calibre_rag"],
     },
     "arxiv": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10770/mcp",
-        "description": "arxiv-mcp — Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",
+        "description": "arxiv-mcp - Papers: search, full text, citations, DOI, lab blogs (22 tools + 10 prompts)",
         "category": "research",
         "key_tools": [
             "search_papers",
@@ -109,7 +109,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     "aiwatcher": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10946/mcp",
-        "description": "aiwatcher-mcp — AI news distillation, urgency scoring, top items, search, digest history",
+        "description": "aiwatcher-mcp - AI news distillation, urgency scoring, top items, search, digest history",
         "category": "intelligence",
         "key_tools": [
             "get_top_items",
@@ -122,7 +122,7 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "browser": {
         "url": "http://127.0.0.1:10780/mcp",
-        "description": "browser-mcp — Browser automation: open URLs, screenshots, web scraping, bookmarks",
+        "description": "browser-mcp - Browser automation: open URLs, screenshots, web scraping, bookmarks",
         "category": "automation",
         "key_tools": [
             "browser_open",
@@ -133,14 +133,14 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "cursor": {
         "url": "http://127.0.0.1:11000/mcp",
-        "description": "cursor-mcp — Cursor platform API: usage/spend guardrails, cloud agent monitor",
+        "description": "cursor-mcp - Cursor platform API: usage/spend guardrails, cloud agent monitor",
         "category": "orchestration",
         "key_tools": ["cursor_usage", "cursor_cloud", "cursor_docs", "cursor_sdk", "cursor_help"],
     },
     "pywinauto": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10788/mcp",
-        "description": "pywinauto-mcp — Windows UI automation: windows, clicks, keyboard, OCR, Cua-shaped window snapshots",
+        "description": "pywinauto-mcp - Windows UI automation: windows, clicks, keyboard, OCR, Cua-shaped window snapshots",
         "category": "automation",
         "key_tools": [
             "get_window_state",
@@ -152,25 +152,25 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "speech": {
         "url": "http://127.0.0.1:10909/mcp",
-        "description": "speech-mcp — TTS/STT, wake word, voice command bus ingress",
+        "description": "speech-mcp - TTS/STT, wake word, voice command bus ingress",
         "category": "media",
         "key_tools": ["configure_local_wake_word", "transcribe_audio_file", "speech_say"],
     },
     "alexa": {
         "url": "http://127.0.0.1:10801/mcp",
-        "description": "alexa-mcp — Acoustic bridge: TTS to Echo, STT of Alexa reply (interact)",
+        "description": "alexa-mcp - Acoustic bridge: TTS to Echo, STT of Alexa reply (interact)",
         "category": "smart_home",
         "key_tools": ["interact", "speak_command", "listen_for_response"],
     },
     "yahboom": {
         "url": "http://127.0.0.1:10892/mcp",
-        "description": "yahboom-mcp — Yahboom robot car: motors, patrol, sensors, camera",
+        "description": "yahboom-mcp - Yahboom robot car: motors, patrol, sensors, camera",
         "category": "robotics",
         "key_tools": ["yahboom_agent_mission", "yahboom_patrol", "yahboom_status"],
     },
     "teleoperator": {
         "url": "http://127.0.0.1:10901/mcp",
-        "description": "teleoperator-mcp — WebXR teleop gateway: estop, takeover, authority, gaze, LiveKit video",
+        "description": "teleoperator-mcp - WebXR teleop gateway: estop, takeover, authority, gaze, LiveKit video",
         "category": "robotics",
         "key_tools": [
             "teleop_voice_command",
@@ -182,15 +182,15 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "dreame": {
         "url": "http://127.0.0.1:10894/mcp",
-        "description": "dreame-mcp — Dreame D20 Pro robot vacuum (status, battery, start_clean, stop, pause, go_home, find_robot)",
+        "description": "dreame-mcp - Dreame D20 Pro robot vacuum (status, battery, start_clean, stop, pause, go_home, find_robot)",
         "category": "smart_home",
         "key_tools": ["dreame_tool", "dreame_agentic_workflow"],
     },
     "vla-robotics": {
         "url": "http://127.0.0.1:11024/mcp",
         "description": (
-            "vla-mcp (video-language-action) — X Square Wall-OSS, WALL-WM, DMuon; "
-            "NOT vienna-life-assistant — use alias vienna-life for life admin"
+            "vla-mcp (video-language-action) - X Square Wall-OSS, WALL-WM, DMuon; "
+            "NOT vienna-life-assistant - use alias vienna-life for life admin"
         ),
         "category": "robotics",
         "key_tools": [
@@ -204,38 +204,38 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     "email": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10813/mcp",
-        "description": "email-mcp — SMTP/IMAP inbox, send, search, mailing lists, auto-respond",
+        "description": "email-mcp - SMTP/IMAP inbox, send, search, mailing lists, auto-respond",
         "category": "office",
         "key_tools": ["check_inbox", "send_email", "email_status", "search_emails"],
     },
     "notion": {
         "url": "http://127.0.0.1:10811/mcp",
-        "description": "notion-mcp — pages, databases, search, workspace automation",
+        "description": "notion-mcp - pages, databases, search, workspace automation",
         "category": "office",
         "key_tools": ["create_page", "search_pages", "query_database"],
     },
     "onenote": {
         "url": "http://127.0.0.1:10907/mcp",
-        "description": "onenote-mcp — notebooks, sections, pages via Graph",
+        "description": "onenote-mcp - notebooks, sections, pages via Graph",
         "category": "office",
         "key_tools": ["listNotebooks", "listPages", "createPage", "searchPages"],
     },
     "libreoffice": {
         "url": "http://127.0.0.1:10981/mcp",
-        "description": "libreoffice-mcp — headless convert + bridge to LO extension MCP",
+        "description": "libreoffice-mcp - headless convert + bridge to LO extension MCP",
         "category": "office",
         "key_tools": ["libreoffice", "convert", "bridge_discover"],
     },
     "libreoffice-ext": {
         "url": "http://127.0.0.1:8765/mcp",
-        "description": "LibreOffice extension MCP (WriterAgent / mcp-libre / Nelson) — live GUI edit",
+        "description": "LibreOffice extension MCP (WriterAgent / mcp-libre / Nelson) - live GUI edit",
         "category": "office",
         "key_tools": ["convert_document", "read_document_text", "create_document"],
     },
     "devices": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10716/mcp",
-        "description": "devices-mcp — home IoT: cameras, Shelly temps, Nest CO/smoke, Ring alarm",
+        "description": "devices-mcp - home IoT: cameras, Shelly temps, Nest CO/smoke, Ring alarm",
         "category": "smart_home",
         "key_tools": [
             "security_management",
@@ -246,19 +246,19 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
     },
     "glance": {
         "url": "http://127.0.0.1:10776/mcp",
-        "description": "glance-mcp — RSS, weather, fleet probes, OPML feeds",
+        "description": "glance-mcp - RSS, weather, fleet probes, OPML feeds",
         "category": "intelligence",
         "key_tools": ["glance_ops", "glance_health"],
     },
     "vienna-life": {
         "url": "http://127.0.0.1:10922/mcp",
-        "description": "vienna-life-assistant (ViLife) — calendar, todos, expenses; NOT vla-mcp robotics",
+        "description": "vienna-life-assistant (ViLife) - calendar, todos, expenses; NOT vla-mcp robotics",
         "category": "life",
         "key_tools": ["vienna_life", "fleet_overview"],
     },
     "secrets": {
         "url": "http://127.0.0.1:11026/mcp",
-        "description": "secrets-mcp — Bitwarden CLI, audit_fleet, fingerprint resolve",
+        "description": "secrets-mcp - Bitwarden CLI, audit_fleet, fingerprint resolve",
         "category": "infra",
         "key_tools": ["secrets_ops", "audit_fleet"],
     },
@@ -340,7 +340,7 @@ async def fleet_refresh_from_hub() -> dict[str, Any]:
             continue
         fresh[alias] = {
             "url": url,
-            "description": f"{sid} — via hub registry",
+            "description": f"{sid} - via hub registry",
             "category": str(entry.get("tier") or "hub"),
             "key_tools": [],
             "hub": True,
@@ -536,8 +536,8 @@ async def fleet_inspect_repo(
     prompts = {
         "status": "Check the git status, look for lint errors. Report issues concisely.",
         "tests": "Run the test suite and report results. Identify failures if any.",
-        "deps": "Check dependency freshness — outdated packages or security issues?",
-        "structure": "Analyze repo structure — missing files, broken imports, issues?",
+        "deps": "Check dependency freshness - outdated packages or security issues?",
+        "structure": "Analyze repo structure - missing files, broken imports, issues?",
         None: "Check repo health: git status, lint, tests, any issues. Be concise.",
     }
     prompt = prompts.get(aspect, prompts[None])

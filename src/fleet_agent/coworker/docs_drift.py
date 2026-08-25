@@ -1,4 +1,4 @@
-"""Docs Drift Audit — weekly fleet documentation hygiene check."""
+"""Docs Drift Audit - weekly fleet documentation hygiene check."""
 
 from __future__ import annotations
 
@@ -41,7 +41,7 @@ def format_docs_drift_report(
     docs_hits: list[dict[str, Any]] | None,
 ) -> str:
     lines = [
-        f"# Docs Drift Audit — {pulse_date}",
+        f"# Docs Drift Audit - {pulse_date}",
         "",
         "## Watched repos",
         "",
@@ -156,7 +156,7 @@ async def run_docs_drift(*, deliver: bool = True) -> dict[str, Any]:
     artifact_path = save_artifact("docs-drift", report, tz_name)
     log_project_note(DOCS_DRIFT_PROJECT, pulse_date, report, tags=["coworker", "office", "docs"])
 
-    subject = f"Docs Drift Audit — {pulse_date.split()[0]}"
+    subject = f"Docs Drift Audit - {pulse_date.split()[0]}"
     delivery = {"email": await deliver_report(report, subject, deliver=deliver)}
 
     gap_count = sum(1 for r in repo_rows if r.get("error") or not r.get("has_readme"))

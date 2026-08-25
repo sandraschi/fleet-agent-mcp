@@ -1,1 +1,1 @@
-"""Knowledge accumulation system — compile-time knowledge > runtime retrieval."""
+"""Knowledge accumulation system - compile-time knowledge > runtime retrieval."""

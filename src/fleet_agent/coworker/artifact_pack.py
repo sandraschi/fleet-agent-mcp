@@ -1,4 +1,4 @@
-"""Batch artifact pack — combine ~/.fleet-agent/artifacts/*.md → styled PDF."""
+"""Batch artifact pack - combine ~/.fleet-agent/artifacts/*.md → styled PDF."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ async def run_artifact_pack(
         body_parts.append("")
 
     placeholders = {
-        "TITLE": f"Fleet Artifact Pack — {stamp}",
+        "TITLE": f"Fleet Artifact Pack - {stamp}",
         "DATE": pulse_date,
         "FILE_COUNT": str(len(paths)),
         "BODY": "\n".join(body_parts).strip(),
@@ -120,7 +120,7 @@ async def run_artifact_pack(
         tags=["coworker", "office", "artifact-pack"],
     )
 
-    subject = f"Fleet Artifact Pack — {stamp} ({len(paths)} files)"
+    subject = f"Fleet Artifact Pack - {stamp} ({len(paths)} files)"
     delivery = await deliver_report(
         summary,
         subject,

@@ -1,4 +1,4 @@
-"""Workflow loader — YAML + JSON flow templates with mechanical gate support.
+"""Workflow loader - YAML + JSON flow templates with mechanical gate support.
 
 Workflows are auto-discovered from:
   1. ./workflows/ in the project directory

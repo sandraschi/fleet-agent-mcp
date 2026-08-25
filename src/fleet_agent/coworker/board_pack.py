@@ -1,4 +1,4 @@
-"""Board Pack — ODT template merge → styled PDF → email."""
+"""Board Pack - ODT template merge → styled PDF → email."""
 
 from __future__ import annotations
 
@@ -94,7 +94,7 @@ async def run_board_pack(
     actions = _plain_lines(_section(report_md, "Action items") or "Review fleet pulse artifact.")
 
     placeholders = {
-        "TITLE": f"Fleet Board Pack — {stamp}",
+        "TITLE": f"Fleet Board Pack - {stamp}",
         "DATE": pulse_date,
         "KPI_TABLE": "\n".join(kpi_lines),
         "NARRATIVE": narrative,
@@ -153,7 +153,7 @@ async def run_board_pack(
         tags=["coworker", "office", "board-pack"],
     )
 
-    subject = f"Fleet Board Pack — {stamp}"
+    subject = f"Fleet Board Pack - {stamp}"
     delivery = await deliver_report(
         summary,
         subject,

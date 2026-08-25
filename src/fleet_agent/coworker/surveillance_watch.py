@@ -1,4 +1,4 @@
-"""Fleet health surveillance — checks NSSM services for errors, escalates."""
+"""Fleet health surveillance - checks NSSM services for errors, escalates."""
 
 import logging
 from datetime import UTC, datetime
@@ -38,7 +38,7 @@ async def check_server_health(name: str, base_url: str) -> dict[str, Any]:
         result["error"] = str(e)
         return result
 
-    # Log check — try query_logs MCP tool via fleet bridge
+    # Log check - try query_logs MCP tool via fleet bridge
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             r = await client.post(

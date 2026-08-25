@@ -1,4 +1,4 @@
-"""Portmanteau imports — FastMCP registers tools at import time.
+"""Portmanteau imports - FastMCP registers tools at import time.
 
 All tool modules must be imported here for FastMCP discovery during server boot.
 """

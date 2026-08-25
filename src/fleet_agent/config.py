@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     cline_mcp_provider: str = "ollama"
     cline_mcp_model: str = "muse-glimmer"
     cline_mcp_timeout_s: float = 300.0
+    llm_fallback_providers: list[dict[str, str]] = [
+        {"provider": "ollama", "model": "muse-glimmer"},
+        {"provider": "ollama", "model": "llama3"},
+    ]
 
     # Fleet registry (mcp-federation-hub bridge) for dynamic server discovery
     fleet_hub_url: str = "http://127.0.0.1:10857"

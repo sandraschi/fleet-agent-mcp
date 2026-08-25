@@ -1,4 +1,4 @@
-"""Heartbeat tools — agent wake-up routine, health check, and stats.
+"""Heartbeat tools - agent wake-up routine, health check, and stats.
 
 Inspired by kagura-agent's cron-based heartbeat: every N minutes, the agent
 wakes, checks its state machine, executes the current task, and advances.
@@ -22,7 +22,7 @@ _START_TIME = time.time()
 async def heartbeat_status(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Agent health check — uptime, active workflows, task count, memory stats.
+    """Agent health check - uptime, active workflows, task count, memory stats.
 
     ## Return Format
     {"success": bool, "health": dict, "message": str}
@@ -116,7 +116,7 @@ async def heartbeat_wake(
     ] = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Agent wake-up routine — check state machine, get current task, suggest next action.
+    """Agent wake-up routine - check state machine, get current task, suggest next action.
 
     This is the core heartbeat: called by cron or manually, it returns what
     the agent should do right now based on active workflows and pending tasks.
@@ -145,6 +145,18 @@ async def heartbeat_wake(
     # Check for active workflow
     instance = sm.status()
     if instance is not None:
+        if instance.blocked:
+            return {
+                "success": True,
+                "mode": "blocked",
+                "workflow": instance.workflow_name,
+                "current_node": instance.current_node,
+                "blocked": True,
+                "blocked_reason": instance.blocked_reason,
+                "failure_count": instance.failure_count,
+                "action": f"Workflow instance is BLOCKED at node '{instance.current_node}'. Resolve issue and call workflow_unblock().",
+                "message": f"Active workflow '{instance.workflow_name}' is BLOCKED at '{instance.current_node}': {instance.blocked_reason}",
+            }
         task = sm.get_current_task()
         branches = sm.get_current_branches()
         return {
@@ -159,7 +171,7 @@ async def heartbeat_wake(
             "message": f"Active workflow: {instance.workflow_name} -> {instance.current_node}.",
         }
 
-    # No active workflow — auto-start requested workflow if any
+    # No active workflow - auto-start requested workflow if any
     if start_workflow:
         try:
             started = sm.start(start_workflow)
@@ -182,7 +194,7 @@ async def heartbeat_wake(
                 "message": f"Could not start workflow '{start_workflow}': {e}",
             }
 
-    # No active workflow — check pending tasks
+    # No active workflow - check pending tasks
     tasks = store.todo_list(status="pending")
     if tasks:
         priority_order = {"high": 0, "medium": 1, "low": 2}

@@ -1,4 +1,4 @@
-"""Autonomous contribution tool — Fritz finds issues, files, fixes, and PRs without hand-holding.
+"""Autonomous contribution tool - Fritz finds issues, files, fixes, and PRs without hand-holding.
 
 One tool that orchestrates the full pipeline:
   inspect -> issue -> branch -> fix -> commit -> push -> PR
@@ -116,7 +116,7 @@ async def fritz_contribute(
 
     Fritz clones the repo, runs ruff to find lint errors, picks the most
     impactful one, files a GitHub issue, creates a branch, applies the fix
-    via file_edit, commits, pushes, and opens a PR — all without hand-holding.
+    via file_edit, commits, pushes, and opens a PR - all without hand-holding.
     Use fritz_find_contributions() to discover repos to target.
 
     See docs/contribution-pipeline.md for the full methodology.
@@ -244,7 +244,7 @@ async def fritz_contribute(
     _sh(["git", "checkout", "-b", branch], cwd=str(work_dir))
     step("branch", branch)
 
-    # 7. Apply fix directly (not via MCP — avoids self-call timeout)
+    # 7. Apply fix directly (not via MCP - avoids self-call timeout)
     fix_path = Path(file_path)
     if not fix_path.exists():
         return {"success": False, "steps": steps, "message": f"File not found: {file_path}"}
@@ -258,7 +258,7 @@ async def fritz_contribute(
     verified = old_str not in fix_path.read_text(
         encoding="utf-8"
     ) and new_str in fix_path.read_text(encoding="utf-8")
-    bak_path.unlink()  # remove backup before commit — only the fix should ship
+    bak_path.unlink()  # remove backup before commit - only the fix should ship
     step("fix", verified)
 
     # 8. Commit
@@ -481,7 +481,7 @@ async def gogetajob_feed() -> dict[str, Any]:
 async def gogetajob_start(
     ref: Annotated[str, Field(description="Issue reference (e.g. owner/repo#123) to take.")],
 ) -> dict[str, Any]:
-    """Take a job — fork, clone, and create a branch via gogetajob.
+    """Take a job - fork, clone, and create a branch via gogetajob.
 
     Delegates to `npx @kagura-agent/gogetajob start <ref>`.
     After this, work on the fix, then use gogetajob_submit.

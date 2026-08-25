@@ -1,4 +1,4 @@
-"""Coworker subsystem — Viktor-style scheduled fleet execution."""
+"""Coworker subsystem - Viktor-style scheduled fleet execution."""
 
 from .bootstrap import ensure_coworker_tasks
 from .fleet_pulse import run_fleet_pulse

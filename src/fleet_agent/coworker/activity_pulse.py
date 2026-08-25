@@ -1,4 +1,4 @@
-"""Fritz activity pulse — concise periodic status to Fleet Hub."""
+"""Fritz activity pulse - concise periodic status to Fleet Hub."""
 
 from __future__ import annotations
 
@@ -168,7 +168,7 @@ def _is_truly_stale(rec: str, last_updated_iso: str) -> bool:
         threshold = int(rec) * 2
         return elapsed > threshold
 
-    # Time-of-day, day-of-week, day-of-month — flag as stale
+    # Time-of-day, day-of-week, day-of-month - flag as stale
     return True
 
 
@@ -305,7 +305,7 @@ async def run_activity_pulse(deliver: bool = True) -> dict[str, Any]:
             result_txt = _find_result_text(recent, e["timestamp"])
             firing_lines += f"- {_ago(e['timestamp'])}  {task_name}  \u2192 {result_txt}\n"
         if not firing_lines:
-            firing_lines = "*scheduler just started — waiting for next tick*\n"
+            firing_lines = "*scheduler just started - waiting for next tick*\n"
 
         # ── Build ──
         lines = [f"**Fritz** \u2014 {_recurrence_summary(tasks, flow_by_id)}"]

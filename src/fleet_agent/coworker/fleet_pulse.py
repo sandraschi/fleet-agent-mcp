@@ -1,4 +1,4 @@
-"""Morning Fleet Pulse — gather fleet health and deliver a markdown report."""
+"""Morning Fleet Pulse - gather fleet health and deliver a markdown report."""
 
 from __future__ import annotations
 
@@ -62,7 +62,7 @@ def format_fleet_pulse_report(
 ) -> str:
     """Build markdown report from gathered data."""
     lines = [
-        f"# Fleet Pulse — {pulse_date}",
+        f"# Fleet Pulse - {pulse_date}",
         "",
         "## Fritz",
         "",
@@ -133,7 +133,7 @@ def format_fleet_pulse_report(
         for alert in pipeline.get("alerts") or []:
             if alert.get("severity") == "critical":
                 lines.append(
-                    f"{item_n}. Pipeline: {alert.get('code')} — {alert.get('message', '')[:120]}"
+                    f"{item_n}. Pipeline: {alert.get('code')} - {alert.get('message', '')[:120]}"
                 )
                 item_n += 1
     if down:
@@ -223,7 +223,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         host = store_settings.get("smtp_host", "")
         user = store_settings.get("smtp_user", "")
         if to and host and user:
-            subject = f"Fleet Pulse — {datetime.now(ZoneInfo(tz_name)).strftime('%Y-%m-%d')}"
+            subject = f"Fleet Pulse - {datetime.now(ZoneInfo(tz_name)).strftime('%Y-%m-%d')}"
             email_result = await _send_email_smtp(
                 to=to,
                 subject=subject,
@@ -252,7 +252,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         from .urgent_notify import deliver_urgent_alert
 
         hub_result = await publish_intel_report(
-            title=f"Fleet Pulse — {pulse_date.split()[0]}",
+            title=f"Fleet Pulse - {pulse_date.split()[0]}",
             markdown=report,
             source="fritz",
             tags=["fleet-pulse", "coworker"],
@@ -272,7 +272,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
 
         ingest_result = await push_fritz_report_event(
             flow="fleet_pulse",
-            title=f"Fleet Pulse — {online}/{len(servers)} MCP online",
+            title=f"Fleet Pulse - {online}/{len(servers)} MCP online",
             summary=(
                 f"Pipeline: {'healthy' if pipeline.get('healthy') else 'DEGRADED'}; "
                 f"{critical_count} critical alerts. "
@@ -291,7 +291,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
             if down:
                 alert_lines.append(f"- Offline MCP: {', '.join(down[:8])}")
             urgent_result = await deliver_urgent_alert(
-                subject=f"Fleet Pulse — {pulse_date.split()[0]}",
+                subject=f"Fleet Pulse - {pulse_date.split()[0]}",
                 body="\n".join(alert_lines) or report[:1500],
                 reason="fleet pulse degradation",
                 urgency=urgency,

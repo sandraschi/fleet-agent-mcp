@@ -1,4 +1,4 @@
-"""Identity tools — agent self-definition, north star, and human partner info."""
+"""Identity tools - agent self-definition, north star, and human partner info."""
 
 from typing import Any
 
@@ -12,7 +12,7 @@ from ..registry import mcp
 async def identity_whoami(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Return the agent's self-introduction — name, human partner, and purpose preview.
+    """Return the agent's self-introduction - name, human partner, and purpose preview.
 
     ## Return Format
     {"success": bool, "identity": dict, "message": str}
@@ -34,7 +34,7 @@ async def identity_whoami(
 async def identity_soul(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Read the agent's full SOUL.md — core identity, personality, and constraints.
+    """Read the agent's full SOUL.md - core identity, personality, and constraints.
 
     ## Return Format
     {"success": bool, "soul": str, "message": str}
@@ -63,7 +63,7 @@ async def identity_soul(
 async def identity_north_star(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Read the agent's NORTH_STAR.md — purpose, long-term goals, guiding principles.
+    """Read the agent's NORTH_STAR.md - purpose, long-term goals, guiding principles.
 
     The north star is used by pulse_align() to prioritize tasks strategically.
 
@@ -95,7 +95,7 @@ async def identity_north_star(
 async def identity_user(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Read USER.md — information about the agent's human partner.
+    """Read USER.md - information about the agent's human partner.
 
     ## Return Format
     {"success": bool, "user_info": str, "message": str}

@@ -34,7 +34,7 @@ async def code_generate(
     """Generate code via LLM and write it to the repo.
 
     Uses the fleet's configured Ollama/LMStudio model. For large
-    changes, call multiple times — one file per invocation.
+    changes, call multiple times - one file per invocation.
 
     ## Return Format
     {"success": bool, "file_path": str, "language": str, "lines": int}

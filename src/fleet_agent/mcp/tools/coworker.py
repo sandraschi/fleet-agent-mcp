@@ -1,4 +1,4 @@
-"""Coworker MCP tools — Viktor-style fleet execution.
+"""Coworker MCP tools - Viktor-style fleet execution.
 
 [RATIONAL]: Consolidates 11 scheduled coworker flows into a single portmanteau
 tool to reduce context bloat. Each flow is an operation on the coworker_execute
@@ -113,7 +113,7 @@ async def coworker_list_flows() -> dict[str, Any]:
 async def coworker_bootstrap() -> dict[str, Any]:
     """Seed default coworker recurring tasks (pulse, inbox, day prep, docs, PDF).
 
-    Idempotent — safe to call multiple times. Creates scheduled tasks in the
+    Idempotent - safe to call multiple times. Creates scheduled tasks in the
     pulse TODO list if they don't already exist.
 
     ## Return Format

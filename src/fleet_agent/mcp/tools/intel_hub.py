@@ -54,7 +54,7 @@ async def aiwatcher_push_event(
     url: Annotated[str, Field(description="Optional link.")] = "",
     urgency_hint: Annotated[
         float | None,
-        Field(description="0–10 pre-score; ≥8 surfaces in bundles."),
+        Field(description="0-10 pre-score; ≥8 surfaces in bundles."),
     ] = None,
 ) -> dict[str, Any]:
     """Push a structured event from Fritz into AIWatcher."""
@@ -72,7 +72,7 @@ async def intel_public_site_generate() -> dict[str, Any]:
     """Regenerate the public funnel site (GitHub repos + diary + AIWatcher counts).
 
     PUBLIC-SAFE: renders only public repo metadata, per-repo dev-diary
-    aggregates, and AIWatcher pipeline counts — never private content.
+    aggregates, and AIWatcher pipeline counts - never private content.
 
     ## Return Format
     {"success": bool, "path": str, "repos": int, "diary_entries": int,

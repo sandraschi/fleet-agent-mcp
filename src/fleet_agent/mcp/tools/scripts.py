@@ -1,4 +1,4 @@
-"""Script management tools — CRUD + execution for task scripts.
+"""Script management tools - CRUD + execution for task scripts.
 
 Supports Python and shell scripts with sandboxed execution and output capture.
 Scripts can be linked to tasks and run on schedule.

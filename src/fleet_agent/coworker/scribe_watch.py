@@ -1,4 +1,4 @@
-"""Scribe watch — session-scribe freshness monitoring + digest rollup.
+"""Scribe watch - session-scribe freshness monitoring + digest rollup.
 
 Created 2026-07-17 (advanced-memory-mcp TODO P1, scribe v2 Fritz integration).
 The session scribe (advanced-memory-mcp scripts/session_scribe.py, hourly
@@ -96,9 +96,9 @@ async def run_scribe_watch(*, deliver: bool = True) -> dict[str, Any]:
         )
 
     report_lines = [
-        f"# Scribe Watch — {datetime.now(UTC).isoformat()}",
+        f"# Scribe Watch - {datetime.now(UTC).isoformat()}",
         "",
-        f"**Status: {status.upper()}** — {headline}",
+        f"**Status: {status.upper()}** - {headline}",
         "",
         f"- state age: {'n/a' if age is None else f'{age:.2f}h'} (stale > {STALE_HOURS}h)",
         f"- vault inbox digests awaiting review: {len(vault_digests)}",
@@ -133,7 +133,7 @@ async def run_scribe_watch(*, deliver: bool = True) -> dict[str, Any]:
 
             await _send_email_smtp(
                 to=to,
-                subject=f"SCRIBE WATCH — RED — {headline}",
+                subject=f"SCRIBE WATCH - RED - {headline}",
                 body=report,
                 smtp_host=smtp_host,
                 smtp_port=int(settings.get("smtp_port", 587)),
@@ -144,7 +144,7 @@ async def run_scribe_watch(*, deliver: bool = True) -> dict[str, Any]:
     return {
         "success": True,
         "status": status,
-        "message": f"Scribe watch: {status.upper()} — {headline}",
+        "message": f"Scribe watch: {status.upper()} - {headline}",
         "pending_digests": len(vault_digests),
         "artifact_path": artifact_path,
     }

@@ -1,4 +1,4 @@
-"""Knowledge accumulation tools — compile-time knowledge cards.
+"""Knowledge accumulation tools - compile-time knowledge cards.
 
 Inspired by kagura-agent/wiki: 270+ concept cards, 360+ project notes,
 with query-writeback (answers feed back into the wiki), ingest (create +
@@ -157,7 +157,7 @@ async def memory_lint(
 ) -> dict[str, Any]:
     """Lint the knowledge base for issues: broken references, stale cards, untagged cards.
 
-    Periodic linting prevents knowledge rot — stale facts, orphaned cards,
+    Periodic linting prevents knowledge rot - stale facts, orphaned cards,
     and missing cross-references.
 
     ## Return Format
@@ -186,7 +186,7 @@ async def memory_project_note(
         str,
         Field(description="Project name (e.g. 'fleet-agent-mcp', 'flowforge')."),
     ],
-    content: Annotated[str, Field(description="Note content — what you learned or observed.")],
+    content: Annotated[str, Field(description="Note content - what you learned or observed.")],
     tags: Annotated[list[str] | None, Field(description="Tags for cross-referencing.")] = None,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
@@ -303,3 +303,83 @@ async def suggestion_ack(
     from ...memory.suggestions import ack_suggestion
 
     return ack_suggestion(key)
+
+
+def _parse_skill_md(content: str) -> tuple[dict[str, Any], str]:
+    """Parse standard SKILL.md YAML frontmatter + markdown body."""
+    meta: dict[str, Any] = {}
+    body = content
+    if content.startswith("---"):
+        parts = content.split("---", 2)
+        if len(parts) >= 3:
+            fm_text = parts[1].strip()
+            body = parts[2].strip()
+            for line in fm_text.splitlines():
+                if ":" in line:
+                    key, val = line.split(":", 1)
+                    key = key.strip()
+                    val = val.strip().strip("'\"")
+                    if val.startswith("[") and val.endswith("]"):
+                        items = [x.strip().strip("'\"") for x in val[1:-1].split(",") if x.strip()]
+                        meta[key] = items
+                    else:
+                        meta[key] = val
+    return meta, body
+
+
+@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
+async def import_external_skill(
+    file_path: Annotated[
+        str,
+        Field(description="Path to local SKILL.md file or directory containing SKILL.md."),
+    ],
+    tags: Annotated[
+        list[str] | None,
+        Field(description="Additional tags to attach to the imported skill card."),
+    ] = None,
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Import a standard SKILL.md file (OpenClaw, Anthropic skills, Hermes format) into a Fritz skill card.
+
+    Parses YAML frontmatter (name, description, tags) and Markdown body, creating a
+    card with category 'skill' and tags type:skill, created_by:import.
+
+    ## Return Format
+    {"success": bool, "card": dict, "message": str}
+
+    ## Examples
+    import_external_skill("C:/path/to/my-skill/SKILL.md")
+    """
+    import os.path
+
+    path = os.path.abspath(file_path)
+    if os.path.isdir(path):
+        path = os.path.join(path, "SKILL.md")
+    if not os.path.exists(path):
+        return {"success": False, "message": f"Skill file not found at '{file_path}'."}
+
+    with open(path, "r", encoding="utf-8") as f:
+        raw_content = f.read()
+
+    meta, body = _parse_skill_md(raw_content)
+    title = meta.get("name") or meta.get("title") or os.path.basename(os.path.dirname(path))
+    desc = meta.get("description", "")
+    parsed_tags = meta.get("tags", [])
+    if isinstance(parsed_tags, str):
+        parsed_tags = [t.strip() for t in parsed_tags.split(",") if t.strip()]
+
+    combined_tags = list(set(["type:skill", "created_by:import"] + parsed_tags + (tags or [])))
+    full_content = f"# {title}\n\n>{desc}\n\n{body}" if desc else f"# {title}\n\n{body}"
+
+    wiki = get_wiki()
+    card = wiki.create_card(
+        title=title,
+        content=full_content,
+        tags=combined_tags,
+        category="skill",
+    )
+    return {
+        "success": True,
+        "card": card,
+        "message": f"Skill '{title}' imported successfully from '{file_path}' (id: {card['id']}).",
+    }

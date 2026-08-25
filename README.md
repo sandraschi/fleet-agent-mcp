@@ -11,7 +11,7 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. **68 FastMCP 3.2 tools across 16 subsystems** (v0.2.1-pre — scripts + Tauri NSIS hardening).
+Self-evolving AI agent for the fleet ecosystem. **71 FastMCP 3.2 tools across 18 subsystems** (v0.2.2 — Hermes Agent borrowings + anti-spin failure limit).
 
 **Name**: Fritz (short for Friedrich). When he fouls up: *"Friedrich! Was ist dir!"*
 
@@ -68,9 +68,9 @@ Three roles, one agent:
 
 | # | Subsystem | Tools | Description | Docs |
 |---|---|---|---|---|---|
-| 1 | **flowforge** | 9 | YAML state machine — enforced step execution | [docs/flowforge.md](docs/flowforge.md) |
+| 1 | **flowforge** | 11 | YAML state machine — step execution & anti-spin failure limits | [docs/flowforge.md](docs/flowforge.md) |
 | 2 | **pulse** | 6 | Task management with north-star alignment | [docs/pulse.md](docs/pulse.md) |
-| 3 | **memory** | 7 | Compile-time knowledge wiki with linting | [docs/memory.md](docs/memory.md) |
+| 3 | **memory** | 8 | Compile-time knowledge wiki + SKILL.md importer | [docs/memory.md](docs/memory.md) |
 | 4 | **identity** | 4 | Agent self-definition and purpose | [docs/identity.md](docs/identity.md) |
 | 5 | **teleport** | 3 | Soul migration between machines | [docs/teleport.md](docs/teleport.md) |
 | 6 | **evolution** | 3 | Mistake → correction → lesson log | [docs/evolution.md](docs/evolution.md) |

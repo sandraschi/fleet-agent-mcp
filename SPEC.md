@@ -1,6 +1,6 @@
 # fleet-agent-mcp — Architecture & Design Spec
 
-**Version**: 0.2.1-pre
+**Version**: 0.2.2
 **Created**: 2026-05-19
 **Inspiration**: [kagura-agent](https://github.com/kagura-agent) — self-evolving AI agent born 2026-03-10 on OpenClaw
 

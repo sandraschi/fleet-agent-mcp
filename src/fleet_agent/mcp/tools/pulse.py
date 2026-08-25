@@ -1,9 +1,9 @@
-"""Task management tools — unified TODO list with north-star alignment.
+"""Task management tools - unified TODO list with north-star alignment.
 
 Inspired by kagura-agent/pulse-todo: single TODO.md approach with dependency
 grouping (self/human/external), cron synchronization, stale detection.
 
-[RATIONAL]: Task management is a single concern — create, list, complete,
+[RATIONAL]: Task management is a single concern - create, list, complete,
 align with purpose, detect staleness. Consolidating avoids tool fragmentation.
 """
 
@@ -82,7 +82,7 @@ async def pulse_add(
                 "message": f"🤨 {validation.strip()} I'm a good agent, not a miracle worker.",
             }
     except Exception:
-        pass  # LLM unavailable — skip validation
+        pass  # LLM unavailable - skip validation
 
     store = get_store()
     now = datetime.now(UTC).isoformat()

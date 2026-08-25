@@ -1,4 +1,4 @@
-"""Evolution log tools — record mistakes, corrections, and lessons.
+"""Evolution log tools - record mistakes, corrections, and lessons.
 
 Inspired by kagura-agent: "When I mess up, it's in the git history.
 When I learn something, it goes into my wiki. No curation, no hiding."
@@ -18,7 +18,7 @@ async def evolution_record(
     correction: Annotated[str, Field(description="What went wrong and how it was fixed.")],
     lesson: Annotated[
         str,
-        Field(description="The lesson learned — stated as a rule to follow going forward."),
+        Field(description="The lesson learned - stated as a rule to follow going forward."),
     ],
     context: Annotated[
         str,
@@ -29,14 +29,14 @@ async def evolution_record(
     """Record a mistake, correction, and lesson in the evolution log.
 
     Every correction becomes a permanent lesson. This creates compound improvement
-    over time — the agent never makes the same mistake twice.
+    over time - the agent never makes the same mistake twice.
 
     ## Return Format
     {"success": bool, "entry": dict, "message": str}
 
     ## Examples
     evolution_record(
-        correction="Used shell=True in subprocess — switched to create_subprocess_exec",
+        correction="Used shell=True in subprocess - switched to create_subprocess_exec",
         lesson="NEVER use shell=True for subprocess calls",
         context="Building the state machine engine"
     )
@@ -55,7 +55,7 @@ async def evolution_list(
     limit: Annotated[int, Field(description="Max entries to return.", ge=1, le=500)] = 50,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """List recent evolution log entries — corrections and lessons.
+    """List recent evolution log entries - corrections and lessons.
 
     ## Return Format
     {"success": bool, "entries": list[dict], "count": int, "message": str}
@@ -87,7 +87,7 @@ async def evolution_list(
 async def evolution_stats(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Get evolution log statistics — total corrections, unique lessons, patterns.
+    """Get evolution log statistics - total corrections, unique lessons, patterns.
 
     ## Return Format
     {"success": bool, "stats": dict, "duplicate_lessons": list, "message": str}

@@ -1,8 +1,8 @@
-"""Mechanical gate engine — deterministic verdicts from structured evaluations.
+"""Mechanical gate engine - deterministic verdicts from structured evaluations.
 
 Inspired by OPC's `opc-harness synthesize`: reads eval artifacts, counts
 severities, and computes a verdict WITHOUT an LLM. The gate never asks an
-LLM "is this finding important enough" — it applies mechanical rules:
+LLM "is this finding important enough" - it applies mechanical rules:
 
   Any 🔴 (critical)   → FAIL
   Any 🟡 (warning)    → ITERATE
@@ -28,7 +28,7 @@ class Finding:
     """A single finding from an evaluation.
 
     Fields:
-        severity: critical=🔴, warning=🟡, suggestion=🔵, blocked=⛔, info=ℹ️
+        severity: critical=🔴, warning=🟡, suggestion=🔵, blocked=⛔, info=i️
         message: Human-readable description of the finding.
         file_ref: Optional file path the finding relates to.
         line: Optional line number.
@@ -47,7 +47,7 @@ SEVERITY_EMOJI: dict[Severity, str] = {
     "warning": "🟡",
     "suggestion": "🔵",
     "blocked": "⛔",
-    "info": "ℹ️",
+    "info": "i️",
 }
 
 
@@ -179,7 +179,7 @@ def synthesize(
 
     # ── Verdict computation ──
     if blocked:
-        detail_lines = ["⛔ BLOCKED — hard blocker found:"]
+        detail_lines = ["⛔ BLOCKED - hard blocker found:"]
         for b in blocked:
             loc = f"{b.file_ref}:{b.line}" if b.file_ref and b.line else (b.file_ref or "")
             detail_lines.append(f"  ⛔ {b.message}  {loc}".strip())
@@ -188,7 +188,7 @@ def synthesize(
         report = "\n".join(detail_lines)
         return GateVerdict(
             verdict="BLOCKED",
-            summary=f"{len(blocked)} blocker(s) — pipeline cannot proceed",
+            summary=f"{len(blocked)} blocker(s) - pipeline cannot proceed",
             findings_breakdown=breakdown,
             failures=failures,
             warnings=warnings_list,
@@ -196,7 +196,7 @@ def synthesize(
         )
 
     if failures:
-        detail_lines = [f"🔴 FAIL — {len(failures)} critical finding(s):"]
+        detail_lines = [f"🔴 FAIL - {len(failures)} critical finding(s):"]
         for f in failures:
             loc = f"{f.file_ref}:{f.line}" if f.file_ref and f.line else (f.file_ref or "")
             detail_lines.append(f"  🔴 {f.message}  {loc}".strip())
@@ -205,7 +205,7 @@ def synthesize(
         report = "\n".join(detail_lines)
         return GateVerdict(
             verdict="FAIL",
-            summary=f"{len(failures)} critical finding(s) — changes required",
+            summary=f"{len(failures)} critical finding(s) - changes required",
             findings_breakdown=breakdown,
             failures=failures,
             warnings=warnings_list,
@@ -213,7 +213,7 @@ def synthesize(
         )
 
     if warnings_list:
-        detail_lines = [f"🟡 ITERATE — {len(warnings_list)} warning(s):"]
+        detail_lines = [f"🟡 ITERATE - {len(warnings_list)} warning(s):"]
         for f in warnings_list:
             loc = f"{f.file_ref}:{f.line}" if f.file_ref and f.line else (f.file_ref or "")
             detail_lines.append(f"  🟡 {f.message}  {loc}".strip())
@@ -222,14 +222,14 @@ def synthesize(
         report = "\n".join(detail_lines)
         return GateVerdict(
             verdict="ITERATE",
-            summary=f"{len(warnings_list)} warning(s) — address before proceeding",
+            summary=f"{len(warnings_list)} warning(s) - address before proceeding",
             findings_breakdown=breakdown,
             failures=failures,
             warnings=warnings_list,
             detail=report,
         )
 
-    detail = "✅ PASS — all checks clear\n" + "\n".join(lines)
+    detail = "✅ PASS - all checks clear\n" + "\n".join(lines)
     return GateVerdict(
         verdict="PASS",
         summary=f"{len(evals)} evaluation(s), all clear",
@@ -329,7 +329,7 @@ def detect_oscillation(
         return OscillationResult(
             oscillating=False,
             pattern=pattern,
-            message=f"Consecutive {pattern[-1]} — converging",
+            message=f"Consecutive {pattern[-1]} - converging",
         )
 
     # Flag if we see reverse of previous verdict
@@ -506,10 +506,10 @@ _EMOJI_SEVERITY: dict[str, Severity] = {
     "🟡": "warning",
     "🔵": "suggestion",
     "⛔": "blocked",
-    "ℹ️": "info",
+    "i️": "info",
 }
 
-_EVAL_LINE_PATTERN = re.compile(r"^(?P<emoji>[🔴🟡🔵⛔ℹ️])\s*(?P<message>.+)")
+_EVAL_LINE_PATTERN = re.compile(r"^(?P<emoji>[🔴🟡🔵⛔i️])\s*(?P<message>.+)")
 
 
 def _parse_eval_markdown(text: str) -> tuple[list[Finding], list[str]]:

@@ -120,7 +120,7 @@ async def route_voice_intent(
     )
     if server in ("fleet-agent", "self"):
         # Local tools (dev_ops, pulse_add, fritz_voice_agent, ...) run
-        # in-process — no HTTP round trip to our own /mcp endpoint.
+        # in-process - no HTTP round trip to our own /mcp endpoint.
         result = await _call_local_tool(tool, args)
     else:
         result = await fleet_call_tool(server=server, tool=tool, arguments=args)

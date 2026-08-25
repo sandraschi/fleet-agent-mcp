@@ -1,4 +1,4 @@
-"""WF-001 — Morning brief: start morning_brief workflow + optional ViLife snapshot."""
+"""WF-001 - Morning brief: start morning_brief workflow + optional ViLife snapshot."""
 
 from __future__ import annotations
 
@@ -53,7 +53,7 @@ async def run_morning_brief(*, deliver: bool = True) -> dict[str, Any]:
 
     pulse_date = now_label()
     lines = [
-        f"# Morning Brief — {pulse_date}",
+        f"# Morning Brief - {pulse_date}",
         "",
         f"**Workflow:** `{MORNING_BRIEF_WORKFLOW}` → `{instance.current_node}`",
         f"**Started fresh:** {started}",

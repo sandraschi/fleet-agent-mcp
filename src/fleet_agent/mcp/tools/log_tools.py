@@ -63,7 +63,7 @@ async def check_log_errors(
 ) -> dict[str, Any]:
     """Scan recent logs for error/critical entries. Returns a summary.
 
-    Useful for Fritz heartbeat — checks for problems across NSSM services.
+    Useful for Fritz heartbeat - checks for problems across NSSM services.
 
     ## Return Format
     {"success": bool, "error_count": int, "errors": list, "sources_with_errors": list}

@@ -1,1 +1,1 @@
-"""Identity system — agent self-definition and purpose."""
+"""Identity system - agent self-definition and purpose."""

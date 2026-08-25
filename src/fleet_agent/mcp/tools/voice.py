@@ -1,4 +1,4 @@
-"""Voice command bus — route spoken intents to fleet members."""
+"""Voice command bus - route spoken intents to fleet members."""
 
 from __future__ import annotations
 

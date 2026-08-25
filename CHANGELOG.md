@@ -1,3 +1,12 @@
+# Changelog
+
+## [0.2.2] — 2026-08-25
+
+### Added — Hermes Agent Borrowings & Anti-Spin Hardening
+- **Flowforge Anti-Spin Guard** — `failure_limit: 2` (default) auto-blocks workflow instances on repeated node execution failures to prevent token spin-loops. Added `workflow_failure_record` and `workflow_unblock` FastMCP tools, `heartbeat_wake` block detection, and `speechops` TTS / urgent report alerts.
+- **External `SKILL.md` Importer** — `import_external_skill` FastMCP tool parses standard YAML frontmatter (`name`, `description`, `tags`) and Markdown content from OpenClaw, Anthropic, or Hermes skill files into `card_type: skill` cards.
+- **Prompt Cache Alignment** — dynamic memory cards and prior node outputs injected into turn history immediately preceding execution, preserving static system prompt KV-caching.
+- **Multi-Provider Fallback Cascade Engine** — `llm_fallback_providers` configuration in `Settings`; `run_agent_step` automatically cascades from primary cloud LLM to local Ollama models (`muse-glimmer` / `llama3`) on network or API failures.
 
 ## [0.2.1] — 2026-08-17
 

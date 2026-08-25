@@ -1,4 +1,4 @@
-"""Cursor spend watch — guardrail poll via cursor-mcp."""
+"""Cursor spend watch - guardrail poll via cursor-mcp."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ def format_cursor_spend_report(*, pulse_date: str, payload: dict[str, Any]) -> s
     reasons = alert.get("reasons") or []
 
     lines = [
-        f"# Cursor Spend Watch — {pulse_date}",
+        f"# Cursor Spend Watch - {pulse_date}",
         "",
         f"**Alert level:** {alert.get('level', 'unknown').upper()}",
         "",
@@ -87,7 +87,7 @@ async def run_cursor_spend_watch(*, deliver: bool = True) -> dict[str, Any]:
     log_project_note(CURSOR_SPEND_PROJECT, pulse_date, report, tags=["coworker", "cursor", "spend"])
 
     should_deliver = deliver and alert_level in {"warn", "critical"}
-    subject = f"Cursor Spend {alert_level.upper()} — {pulse_date.split()[0]}"
+    subject = f"Cursor Spend {alert_level.upper()} - {pulse_date.split()[0]}"
     delivery = {"email": await deliver_report(report, subject, deliver=should_deliver)}
 
     return {

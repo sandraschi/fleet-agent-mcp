@@ -1,6 +1,6 @@
 # Hermes → Fritz: Self-Improvement Mapping
 
-> **Status: PRELIMINARY** — design map only; tools marked *planned* are not implemented unless noted *shipped*.
+> **Status: SHIPPED (v0.2.2)** — anti-spin failure limit, SKILL.md importer, prompt-cache alignment, and multi-provider fallback cascade shipped.
 >
 > **Goal:** Port the *useful* parts of Hermes Agent’s learning loop into `fleet-agent-mcp` (Fritz) without adopting the Hermes runtime, gateway, or “LLM decides what to do next” coordination model.
 >
@@ -15,11 +15,11 @@ Hermes “self-improving” is **not** offline RL. It is:
 | Layer | Hermes mechanism | Fritz analogue today |
 |-------|------------------|----------------------|
 | **Nudge** | System prompt: after 5+ tool calls, save via `skill_manage` | Workflow `record` node + SOUL; no hard rule |
-| **Write** | `skill_manage(create\|patch)` → `~/.hermes/skills/*.md` | `memory_card_create` / `memory_card_update` |
+| **Write** | `skill_manage(create\|patch)` → `~/.hermes/skills/*.md` | `memory_card_create` / `import_external_skill` (*shipped*) |
 | **Recall** | Progressive skill index + `session_search` (FTS5 on messages) | `memory_card_search` (SQL `LIKE`) |
 | **Hygiene** | Curator: archive stale *agent* skills, pin, backup | `memory_lint` only; no lifecycle |
 | **Honesty** | Curator never deletes; evolution is separate | `evolution_record` (*shipped*) — explicit mistakes |
-| **Anti-spin** | Kanban `failure_limit` → auto-block task | Not in flowforge yet |
+| **Anti-spin** | Kanban `failure_limit` → auto-block task | `workflow_failure_record` + auto-block (*shipped*) |
 
 Fritz’s advantage: **YAML decides the pipeline**; Hermes’s risk: model skips saving or over-saves slop.
 
@@ -57,15 +57,16 @@ flowchart LR
 
 ## 3. Component Map (Hermes → Fritz)
 
-| Hermes | Fritz target | Priority |
-|--------|--------------|----------|
-| `skill_manage` + prompt nudges | `memory_card_create` with `card_type=skill` + workflow recipe | P0 |
-| `skill_usage.json` telemetry | `memory_cards.metadata` + `memory_card_touch` | P0 |
-| `session_search` (FTS5) | `run_search` / `run_show` on coworker runs | P0 |
+| Hermes | Fritz target | Priority / Status |
+|--------|--------------|-------------------|
+| `skill_manage` + prompt nudges | `memory_card_create` with `card_type=skill` + workflow recipe | P0 (*shipped*) |
+| `skill_usage.json` telemetry | `memory_cards.metadata` + `memory_card_touch` | P0 (*shipped*) |
+| `session_search` (FTS5) | `run_search` / `run_show` on coworker runs | P0 (*shipped*) |
 | `agent/curator.py` | `memory_curator_*` tools (archive/pin/run) | P1 |
-| Kanban `failure_limit` | `workflow_failure_record` + blocked instance | P1 |
+| Kanban `failure_limit` | `workflow_failure_record` + blocked instance | P0 (*shipped v0.2.2*) |
+| Multi-provider fallback | `llm_fallback_providers` + `run_agent_step` cascade | P0 (*shipped v0.2.2*) |
+| `agentskills.io` SKILL.md | `import_external_skill` tool | P0 (*shipped v0.2.2*) |
 | Checkpoints v2 | `coworker_checkpoint_*` on execute paths | P2 |
-| `agentskills.io` SKILL.md | Card frontmatter spec (below) | P0 |
 | Gateway / 22 platforms | **Skip** — `notify` + `discord-mcp` | — |
 | Honcho / mem0 plugins | **Skip** — `advanced-memory-mcp` optional | — |
 | `delegate_task` tree | **Skip** — `fleet_bridge` fan-out cap (5) | — |

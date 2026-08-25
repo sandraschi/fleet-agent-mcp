@@ -1,4 +1,4 @@
-"""Evolution log — every mistake, every correction, every lesson.
+"""Evolution log - every mistake, every correction, every lesson.
 
 Inspired by kagura-agent: "When I mess up, it's in the git history.
 When I learn something, it goes into my wiki. No curation, no hiding."

@@ -1,4 +1,4 @@
-"""Coworker flow registry — scheduled Viktor-style office + fleet automations."""
+"""Coworker flow registry - scheduled Viktor-style office + fleet automations."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "activity_pulse": {
         "id": "coworker-activity-pulse",
         "label": "Fritz Activity Pulse",
-        "task": "Fritz Activity Pulse — coworker:activity_pulse",
+        "task": "Fritz Activity Pulse - coworker:activity_pulse",
         "category": "fleet",
         "recurrence_setting": "activity_pulse_interval",
         "default_recurrence": "6h",
@@ -23,7 +23,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "fleet_pulse": {
         "id": "coworker-fleet-pulse",
         "label": "Morning Fleet Pulse",
-        "task": "Morning Fleet Pulse — coworker:fleet_pulse",
+        "task": "Morning Fleet Pulse - coworker:fleet_pulse",
         "category": "fleet",
         "recurrence_setting": "fleet_pulse_time",
         "default_recurrence": "07:00",
@@ -34,7 +34,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "inbox_briefing": {
         "id": "coworker-inbox-briefing",
         "label": "Inbox Briefing",
-        "task": "Inbox Briefing — coworker:inbox_briefing",
+        "task": "Inbox Briefing - coworker:inbox_briefing",
         "category": "office",
         "recurrence_setting": "inbox_briefing_time",
         "default_recurrence": "wd:08:00",
@@ -45,7 +45,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "day_prep": {
         "id": "coworker-day-prep",
         "label": "Office Day Prep",
-        "task": "Office Day Prep — coworker:day_prep",
+        "task": "Office Day Prep - coworker:day_prep",
         "category": "office",
         "recurrence_setting": "day_prep_time",
         "default_recurrence": "wd:08:30",
@@ -56,7 +56,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "docs_drift": {
         "id": "coworker-docs-drift",
         "label": "Docs Drift Audit",
-        "task": "Docs Drift Audit — coworker:docs_drift",
+        "task": "Docs Drift Audit - coworker:docs_drift",
         "category": "office",
         "recurrence_setting": "docs_drift_time",
         "default_recurrence": "sun:10:00",
@@ -67,7 +67,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "weekly_report_pdf": {
         "id": "coworker-weekly-report-pdf",
         "label": "Weekly Report PDF",
-        "task": "Weekly Report PDF — coworker:weekly_report_pdf",
+        "task": "Weekly Report PDF - coworker:weekly_report_pdf",
         "category": "office",
         "recurrence_setting": "weekly_report_pdf_time",
         "default_recurrence": "fri:17:00",
@@ -78,18 +78,18 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "board_pack": {
         "id": "coworker-board-pack",
         "label": "Monthly Board Pack",
-        "task": "Monthly Board Pack — coworker:board_pack",
+        "task": "Monthly Board Pack - coworker:board_pack",
         "category": "office",
         "recurrence_setting": "board_pack_time",
         "default_recurrence": "d1:09:00",
         "enabled_setting": "coworker_board_pack_enabled",
         "default_enabled": True,
-        "description": "1st of month 09:00 — ODT board pack → PDF → email",
+        "description": "1st of month 09:00 - ODT board pack → PDF → email",
     },
     "artifact_pack": {
         "id": "coworker-artifact-pack",
         "label": "Artifact Pack",
-        "task": "Artifact Pack — coworker:artifact_pack",
+        "task": "Artifact Pack - coworker:artifact_pack",
         "category": "office",
         "recurrence_setting": "artifact_pack_time",
         "default_recurrence": "sun:18:00",
@@ -100,29 +100,29 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "cursor_spend_watch": {
         "id": "coworker-cursor-spend-watch",
         "label": "Cursor Spend Watch",
-        "task": "Cursor Spend Watch — coworker:cursor_spend_watch",
+        "task": "Cursor Spend Watch - coworker:cursor_spend_watch",
         "category": "fleet",
         "recurrence_setting": "cursor_spend_watch_interval",
         "default_recurrence": "2h",
         "enabled_setting": "coworker_cursor_spend_watch_enabled",
         "default_enabled": True,
-        "description": "cursor-mcp alert_check — hourly spend, on-demand, running cloud agents",
+        "description": "cursor-mcp alert_check - hourly spend, on-demand, running cloud agents",
     },
     "devices_watch": {
         "id": "coworker-devices-watch",
         "label": "Devices Priority Watch",
-        "task": "Devices Priority Watch — coworker:devices_watch",
+        "task": "Devices Priority Watch - coworker:devices_watch",
         "category": "home",
         "recurrence_setting": "devices_watch_interval",
         "default_recurrence": "5m",
         "enabled_setting": "coworker_devices_watch_enabled",
         "default_enabled": True,
-        "description": "devices-mcp — kitchen temp, CO, smoke, Ring burglar → Fritz urgent",
+        "description": "devices-mcp - kitchen temp, CO, smoke, Ring burglar → Fritz urgent",
     },
     "surveillance_watch": {
         "id": "coworker-surveillance-watch",
         "label": "Fleet Health Surveillance",
-        "task": "Fleet Surveillance — coworker:surveillance_watch",
+        "task": "Fleet Surveillance - coworker:surveillance_watch",
         "category": "system",
         "recurrence_setting": "surveillance_watch_interval",
         "default_recurrence": "15m",
@@ -133,7 +133,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "scribe_watch": {
         "id": "coworker-scribe-watch",
         "label": "Session Scribe Watch",
-        "task": "Session Scribe Watch — coworker:scribe_watch",
+        "task": "Session Scribe Watch - coworker:scribe_watch",
         "category": "system",
         "recurrence_setting": "scribe_watch_interval",
         "default_recurrence": "2h",
@@ -147,7 +147,7 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
     "check_email": {
         "id": "coworker-check-email",
         "label": "Email Security Scan",
-        "task": "Email Security Scan — coworker:check_email",
+        "task": "Email Security Scan - coworker:check_email",
         "category": "system",
         "recurrence_setting": "check_email_interval",
         "default_recurrence": "15m",
@@ -171,7 +171,7 @@ def list_flow_catalog() -> list[dict[str, Any]]:
     ]
 
 
-# Future office flows (not wired — ideas for roadmap)
+# Future office flows (not wired - ideas for roadmap)
 OFFICE_FLOW_IDEAS: list[dict[str, Any]] = [
     {
         "key": "weekly_report_pdf",

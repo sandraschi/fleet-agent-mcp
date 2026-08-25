@@ -1,4 +1,4 @@
-"""Weekly Report PDF — Fleet Pulse markdown → LibreOffice PDF → email."""
+"""Weekly Report PDF - Fleet Pulse markdown → LibreOffice PDF → email."""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
             "operation": "merge",
             "template": "fleet-report.odt",
             "placeholders": {
-                "TITLE": f"Weekly Fleet Report — {stamp}",
+                "TITLE": f"Weekly Fleet Report - {stamp}",
                 "DATE": pulse_date,
                 "SUMMARY": "Automated Fleet Pulse export",
                 "BODY": markdown_to_plain(report_md),
@@ -131,7 +131,7 @@ async def run_weekly_report_pdf(*, deliver: bool = True) -> dict[str, Any]:
     )
     log_project_note(WEEKLY_REPORT_PROJECT, pulse_date, report, tags=["coworker", "office", "pdf"])
 
-    subject = f"Weekly Fleet Report — {datetime.now(ZoneInfo(tz_name)).strftime('%Y-%m-%d')}"
+    subject = f"Weekly Fleet Report - {datetime.now(ZoneInfo(tz_name)).strftime('%Y-%m-%d')}"
     delivery = await deliver_report(
         report,
         subject,

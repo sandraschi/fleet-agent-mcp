@@ -1,4 +1,4 @@
-"""Mechanical gate tools — zero-LLM evaluation for workflow nodes.
+"""Mechanical gate tools - zero-LLM evaluation for workflow nodes.
 
 Exposes the harness/gate_engine.py functions as MCP tools that any fleet
 orchestrator can call: gate_evaluate, gate_verify, criteria_lint.
@@ -46,7 +46,7 @@ async def gate_evaluate(
                 "  role (str): Reviewer role name (e.g. 'security', 'frontend').\n"
                 "  findings (list[dict]): Structured findings with:\n"
                 "    severity (str): 'critical'🔴 | 'warning'🟡 | 'suggestion'🔵 "
-                "| 'blocked'⛔ | 'info'ℹ️\n"
+                "| 'blocked'⛔ | 'info'i️\n"
                 "    message (str): Description.\n"
                 "    file_ref (str, optional): File path reference.\n"
                 "    line (int, optional): Line number.\n"
@@ -59,7 +59,7 @@ async def gate_evaluate(
 ) -> dict[str, Any]:
     """Compute a mechanical gate verdict from evaluation reports.
 
-    No LLM involved — verdict is computed by code from severity levels:
+    No LLM involved - verdict is computed by code from severity levels:
       - Any 🔴 critical → FAIL
       - Any 🟡 warning → ITERATE
       - All clear → PASS

@@ -1,18 +1,18 @@
-"""fleet-agent-mcp — Combined Starlette + FastMCP server with REST API.
+"""fleet-agent-mcp - Combined Starlette + FastMCP server with REST API.
 
 MCP endpoint: /mcp (Streamable HTTP, JSON-RPC)
 REST endpoints:
-  /api/status         GET  — Agent health
-  /api/whoami         GET  — Agent identity
-  /api/tools          GET  — Tool listing
-  /api/settings       GET/PUT — LLM provider settings
-  /api/models         GET  — Available models from provider
-  /api/chat           POST — Streaming chat (SSE)
-  /api/logs           GET  — Recent log entries
-  /api/logs/stream    GET  — SSE log stream
-  /api/log            POST — Add a log entry
+  /api/status         GET  - Agent health
+  /api/whoami         GET  - Agent identity
+  /api/tools          GET  - Tool listing
+  /api/settings       GET/PUT - LLM provider settings
+  /api/models         GET  - Available models from provider
+  /api/chat           POST - Streaming chat (SSE)
+  /api/logs           GET  - Recent log entries
+  /api/logs/stream    GET  - SSE log stream
+  /api/log            POST - Add a log entry
 
-Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childhood bike — Fritz."
+Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childhood bike - Fritz."
 """
 
 import argparse
@@ -373,7 +373,7 @@ async def api_contribution_get(request: Request) -> JSONResponse:
 
 
 async def api_health(request: Request) -> JSONResponse:
-    """GET /api/health — fleet-standard health check."""
+    """GET /api/health - fleet-standard health check."""
     if _SHUTTING_DOWN:
         return JSONResponse({"status": "shutting_down", "server": "fleet-agent-mcp"})
 
@@ -428,7 +428,7 @@ _SHUTTING_DOWN: bool = False
 
 
 async def api_shutdown(request: Request) -> JSONResponse:
-    """POST /api/shutdown — graceful shutdown, health returns shutting_down."""
+    """POST /api/shutdown - graceful shutdown, health returns shutting_down."""
     global _SHUTTING_DOWN
     _SHUTTING_DOWN = True
     import os
@@ -444,7 +444,7 @@ async def api_shutdown(request: Request) -> JSONResponse:
 
 
 async def api_diagnostics(request: Request) -> JSONResponse:
-    """GET /api/v1/diagnostics — full fleet diagnostics payload."""
+    """GET /api/v1/diagnostics - full fleet diagnostics payload."""
     import platform
 
     from .config import settings as _settings
@@ -490,7 +490,7 @@ def build_app() -> Starlette:
     if not _START_MONO:
         _START_MONO = _time.monotonic()
 
-    from .mcp import tools as _tools  # noqa: F401 — triggers @mcp.tool registration
+    from .mcp import tools as _tools  # noqa: F401 - triggers @mcp.tool registration
     from .mcp.registry import mcp
 
     settings.ensure_dirs()

@@ -1,4 +1,4 @@
-"""State machine workflow tools — YAML/JSON-defined, gate-enforced step execution.
+"""State machine workflow tools - YAML/JSON-defined, gate-enforced step execution.
 
 Inspired by kagura-agent/flowforge and OPC (One Person Company):
 - YAML and OPC-style JSON flow templates
@@ -26,8 +26,8 @@ async def workflow_define(
     """Register a workflow from a YAML or JSON file.
 
     Supports:
-    - YAML workflows (.yaml, .yml) — linear/branch/terminal nodes
-    - OPC-style JSON flow templates (.json) — with node types,
+    - YAML workflows (.yaml, .yml) - linear/branch/terminal nodes
+    - OPC-style JSON flow templates (.json) - with node types,
       branches_map (PASS/FAIL/ITERATE), context_schema, soft_evidence
 
     ## Return Format
@@ -182,7 +182,7 @@ async def workflow_start(
 async def workflow_status(
     ctx: Context | None = None,
 ) -> dict[str, Any]:
-    """Get current workflow instance status — node, type, task, branches, gate state.
+    """Get current workflow instance status - node, type, task, branches, gate state.
 
     ## Return Format
     {"success": bool, "active": bool, "workflow": str, "current_node": str,
@@ -228,9 +228,13 @@ async def workflow_status(
         "node_outputs": node_outputs,
         "history_length": len(instance.history),
         "requires_evals": node_type in ("review", "gate") if node_type else False,
+        "failure_count": instance.failure_count,
+        "blocked": instance.blocked,
+        "blocked_reason": instance.blocked_reason,
         "message": (
             f"At node '{instance.current_node}' ({node_type or 'build'})"
             f" in workflow '{instance.workflow_name}'."
+            f"{' [BLOCKED: ' + instance.blocked_reason + ']' if instance.blocked else ''}"
             f"{' Last gate: ' + last_verdict if last_verdict else ''}"
         ),
     }
@@ -472,4 +476,75 @@ async def workflow_reset(
         "current_node": instance.current_node,
         "task": task,
         "message": f"Workflow '{instance.workflow_name}' reset to node '{instance.current_node}'.",
+    }
+
+
+@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
+async def workflow_failure_record(
+    reason: Annotated[
+        str | None,
+        Field(description="Optional failure reason or error message detailing why the step failed."),
+    ] = None,
+    failure_limit: Annotated[
+        int,
+        Field(description="Maximum allowed failures at current node before auto-blocking. Default 2."),
+    ] = 2,
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Record a failure for the current node on the active workflow instance (anti-spin guard).
+
+    Increments the failure counter. If failure_count >= failure_limit, the workflow instance
+    is set to BLOCKED state, halting automatic advances until workflow_unblock is called.
+
+    ## Return Format
+    {"success": bool, "active": bool, "failure_count": int, "blocked": bool,
+     "blocked_reason": str|null, "message": str}
+
+    ## Examples
+    workflow_failure_record(reason="Pytest exit code 1")
+    """
+    sm = get_state_machine()
+    instance = sm.failure_record(reason=reason, failure_limit=failure_limit)
+    if instance is None:
+        return {"success": False, "active": False, "message": "No active workflow instance."}
+
+    return {
+        "success": True,
+        "active": True,
+        "workflow": instance.workflow_name,
+        "current_node": instance.current_node,
+        "failure_count": instance.failure_count,
+        "blocked": instance.blocked,
+        "blocked_reason": instance.blocked_reason,
+        "message": (
+            f"Recorded failure ({instance.failure_count}/{failure_limit}) at node '{instance.current_node}'."
+            f"{' Instance is BLOCKED.' if instance.blocked else ''}"
+        ),
+    }
+
+
+@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
+async def workflow_unblock(
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Unblock the active workflow instance and reset its failure counter.
+
+    ## Return Format
+    {"success": bool, "active": bool, "workflow": str, "message": str}
+
+    ## Examples
+    workflow_unblock()
+    """
+    sm = get_state_machine()
+    instance = sm.unblock()
+    if instance is None:
+        return {"success": False, "active": False, "message": "No active workflow instance."}
+
+    return {
+        "success": True,
+        "active": True,
+        "workflow": instance.workflow_name,
+        "current_node": instance.current_node,
+        "blocked": False,
+        "message": f"Workflow instance '{instance.workflow_name}' unblocked and failure counter reset.",
     }

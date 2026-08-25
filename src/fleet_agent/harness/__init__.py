@@ -1,4 +1,4 @@
-"""Mechanical Gate Engine — zero-LLM gate enforcement for fleet-agent-mcp.
+"""Mechanical Gate Engine - zero-LLM gate enforcement for fleet-agent-mcp.
 
 Ported concepts from OPC (One Person Company) by iamtouchskyer:
   https://github.com/iamtouchskyer/opc

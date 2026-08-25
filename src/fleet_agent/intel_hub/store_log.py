@@ -1,4 +1,4 @@
-"""Ring-buffer log store for Fleet Hub — recent log entries from all fleet repos."""
+"""Ring-buffer log store for Fleet Hub - recent log entries from all fleet repos."""
 
 from __future__ import annotations
 

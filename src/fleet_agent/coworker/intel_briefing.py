@@ -42,15 +42,15 @@ def qualifies_for_pulse_task(
 def format_intel_section(items: list[dict[str, Any]], *, hours: int) -> str:
     lines = [f"## AI intel (last {hours}h)", ""]
     if not items:
-        lines.append("_No scored items in window — run `just poll` / distillation on aiwatcher._")
+        lines.append("_No scored items in window - run `just poll` / distillation on aiwatcher._")
         return "\n".join(lines)
 
     for i, item in enumerate(items[:8], 1):
         urgency = item.get("urgency")
-        score = f"{urgency:.1f}" if isinstance(urgency, (int, float)) else "—"
+        score = f"{urgency:.1f}" if isinstance(urgency, (int, float)) else "-"
         title = (item.get("title") or "?")[:100]
         source = item.get("source") or ""
-        lines.append(f"{i}. **[{score}]** {title}" + (f" — _{source}_" if source else ""))
+        lines.append(f"{i}. **[{score}]** {title}" + (f" - _{source}_" if source else ""))
         summary = (item.get("summary") or "").strip()
         if summary:
             lines.append(f"   {summary[:200]}")
@@ -73,7 +73,7 @@ async def fetch_intel_briefing(
     if not result.get("success"):
         return {
             "ok": False,
-            "section": "## AI intel\n\n_aiwatcher offline or unreachable — skip intel slice._",
+            "section": "## AI intel\n\n_aiwatcher offline or unreachable - skip intel slice._",
             "hot_items": [],
             "message": result.get("message", "fleet_call failed"),
         }

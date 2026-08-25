@@ -1,4 +1,4 @@
-"""Agentic loop control tools — start, stop, status for the autonomous execution loop."""
+"""Agentic loop control tools - start, stop, status for the autonomous execution loop."""
 
 from __future__ import annotations
 

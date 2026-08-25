@@ -1,4 +1,4 @@
-"""Identity loader — reads SOUL.md, NORTH_STAR.md, USER.md from identity/ directory.
+"""Identity loader - reads SOUL.md, NORTH_STAR.md, USER.md from identity/ directory.
 
 Inspired by OpenClaw's agent workspace conventions: SOUL.md, IDENTITY.md, USER.md
 are injected into the agent's context to define its personality and constraints.
