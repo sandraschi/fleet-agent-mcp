@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.sandraschi/fleet-agent-mcp",
+  "description": "Self-evolving AI agent: task orchestration, persistent memory, workflows, identity",
+  "version": "0.2.2",
+  "repository": {
+    "url": "https://github.com/sandraschi/fleet-agent-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "mcpb",
+      "identifier": "https://github.com/sandraschi/fleet-agent-mcp/releases/download/v0.2.2/fleet-agent-mcp-v0.2.2.mcpb",
+      "fileSha256": "07ef2a7542b0665195b6beca133ace12b1dea856e2f06eec80146886d7d2ac1c",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
