@@ -172,6 +172,13 @@ async def sfb_post(
     category: Annotated[
         str, Field(description="Diary category: note | repo_fix | decision | blooper.")
     ] = "note",
+    agent: Annotated[
+        str | None,
+        Field(
+            description="Posting agent name for attribution - shown as [agent] prefix "
+            "on Discord and in diary tags. Defaults to this server's agent_name (Fritz)."
+        ),
+    ] = None,
     dry_run: Annotated[bool, Field(description="Validate budget only - no posts.")] = False,
 ) -> dict[str, Any]:
     """Crosspost one event to all three surfaces: hub board + Discord + vla diary.
@@ -197,6 +204,7 @@ async def sfb_post(
         board_channel=board_channel,
         task_id=task_id,
         category=category,
+        agent=agent,
         dry_run=dry_run,
     )
 

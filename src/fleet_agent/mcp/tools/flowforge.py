@@ -156,6 +156,17 @@ async def workflow_start(
         task = sm.get_current_task()
         node_type = sm.get_current_node_type()
 
+        # Harness-driven surveillance post (best effort, never blocks the start)
+        from ...coworker.crosspost import autopost_workflow_event
+
+        await autopost_workflow_event(
+            "start",
+            name,
+            instance.current_node,
+            instance.started_at,
+            detail=f"first task: {task}" if task else "",
+        )
+
         result = {
             "success": True,
             "instance": instance.to_dict(),
@@ -295,6 +306,8 @@ async def workflow_next(
 
     prev_node = instance.current_node
     node_type = sm.get_current_node_type()
+    wf_name = instance.workflow_name
+    wf_started_at = instance.started_at
 
     try:
         instance = sm.next(
@@ -306,6 +319,15 @@ async def workflow_next(
         return {"success": False, "error": str(e), "message": f"Failed to advance: {e}"}
 
     if instance is None:
+        from ...coworker.crosspost import autopost_workflow_event
+
+        await autopost_workflow_event(
+            "completed",
+            wf_name,
+            prev_node,
+            wf_started_at,
+            detail=f"verdict: {verdict}" if verdict else "",
+        )
         return {
             "success": True,
             "completed": True,
@@ -483,11 +505,15 @@ async def workflow_reset(
 async def workflow_failure_record(
     reason: Annotated[
         str | None,
-        Field(description="Optional failure reason or error message detailing why the step failed."),
+        Field(
+            description="Optional failure reason or error message detailing why the step failed."
+        ),
     ] = None,
     failure_limit: Annotated[
         int,
-        Field(description="Maximum allowed failures at current node before auto-blocking. Default 2."),
+        Field(
+            description="Maximum allowed failures at current node before auto-blocking. Default 2."
+        ),
     ] = 2,
     ctx: Context | None = None,
 ) -> dict[str, Any]:
@@ -508,6 +534,17 @@ async def workflow_failure_record(
     if instance is None:
         return {"success": False, "active": False, "message": "No active workflow instance."}
 
+    if instance.blocked:
+        from ...coworker.crosspost import autopost_workflow_event
+
+        await autopost_workflow_event(
+            "blocked",
+            instance.workflow_name,
+            instance.current_node,
+            instance.started_at,
+            detail=instance.blocked_reason or "",
+        )
+
     return {
         "success": True,
         "active": True,
@@ -517,7 +554,8 @@ async def workflow_failure_record(
         "blocked": instance.blocked,
         "blocked_reason": instance.blocked_reason,
         "message": (
-            f"Recorded failure ({instance.failure_count}/{failure_limit}) at node '{instance.current_node}'."
+            f"Recorded failure ({instance.failure_count}/{failure_limit}) "
+            f"at node '{instance.current_node}'."
             f"{' Instance is BLOCKED.' if instance.blocked else ''}"
         ),
     }
@@ -546,5 +584,7 @@ async def workflow_unblock(
         "workflow": instance.workflow_name,
         "current_node": instance.current_node,
         "blocked": False,
-        "message": f"Workflow instance '{instance.workflow_name}' unblocked and failure counter reset.",
+        "message": (
+            f"Workflow instance '{instance.workflow_name}' unblocked, failure counter reset."
+        ),
     }

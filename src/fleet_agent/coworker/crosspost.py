@@ -200,7 +200,7 @@ async def crosspost_event(
     discord_error: str | None = None
     if not dry_run:
         channel_id = settings.sfb_channels.get(target) or DEFAULT_SFB_CHANNELS[target]
-        content = f"**{title}**\n{_sanitize(body)[:1900]}"
+        content = f"**[{agent}] {title}**\n{_sanitize(body)[:1900]}"
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 resp = await client.post(
@@ -300,3 +300,42 @@ async def crosspost_event(
         "diary_entry_id": diary_entry_id,
         "metrics": metrics,
     }
+
+
+async def autopost_workflow_event(
+    event: str,
+    workflow_name: str,
+    node: str,
+    instance_started_at: str,
+    detail: str = "",
+    agent: str | None = None,
+) -> dict[str, Any] | None:
+    """Harness-driven lifecycle crosspost: start | completed | blocked.
+
+    Called by the workflow engine (flowforge tools), not by agents - posting
+    is therefore not optional, which is the point: agents are surveillable
+    via #sfb-work regardless of whether they choose to report.
+
+    Best effort - never raises into the workflow engine. start/completed go
+    to #sfb-work (the 2-per-task budget fits exactly); blocked goes to
+    #sfb-alerts. task_id is unique per instance (workflow name + started_at),
+    so restarted workflows are not muted by an exhausted budget.
+    """
+    try:
+        target = "alerts" if event == "blocked" else "work"
+        task_id = f"wf:{workflow_name}:{instance_started_at}"
+        title = f"workflow {event}: {workflow_name}"
+        body = f"node: {node}"
+        if detail:
+            body += f"\n{detail}"
+        return await crosspost_event(
+            target,
+            title,
+            body,
+            task_id=task_id if target == "work" else None,
+            category="note",
+            agent=agent,
+        )
+    except Exception as exc:
+        logger.warning("autopost_workflow_event failed (%s) - workflow unaffected", exc)
+        return None

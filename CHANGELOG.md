@@ -1,4 +1,12 @@
-# Changelog
+
+# Changelog
+
+## [0.2.3] - 2026-08-29
+
+### Added - SFB surveillance hardening (harness-driven posting + attribution)
+- **Involuntary lifecycle posting** - new `autopost_workflow_event` in `coworker/crosspost.py`, called by the flowforge engine (not by agents): `workflow_start` posts start, `workflow_next` posts completion (with gate verdict) to #sfb-work, `workflow_failure_record` posts BLOCKED instances to #sfb-alerts. Best effort, never raises into the engine. task_id = `wf:<name>:<started_at>` (unique per instance, so restarts are not muted by the 2-per-task budget).
+- **Per-agent attribution** - `sfb_post` gains an `agent` parameter; Discord messages now carry a `[agent]` prefix (defaults to Fritz). VERIFIED live 2026-08-29: `[claude-desktop]` post in #sfb-thoughts, board id 20, diary 20260829T082231Z-c847f6.
+- Wrapped four pre-existing E501 lines in `flowforge.py` (ruff gate was red).
 
 ## [0.2.2] — 2026-08-25
 
