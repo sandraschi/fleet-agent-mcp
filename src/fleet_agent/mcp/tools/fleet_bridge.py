@@ -94,6 +94,12 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
         "category": "media",
         "key_tools": ["query_books", "search_fulltext", "manage_libraries", "calibre_rag"],
     },
+    "japanophile": {
+        "url": "http://127.0.0.1:11193/mcp",
+        "description": "japanophile-mcp - Japanese learning workstation: kanji, JLPT, vocab, knowledge, jp_utils",  # noqa: E501
+        "category": "knowledge",
+        "key_tools": ["kanji", "jlpt", "vocab", "knowledge", "japanophile_help"],
+    },
     "arxiv": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10770/mcp",
