@@ -31,7 +31,8 @@ async def poll_open_contributions() -> None:
             continue
 
         try:
-            result = subprocess.run(
+            result = await asyncio.to_thread(
+                subprocess.run,
                 ["gh", "pr", "view", pr_num, "--repo", repo, "--json", "state,mergedAt"],
                 capture_output=True,
                 text=True,

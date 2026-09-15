@@ -81,10 +81,16 @@ async def restart_hung_service(
 
     import httpx
 
-    def _service_pid() -> int | None:
+    async def _service_pid() -> int | None:
         try:
-            out = subprocess.run(
-                ["sc", "queryex", name], capture_output=True, text=True, timeout=10
+            out = (
+                await asyncio.to_thread(
+                    subprocess.run,
+                    ["sc", "queryex", name],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
             ).stdout
             for line in out.splitlines():
                 line = line.strip()
@@ -96,7 +102,7 @@ async def restart_hung_service(
             pass
         return None
 
-    pid = _service_pid()
+    pid = await _service_pid()
     if pid is None:
         return {
             "action": "no_service",
@@ -105,7 +111,8 @@ async def restart_hung_service(
         }
 
     try:
-        kill = subprocess.run(
+        kill = await asyncio.to_thread(
+            subprocess.run,
             ["taskkill", "/F", "/PID", str(pid), "/T"],
             capture_output=True,
             text=True,

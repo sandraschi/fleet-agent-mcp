@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -117,7 +118,8 @@ async def run_docs_drift(*, deliver: bool = True) -> dict[str, Any]:
         row["has_changelog"] = _has_changelog(repo)
         row["readme_preview"] = _readme_head(repo)
         try:
-            st = subprocess.run(
+            st = await asyncio.to_thread(
+                subprocess.run,
                 ["git", "-C", str(repo), "status", "-sb"],
                 capture_output=True,
                 text=True,

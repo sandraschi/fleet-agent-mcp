@@ -6,6 +6,7 @@ falls back to subprocess git for local operations.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import subprocess
@@ -200,7 +201,7 @@ async def github_create_pr(
         ]
         if draft:
             cmd.append("--draft")
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        r = await asyncio.to_thread(subprocess.run, cmd, capture_output=True, text=True, timeout=30)
         if r.returncode != 0:
             return {"success": False, "message": f"gh CLI failed: {r.stderr.strip()}"}
         url = r.stdout.strip()
@@ -226,7 +227,8 @@ async def github_list_prs(
     github_list_prs(owner="sandraschi", repo="fritz-test")
     """
     try:
-        result = subprocess.run(
+        result = await asyncio.to_thread(
+            subprocess.run,
             [
                 "gh",
                 "pr",
@@ -272,7 +274,8 @@ async def github_get_pr(
     """
     try:
         # Get PR info
-        r = subprocess.run(
+        r = await asyncio.to_thread(
+            subprocess.run,
             [
                 "gh",
                 "pr",
@@ -292,7 +295,8 @@ async def github_get_pr(
         pr_info = json.loads(r.stdout)
 
         # Get changed files
-        r2 = subprocess.run(
+        r2 = await asyncio.to_thread(
+            subprocess.run,
             ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}", "--name-only"],
             capture_output=True,
             text=True,
@@ -303,7 +307,8 @@ async def github_get_pr(
         )
 
         # Get full diff
-        r3 = subprocess.run(
+        r3 = await asyncio.to_thread(
+            subprocess.run,
             ["gh", "pr", "diff", str(number), "--repo", f"{owner}/{repo}"],
             capture_output=True,
             text=True,
@@ -355,7 +360,7 @@ async def github_review_pr(
             cmd = ["gh", "pr", "review", str(number), "--repo", f"{owner}/{repo}", "--comment"]
         if body:
             cmd.extend(["--body", body])
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        r = await asyncio.to_thread(subprocess.run, cmd, capture_output=True, text=True, timeout=15)
         if r.returncode != 0:
             return {"success": False, "message": f"Review failed: {r.stderr.strip()}"}
         return {"success": True, "message": f"Review '{action}' submitted on PR #{number}"}
@@ -382,7 +387,7 @@ async def github_merge_pr(
     """
     try:
         cmd = ["gh", "pr", "merge", str(number), "--repo", f"{owner}/{repo}", f"--{method}"]
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
+        r = await asyncio.to_thread(subprocess.run, cmd, capture_output=True, text=True, timeout=15)
         if r.returncode != 0:
             return {"success": False, "message": f"Merge failed: {r.stderr.strip()}"}
         return {"success": True, "message": f"PR #{number} merged ({method})"}
