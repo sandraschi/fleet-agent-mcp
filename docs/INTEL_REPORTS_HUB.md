@@ -10,7 +10,7 @@ Pretty HTML reports from **any fleet member**, served on a lightweight hub for i
 | Fritz backend | 10996 | publishes + ingests to AIWatcher |
 | AIWatcher backend | 10946 | publishes digests to hub |
 
-## Access matrix (2026-08-16)
+## Access matrix (verified 2026-08-30 — funnel live)
 
 | Surface | URL | Access |
 |---------|-----|--------|
@@ -65,7 +65,7 @@ challenge** (never a redirect - a 302 would break the browser auth dialog);
 after login they see the index. The open subtree is `/intel/public` for
 devices that cannot answer Basic auth (iPads, chatbot webviews).
 
-**Verified 2026-08-16:**
+**Verified 2026-08-30 (re-checked — funnel live):**
 
 | Check | Result |
 |-------|--------|
@@ -128,33 +128,39 @@ Env (optional, if `AIWATCHER_API_KEY` is set):
 | `FLEET_AGENT_AIWATCHER_HTTP_BASE` | `http://127.0.0.1:10946` |
 | `FLEET_AGENT_AIWATCHER_API_KEY` | (empty) |
 
-## iPad access (Tailscale)
+## iPad access
 
-### Same tailnet (recommended)
+### Tailscale Funnel (public internet — verified 2026-08-30)
 
-Hub binds `0.0.0.0:11027` by default. On iPad Safari:
+No Tailscale client needed. Verified live:
+
+- **Harmless public page**: `https://goliath.tailfab45.ts.net/intel/public` → 200, no auth (name + report count only — safe for iPad chatbot webviews)
+- **Full hub**: `https://goliath.tailfab45.ts.net/intel/` → 401 Basic auth challenge, then 200 with credentials (`INTEL_REPORTS_HUB_USER` / `INTEL_REPORTS_HUB_PASS`, defaults `fleet`/`intel` — change in production)
+- **Health**: `https://goliath.tailfab45.ts.net/intel/health` (`/health` via funnel) → public probe
+
+Funnel is per-path on `goliath.tailfab45.ts.net` (landing at `/`). Canonical policy: `mcp-central-docs/operations/TailscaleFunnel.md`.
+
+### Tailnet direct (no funnel)
+
+Hub binds `0.0.0.0:11027` by default:
 
 ```
-http://<goliath-tailscale-name>:11027/
+http://goliath:11027/
+https://goliath.tailfab45.ts.net:11027/   # tailnet-only direct port route
 ```
 
 Example: `http://goliath:11027/reports/abc123`
 
-### Tailscale Funnel (public HTTPS)
-
-On Goliath:
+### Adding / verifying the funnel route
 
 ```powershell
-tailscale funnel 11027
+tailscale serve --bg --set-path /intel/ http://127.0.0.1:11027
+tailscale funnel --bg --set-path /intel/ http://127.0.0.1:11027  # publish
+tailscale serve status
+Invoke-WebRequest https://goliath.tailfab45.ts.net/intel/public -UseBasicParsing  # must be 200
 ```
 
-Copy the `https://….ts.net` URL from the command output — open on iPad anywhere.
-
-To stop:
-
-```powershell
-tailscale funnel --https=11027 off
-```
+> `tailscale funnel 11027` (root-level, no `--set-path`) is **deprecated** — use the per-path `--set-path /intel/` form above. Re-run funnel commands after any `tailscale serve` edit (serve edits drop the funnel flag).
 
 ## Storage
 

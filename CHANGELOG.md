@@ -1,6 +1,60 @@
 
 # Changelog
 
+## [0.2.5] - 2026-09-08
+
+### Added - Real cline-mcp session integration for flowforge "agent" nodes
+- Full re-audit of the tool surface found `agentic.py` (`agentic_start`/`stop`/`status` - manual control of the main loop) had never been imported into `mcp/tools/__init__.py`, so those 3 tools existed with `@mcp.tool` decorators but were never actually registered. Fixed - tool count 100 → 103. Rewrote `SPEC.md` §5 completely (all 24 modules, 103 tools - the previous version covered 7 modules and was internally inconsistent even within those).
+- Investigated whether Fritz actually spawns/controls/supervises sub-agents: it didn't. The flowforge "agent" node path (`agent_step.py`) called cline-mcp's one-shot `agent_run` only - no session tracking, no abort path, no cost accounting - and cline-mcp itself wasn't even running. Full writeup: new `docs/AGENT_ARCHITECTURE_AND_SAFETY.md`.
+- **Built the fix**: `agent_step.py` rewritten to use cline-mcp's real session API (`POST /api/v1/agents/sessions`, `GET .../{id}`, `DELETE .../{id}`) instead of one-shot `agent_run`. Multi-tick model - starting a session and waiting for it are separate agentic-loop ticks, not one blocking call. A session running past the configured wait budget (`cline_mcp_timeout_s`, default 300s) gets a real abort (`DELETE`), not just a timeout. Failed/aborted/timed-out sessions now call `sm.failure_record()` (the pre-existing anti-spin guard) instead of silently advancing the workflow - repeated agent-step failures now visibly block the instance like every other node type already does.
+- Real token/cost accounting recovered from cline-mcp's session output (`inputTokens`/`outputTokens`/`totalCost`, nested in the session's JSON output field) and logged per agent step.
+- **Real bug found by testing the abort path directly**: cline-mcp's outer session `status` reads `"completed"` even for an aborted run (the SDK resolves rather than rejects on abort) - the real outcome is nested at `output.status` (`"aborted"` vs `"completed"`). Without checking that inner field, an abort would have been misread as a successful completion with empty output. Fixed.
+- Verified end-to-end against a live cline-mcp instance (had to start it manually - it isn't NSSM-managed, a real remaining gap noted in the safety doc): full happy path (started → running ×N ticks → completed with real token/cost data), the abort-detection fix, session-not-found handling (cline-mcp doesn't persist sessions to disk, so a restart loses them), and terminal-node archival on completion.
+
+## [0.2.4] - 2026-09-08
+
+### Fixed - VRAM/stuck-loop incident (production)
+- **Root cause**: a leftover `gate-test` workflow instance had been oscillating gate<->review since 2026-08-30 - `get_active_instance()` picks whatever non-archived instance was touched most recently with no completion/stall check, and each oscillation hop refreshed its own `updated_at`, so it permanently won that query. Result: `_handle_task_tick()` (the real todo-queue processor) hadn't run in over a week, and an LLM call fired on every single agentic-loop tick indefinitely, pinning the 4090's VRAM.
+- **Root cause of the root cause**: the test suite had zero DB isolation - `SqliteStore()`/`StateMachine()` defaulted straight to the live production DB, no `conftest.py` existed. `test_state_machine.py`'s own `"gate-test"` gate<->review fixture was what got stuck live, since every local `pytest` run wrote real instances into `~/.fleet-agent/fleet-agent.db` and the running NSSM service ticked them for real.
+- **`agentic_loop.py`**: new `_reap_if_stalled()` - force-archives any workflow instance older than 6h or with >50 history entries, checked every tick before `_handle_workflow_tick()`. Tunable via `settings.json` (`workflow_instance_max_age_hours`, `workflow_instance_max_history`). Also now calls `store.log_event(..., "blocked", reason)` on reap so it's visible to `workflow_health_watch`.
+- **`tests/conftest.py`** (new file): autouse fixture redirects the SQLite store + state machine to a per-test temp DB. Verified: prod DB row count identical before/after a full test-suite run.
+- Archived 275 stray non-production instances that had accumulated in the live DB since 2026-08-15 from unisolated test runs.
+
+### Added - PC/service supervision (coworker watches)
+- `gpu_vram_watch` (15m) - `nvidia-smi` + `ollama /api/ps`, escalates if VRAM stays pinned high.
+- `workflow_health_watch` (30m) - early warning before the stall reaper's 6h ceiling fires.
+- `task_backlog_watch` (6h) - alerts on an old/oversized pending-task backlog (the exact signal that would have caught the incident above days earlier).
+- `disk_watch` (6h) - free space on `C:\`/`D:\` (immediately found `C:\` at 4.4% free).
+- `coworker_execute` MCP tool's flow list now derives from `_COWORKER_RUNNERS.keys()` (single source of truth) instead of a hand-maintained `Literal` that had already drifted stale before this release (missing `scribe_watch`/`surveillance_watch`/`check_email`).
+
+### Removed
+- `activity_pulse` coworker flow (6h self-status ping to Fleet Hub) - nothing consumed it.
+
+### Added - Contribution pipeline hardening
+- `fritz_contribute()` own-repo push mode - repos owned by the authenticated `gh` user skip the fork step entirely and push directly to origin (`_own_gh_user()`).
+- `gogetajob_submit()` now logs to `contribution_log` so gogetajob-driven work shows on the webapp Contributions page (previously silent).
+- **Root-caused and fixed a real `gemma4:12b` timeout**: its verbose "thinking" reasoning trace pushed a real (~2000 char) fix-generation prompt past the 120s timeout, even though nothing in the codebase reads the thinking output. `llm_client.py`'s `_build_payload()` now sends `"think": false` on every Ollama request - same prompt now returns in ~2s. Confirmed harmless for non-reasoning models too.
+- Extended the no-LLM fallback safety net beyond rule `S701` (previously the only rule with a fallback): `_ruff_mechanical_fix()` lets ruff apply its own `--fix` for F401/UP006 (no LLM needed), `_generic_bare_except_fix()` covers S110/E722 generically (narrows to `except Exception:`).
+- `_sh()` (shared helper) now surfaces real stderr/exit-code detail on command failure instead of silently returning an empty string (kept `allow_nonzero=True` at the 4 ruff/biome call sites, where nonzero exit means "found something," not failure).
+- Fixed silent clone failures in `fritz_contribute()` and `fritz_analyze_repo()` - a failed `git clone` now returns a clear error instead of continuing against a nonexistent directory.
+- Landed two real, fully-automated dogfood PRs end-to-end (own repo + a purpose-built 16-bug test fixture) - no merges, per policy.
+
+### Added - job_finder.py (new module) - real analysis replacing gogetajob's label-only classification
+- `fritz_analyze_repo` - read-only: local-LLM issue tractability analysis (title+body+comments, not just labels), an age+maintainer-engagement signal gogetajob fetches but never uses, and a proactive ruff/biome scan for repos that aren't lint-instrumented (so real problems were never filed as issues at all).
+- `fritz_discover_and_analyze` - gh-search-based repo crawler (topic/stars/language/activity-recency), same query shape as gogetajob's `discover`, narrow defaults (3 repos) for a reviewable single crawl.
+- `fritz_act_on_finding` - explicit, separate acting step. Issue-filing always allowed; PR-attempts refused on repos we don't own. Includes a duplicate-issue courtesy check and a friendly, non-preachy issue-body generator.
+- New `analysis_log` SQLite table - every decision (attempted or skipped) logged with reasoning, for postmortem review independent of `contribution_log`'s acted-on-only outcomes.
+- Absolute Windows paths were leaking into filed issue titles/bodies and getting mangled (backslash escapes silently eaten) - fixed with a repo-relative path helper.
+- `fritz_act_on_finding` previously always returned `success: true` regardless of whether the issue was actually filed - fixed to gate on the real outcome.
+
+### Added - Webapp
+- Tasks page: search, status/group/priority/recurring filters, sort, CSV export (was an unfiltered flat list of 100+ items).
+- Automaton page: fixed a stats bug showing literal "?" (`/api/status` returns `{health: {tasks, memory_cards}}`, page was reading `/api/health`'s different shape); added search/sort/pagination to the Schedule board table.
+- Sidebar: collapse toggle moved from a bottom text button to a top-header chevron (standard convention).
+- Contributions/PRs page: new "Find Work" panel - Target-a-repo and Auto-crawler modes, wired to `fritz_analyze_repo`/`fritz_discover_and_analyze`/`fritz_act_on_finding` via new `/api/repo-analysis*` and `/api/analysis-log` routes.
+- Evolution log: was fully built but had zero entries - now auto-logs on 3x task-failure exhaustion; seeded a real first entry from the VRAM incident itself.
+- Scripts: added 5 (git-status-all-repos, stale-branch-report, gpu/vram-snapshot, contribution-opportunity-scan, evolution-log-digest).
+
 ## [0.2.3] - 2026-08-29
 
 ### Added - SFB surveillance hardening (harness-driven posting + attribution)

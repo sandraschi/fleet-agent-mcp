@@ -22,11 +22,29 @@ logger = logging.getLogger("fleet_agent.tools.contribute")
 REPOS_ROOT = Path("D:/Dev/repos")
 FRITZ_MCP = "http://127.0.0.1:10996/mcp/"
 H = {"Accept": "application/json, text/event-stream"}
+RUFF_EXE = "C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe"
 
 
-def _sh(args: list[str], cwd: str | None = None, timeout: int = 60) -> str:
+def _sh(
+    args: list[str], cwd: str | None = None, timeout: int = 60, allow_nonzero: bool = False
+) -> str:
+    """Run a command, return stdout. On failure returns "<error: ...>" -
+    every caller checks .startswith("<error") for this, so keep that prefix
+    stable.
+
+    allow_nonzero: linters (ruff, biome) exit nonzero when they find
+    something, which isn't a command failure - pass True for those. Every
+    other caller (git, gh) should leave this False so a real failure
+    surfaces its actual stderr instead of silently returning an empty
+    string (found 2026-09-08: a failed `gh issue create` reported
+    stdout-only success/failure with the real reason discarded, so the
+    webapp just showed a blank "gh issue create failed: " message).
+    """
     try:
         r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+        if r.returncode != 0 and not allow_nonzero:
+            detail = (r.stderr or r.stdout or "no output").strip()[:300]
+            return f"<error: exit {r.returncode}: {detail}>"
         return r.stdout.strip()
     except Exception as e:
         return f"<error: {e}>"
@@ -39,6 +57,18 @@ def _sh_shell(cmd: str, timeout: int = 60) -> str:
         return r.stdout.strip()
     except Exception as e:
         return f"<error: {e}>"
+
+
+_own_gh_user_cache: str | None = None
+
+
+def _own_gh_user() -> str:
+    """The authenticated gh CLI user - repos owned by this account skip the fork step."""
+    global _own_gh_user_cache
+    if _own_gh_user_cache is None:
+        out = _sh(["gh", "api", "user", "--jq", ".login"], timeout=10)
+        _own_gh_user_cache = out if out and not out.startswith("<error") else ""
+    return _own_gh_user_cache
 
 
 def _mcp(tool: str, args: dict) -> dict:
@@ -68,7 +98,7 @@ def _pick_lint_target(repo_path: str, severity: str = "S701,S110,E722,F401") -> 
     for rule in rules:
         out = _sh(
             [
-                "C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe",
+                RUFF_EXE,
                 "check",
                 repo_path,
                 "--select",
@@ -77,6 +107,7 @@ def _pick_lint_target(repo_path: str, severity: str = "S701,S110,E722,F401") -> 
                 "json",
             ],
             timeout=30,
+            allow_nonzero=True,  # ruff exits 1 when it finds something - not a failure
         )
         if not out or out.startswith("<error"):
             continue
@@ -103,6 +134,50 @@ def _pick_fix_strategy(findings: list[dict], repo_path: str) -> dict | None:
             if f.get("code") == rule:
                 return {"file": f["filename"], "code": rule, "message": f.get("message", "")}
     return None
+
+
+def _ruff_mechanical_fix(file_path: str, code: str) -> bool:
+    """Let ruff apply its own --fix for rules it can safely auto-fix
+    (F401 unused-import, UP006 deprecated-typing, ...) - no LLM needed,
+    and it's always textually correct for the actual file since ruff
+    computed the edit from the real AST, not a guessed literal.
+
+    Returns True if the file was actually changed.
+    """
+    before = Path(file_path).read_text(encoding="utf-8")
+    _sh(
+        [RUFF_EXE, "check", file_path, "--select", code, "--fix", "--no-cache"],
+        timeout=15,
+        allow_nonzero=True,
+    )
+    after = Path(file_path).read_text(encoding="utf-8")
+    return after != before
+
+
+def _generic_bare_except_fix(file_path: str) -> dict | None:
+    """Generic, non-repo-specific fallback for S110/E722 (bare `except:`).
+
+    Ruff won't auto-fix these - picking the right exception type is a
+    judgment call it won't guess at. Narrowing to `except Exception:` is
+    the standard, conservative fix (same choice an LLM makes for this
+    class of finding) and needs no repo-specific knowledge to apply.
+    """
+    import re as _re
+
+    content = Path(file_path).read_text(encoding="utf-8")
+    match = _re.search(r"except\s*:", content)
+    if not match:
+        return None
+    return {
+        "old_string": match.group(0),
+        "new_string": "except Exception:",
+        "title": "fix: narrow bare except clause",
+        "issue_body": (
+            "Reliability/security: a bare `except:` catches everything, "
+            "including SystemExit and KeyboardInterrupt. Narrowed to "
+            "`except Exception:`."
+        ),
+    }
 
 
 @mcp.tool(version="0.1.0")
@@ -139,14 +214,17 @@ async def fritz_contribute(
     # 1. Clone
     step("clone", f"Cloning {repo_url}")
     _sh_shell(f"rmdir /s /q {work_dir} 2>nul")
-    _sh(["git", "clone", repo_url, str(work_dir)], timeout=120)
+    clone_out = _sh(["git", "clone", repo_url, str(work_dir)], timeout=120)
+    if not work_dir.is_dir():
+        step("clone failed", clone_out)
+        return {"success": False, "steps": steps, "message": f"Clone failed: {clone_out}"}
     step("cloned", work_dir.name)
 
     # 2. Run ruff to find issues
     step("ruff", "Scanning for lint errors...")
     out = _sh(
         [
-            "C:/Users/sandr/AppData/Local/Programs/Python/Python313/Scripts/ruff.exe",
+            RUFF_EXE,
             "check",
             str(work_dir / "src"),
             "--select",
@@ -155,6 +233,7 @@ async def fritz_contribute(
             "json",
         ],
         timeout=30,
+        allow_nonzero=True,
     )
     findings = json.loads(out) if out and not out.startswith("<error") else []
     step("findings", f"{len(findings)} issues found")
@@ -200,8 +279,10 @@ async def fritz_contribute(
             llm_result = llm_result.split("```")[1].split("```")[0]
         fix_spec = json.loads(llm_result.strip())
     except Exception as e:
-        # Fallback: use hardcoded fix for known issues
+        # Fallback chain: no-LLM fixes for the same rule set the ruff scan
+        # covers, so a down/slow/misbehaving LLM never kills the whole run.
         step("llm failed", f"{e}, using fallback")
+        fix_spec = None
         if code == "S701":
             fix_spec = {
                 "old_string": "self.template_env = Environment(loader=TemplateLoader(self.templates))",
@@ -209,15 +290,25 @@ async def fritz_contribute(
                 "title": "fix: add autoescape=True to Jinja2 Environment (S701 XSS)",
                 "issue_body": "Security: Jinja2 Environment created without autoescape=True, enabling XSS when rendering user data in templates.",
             }
-        else:
+        elif code in ("S110", "E722"):
+            fix_spec = _generic_bare_except_fix(file_path)
+        elif code in ("F401", "UP006") and _ruff_mechanical_fix(file_path, code):
+            fix_spec = {
+                "_already_applied": True,
+                "title": f"fix: {code} - {msg}"[:80],
+                "issue_body": f"Found by ruff, auto-fixed with `ruff check --fix`: {msg}",
+            }
+        if fix_spec is None:
             return {"success": False, "steps": steps, "message": f"LLM fix planning failed: {e}"}
+        step("fallback", f"using no-LLM fix for {code}")
 
     old_str = fix_spec.get("old_string", "")
     new_str = fix_spec.get("new_string", "")
     title = fix_spec.get("title", f"fix: {code} lint error")
     issue_body = fix_spec.get("issue_body", f"Found by ruff: {msg}")
+    already_applied = fix_spec.get("_already_applied", False)
 
-    if not old_str or not new_str:
+    if not already_applied and (not old_str or not new_str):
         return {"success": False, "steps": steps, "message": "LLM returned incomplete fix spec"}
 
     # 5. File issue via gh
@@ -248,32 +339,49 @@ async def fritz_contribute(
     fix_path = Path(file_path)
     if not fix_path.exists():
         return {"success": False, "steps": steps, "message": f"File not found: {file_path}"}
-    content = fix_path.read_text(encoding="utf-8")
-    if old_str not in content:
-        return {"success": False, "steps": steps, "message": f"old_string not found in {file_path}"}
-    bak_path = fix_path.with_suffix(fix_path.suffix + ".bak")
-    bak_path.write_text(content, encoding="utf-8")
-    new_content = content.replace(old_str, new_str)
-    fix_path.write_text(new_content, encoding="utf-8")
-    verified = old_str not in fix_path.read_text(
-        encoding="utf-8"
-    ) and new_str in fix_path.read_text(encoding="utf-8")
-    bak_path.unlink()  # remove backup before commit - only the fix should ship
-    step("fix", verified)
+    if already_applied:
+        # _ruff_mechanical_fix() already wrote the change to disk in the
+        # fallback branch above - nothing left to do here.
+        step("fix", "already applied via ruff --fix")
+    else:
+        content = fix_path.read_text(encoding="utf-8")
+        if old_str not in content:
+            return {
+                "success": False,
+                "steps": steps,
+                "message": f"old_string not found in {file_path}",
+            }
+        bak_path = fix_path.with_suffix(fix_path.suffix + ".bak")
+        bak_path.write_text(content, encoding="utf-8")
+        new_content = content.replace(old_str, new_str)
+        fix_path.write_text(new_content, encoding="utf-8")
+        verified = old_str not in fix_path.read_text(
+            encoding="utf-8"
+        ) and new_str in fix_path.read_text(encoding="utf-8")
+        bak_path.unlink()  # remove backup before commit - only the fix should ship
+        step("fix", verified)
 
     # 8. Commit
     _sh(["git", "add", "-A"], cwd=str(work_dir))
     _sh(["git", "commit", "-m", title[:72]], cwd=str(work_dir))
     step("committed", "ok")
 
-    # 9. Push to fork
-    _sh(["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
-    _sh(
-        ["git", "remote", "add", "fork", f"https://github.com/sandraschi/{repo_name}.git"],
-        cwd=str(work_dir),
-    )
-    _sh(["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30)
-    step("pushed", branch)
+    # 9. Push - directly to origin for own repos (skip the fork dance entirely),
+    # fork-based flow only for repos we don't own.
+    own_repo = owner.lower() == _own_gh_user().lower()
+    if own_repo:
+        _sh(["git", "push", "origin", branch, "--force"], cwd=str(work_dir), timeout=30)
+        step("pushed", f"{branch} (own repo, direct to origin)")
+        pr_head = branch
+    else:
+        _sh(["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
+        _sh(
+            ["git", "remote", "add", "fork", f"https://github.com/{_own_gh_user()}/{repo_name}.git"],
+            cwd=str(work_dir),
+        )
+        _sh(["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30)
+        step("pushed", f"{branch} (fork)")
+        pr_head = f"{_own_gh_user()}:{branch}"
 
     # 10. PR
     if not dry_run:
@@ -289,7 +397,7 @@ async def fritz_contribute(
                 "--body",
                 issue_body[:500],
                 "--head",
-                f"sandraschi:{branch}",
+                pr_head,
                 "--base",
                 "main",
             ],
@@ -503,7 +611,10 @@ async def gogetajob_submit(
     """Push changes and create a PR via gogetajob.
 
     Delegates to `npx @kagura-agent/gogetajob submit <ref>`.
-    Records the completion and opens a PR.
+    Records the completion and opens a PR. Also logs the result to Fritz's
+    own contribution_log so it shows up in the webapp Contributions page -
+    gogetajob tracks its own work_log separately and previously never
+    surfaced here.
 
     ## Return Format
     {"success": bool, "message": str, "raw": str}
@@ -514,6 +625,28 @@ async def gogetajob_submit(
     out = _gogetajob(args)
     if out.startswith("<error"):
         return {"success": False, "message": out}
+
+    import re as _re
+
+    pr_match = _re.search(r"https://github\.com/[\w.-]+/[\w.-]+/pull/(\d+)", out)
+    repo_match = _re.match(r"([\w.-]+/[\w.-]+)#(\d+)", ref)
+    try:
+        from ...engine.sqlite_store import get_store
+
+        get_store().contrib_create(
+            repo=repo_match.group(1) if repo_match else ref,
+            title=f"gogetajob submit {ref}",
+            issue_url=f"https://github.com/{repo_match.group(1)}/issues/{repo_match.group(2)}"
+            if repo_match
+            else "",
+            pr_url=pr_match.group(0) if pr_match else "",
+            pr_number=pr_match.group(1) if pr_match else "",
+            status="open" if pr_match else "failed",
+            steps=[{"step": "gogetajob submit", "result": out[:500]}],
+        )
+    except Exception as log_e:
+        logger.warning("Failed to log gogetajob contribution: %s", log_e)
+
     return {"success": True, "message": f"Submitted {ref}", "raw": out[:500]}
 
 

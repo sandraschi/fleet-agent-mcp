@@ -246,6 +246,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
     hub_result: dict[str, Any] = {}
     ingest_result: dict[str, Any] = {}
     urgent_result: dict[str, Any] = {}
+    public_site_result: dict[str, Any] = {}
     try:
         from .aiwatcher_ingest import push_fritz_report_event
         from .common import publish_intel_report
@@ -304,6 +305,14 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         ingest_result = {"success": False, "message": str(exc)}
         urgent_result = {"success": False, "message": str(exc)}
 
+    try:
+        from ..intel_hub.public_site import generate_public_site
+
+        public_site_result = await generate_public_site()
+    except Exception as exc:
+        logger.warning("Fleet pulse public site regen failed: %s", exc)
+        public_site_result = {"success": False, "message": str(exc)}
+
     return {
         "success": True,
         "message": f"Fleet Pulse complete: {online}/{len(servers)} MCP servers online",
@@ -313,6 +322,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         "intel_hub": hub_result,
         "aiwatcher_ingest": ingest_result,
         "urgent_alert": urgent_result,
+        "public_site": public_site_result,
         "stats": {
             "servers_online": online,
             "servers_total": len(servers),

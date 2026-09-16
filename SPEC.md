@@ -1,7 +1,8 @@
 # fleet-agent-mcp — Architecture & Design Spec
 
-**Version**: 0.2.2
+**Version**: 0.2.5
 **Created**: 2026-05-19
+**Updated**: 2026-09-08 — see CHANGELOG.md [0.2.4]/[0.2.5] for the full session (VRAM/stuck-loop incident fix, contribution pipeline hardening, job_finder.py, full tool-inventory re-audit, real cline-mcp session integration). Section 5 was fully re-audited and rewritten this session — all 24 tool modules, 103 tools, verified against the live `tool_count`. Sections 3.1-3.6's prose descriptions predate this update and were not independently re-verified line-by-line; §3.7 (contribution pipeline) and the sub-agent reality documented in `docs/AGENT_ARCHITECTURE_AND_SAFETY.md` are both current as of today.
 **Inspiration**: [kagura-agent](https://github.com/kagura-agent) — self-evolving AI agent born 2026-03-10 on OpenClaw
 
 ---
@@ -107,6 +108,22 @@ The agent's wake-up routine:
 2. If no workflow, check pending tasks → return highest priority
 3. If idle, suggest maintenance (lint, stale check, discover workflows)
 
+### 3.7 Contribution Pipeline & Job Finder (new 2026-09-08)
+
+Two layers: `contribute.py` (the acting/execution layer) and `job_finder.py` (the finding/analysis layer, new).
+
+**`fritz_contribute(repo_url, dry_run)`** — self-contained pipeline: clone → ruff scan → LLM computes fix (local Ollama only, `"think": false` — see CHANGELOG) → files a GitHub issue → branch → apply fix → commit → push → open PR. Own repos (checked via `_own_gh_user()`) push straight to origin; repos we don't own use a fork. Never calls `gh pr merge` — PR creation only, merge is always a separate human action. A no-LLM fallback safety net (`_ruff_mechanical_fix` for F401/UP006, `_generic_bare_except_fix` for S110/E722, a hardcoded fix for S701) means a down/slow LLM doesn't fail the whole run.
+
+**`gogetajob_*` tools** — thin wrappers around the real npm package `@kagura-agent/gogetajob` (audit/scan/feed/start/submit/sync). `gogetajob audit --create-issues` is useful for repo-hygiene findings (missing CONTRIBUTING.md etc.) but is a shallow file-presence checklist, not real code analysis — confirmed by running it against a 16-bug intentionally-broken fixture repo and it found none of them.
+
+**`job_finder.py` (new)** — real analysis layer, built to improve on gogetajob's `classifyIssue()` (label/keyword matching only, verified from its actual source):
+- `fritz_analyze_repo(repo_url)` — read-only. LLM-analyzes each open issue's actual title/body/comments (tractability/confidence/reasoning/recommendation), computes an age + maintainer-engagement signal (`fresh_quiet`/`fresh_engaged`/`stale_engaged`/`stale_quiet`), and — for repos that aren't lint-instrumented (checked via `.github/workflows/` + config file detection) — runs our own ruff/biome scan, since a repo's real problems were never filed as issues if nobody's found them yet.
+- `fritz_discover_and_analyze(...)` — `gh search repos`-based crawler (stars/topic/language/activity-recency), same query shape as gogetajob's `discover`. Deliberately narrow defaults (3 repos) for a reviewable single crawl, not a sweep.
+- `fritz_act_on_finding(repo_url, action, summary)` — the only tool that actually files anything. Separate and explicit from analysis on purpose. `action="pr"` is refused outright for repos we don't own. Runs a duplicate-issue courtesy check first (`gh search issues`) and generates a warm, non-preachy issue body via a dedicated prompt (never "this is broken" — always "might be worth a look, feel free to close").
+- Every decision (attempted or skipped, self-found or existing-issue) is logged to a new `analysis_log` SQLite table with the reasoning, independent of `contribution_log` — so "why did Fritz skip this" is answerable later, not just "what did it act on."
+
+Explicit safety posture (Sandra, 2026-09-08): analysis never auto-acts; PR attempts are own-repo-only; max 1 self-found issue filed per repo per pass; local LLM only, no cloud provider ever in the chain. Two real dogfood PRs landed this session (own repo + a fixture repo built for exactly this kind of testing), both fully automated end-to-end, neither merged.
+
 ## 4. Data Persistence
 
 ```
@@ -122,9 +139,13 @@ The agent's wake-up routine:
 └── evolution/              # Evolution log markdown files (optional mirror)
 ```
 
-## 5. MCP Tools (21 tools, v0.1.0)
+## 5. MCP Tools (103 tools, v0.2.4 — 2026-09-08)
 
-### FlowForge (8 tools)
+Re-audited 2026-09-08 against the live server (`GET /api/health` → `tool_count`) and a full `@mcp.tool` grep across every module actually imported by `mcp/tools/__init__.py`. Every module below is verified registered; per-tool descriptions are terse by design (see each module's own docstrings for full detail). This replaces the previous 7-subsystem, 21-tool listing, which had drifted to cover well under a quarter of the real surface — 16 subsystems added since v0.1.0 were never added here.
+
+One drift bug fixed as part of this audit: `agentic.py` (3 tools below) had `@mcp.tool` decorators but the module was never imported in `mcp/tools/__init__.py`, so FastMCP never registered them — `agentic_start`/`stop`/`status` existed in source but were not callable. Fixed; live tool count went 100 → 103.
+
+### FlowForge (12 tools)
 | Tool | Type | Description |
 |---|---|---|
 | `workflow_define` | MUTATING | Register workflow from YAML |
@@ -135,7 +156,10 @@ The agent's wake-up routine:
 | `workflow_log` | READ_ONLY | Execution history |
 | `workflow_list` | READ_ONLY | List registered workflows |
 | `workflow_active` | READ_ONLY | List active instances |
+| `workflow_nodes` | READ_ONLY | Inspect a workflow's node graph |
 | `workflow_reset` | MUTATING | Restart current workflow |
+| `workflow_failure_record` | MUTATING | Anti-spin guard — record a node failure, auto-block after `failure_limit` |
+| `workflow_unblock` | MUTATING | Clear a blocked instance's failure state |
 
 ### Pulse (6 tools)
 | Tool | Type | Description |
@@ -147,7 +171,7 @@ The agent's wake-up routine:
 | `pulse_stale` | READ_ONLY | Find untouched tasks |
 | `pulse_align` | READ_ONLY | Strategic priority ordering |
 
-### Memory (7 tools)
+### Memory (10 tools)
 | Tool | Type | Description |
 |---|---|---|
 | `memory_card_create` | MUTATING | Create knowledge card |
@@ -157,6 +181,9 @@ The agent's wake-up routine:
 | `memory_lint` | READ_ONLY | Detect issues |
 | `memory_project_note` | MUTATING | Log project learning |
 | `memory_project_notes` | READ_ONLY | List project notes |
+| `suggestion_list` | READ_ONLY | Repeated-manual-usage suggestions (P4 — "you keep doing X manually, want a cron?") |
+| `suggestion_ack` | MUTATING | Acknowledge/dismiss a suggestion |
+| `import_external_skill` | MUTATING | Parse an external `SKILL.md` (OpenClaw/Anthropic/Hermes format) into a `skill`-type card |
 
 ### Identity (4 tools)
 | Tool | Type | Description |
@@ -180,11 +207,140 @@ The agent's wake-up routine:
 | `evolution_list` | READ_ONLY | List entries |
 | `evolution_stats` | READ_ONLY | Statistics + duplicates |
 
-### Heartbeat (2 tools)
+### Heartbeat (3 tools)
 | Tool | Type | Description |
 |---|---|---|
 | `heartbeat_status` | READ_ONLY | Health check |
-| `heartbeat_wake` | MUTATING | Wake-up routine |
+| `pipeline_liveness_check` | READ_ONLY | Checks the cron/heartbeat pipeline itself hasn't silently died |
+| `heartbeat_wake` | MUTATING | Wake-up routine — returns the next recommended action for an external caller to execute. Does not itself spawn or execute anything — see `docs/AGENT_ARCHITECTURE_AND_SAFETY.md` for what actually executes work vs what's architectural description. |
+
+### Agentic Loop Control (3 tools, added 2026-09-08)
+| Tool | Type | Description |
+|---|---|---|
+| `agentic_start` | MUTATING | Start the internal 30s-default autonomous loop (`engine/agentic_loop.py`) — starts automatically on boot, this lets an operator restart it without a service bounce |
+| `agentic_stop` | MUTATING | Stop the loop |
+| `agentic_status` | READ_ONLY | Running/stopped + current interval |
+
+### Coworker — Scheduled Flows (3 tools, 16 flows)
+| Tool | Type | Description |
+|---|---|---|
+| `coworker_execute` | MUTATING | Run a scheduled flow immediately (flow list derives from `_COWORKER_RUNNERS.keys()` — single source of truth as of 2026-09-08) |
+| `coworker_list_flows` | READ_ONLY | List wired flows + roadmap ideas |
+| `coworker_bootstrap` | MUTATING | Idempotently seed default recurring tasks |
+
+See the mcp-central-docs project page for the current flow list (16 as of 2026-09-08) and schedules.
+
+### Contribution Pipeline (8 tools) — see §3.7
+| Tool | Type | Description |
+|---|---|---|
+| `fritz_contribute` | MUTATING | Full pipeline: clone → ruff scan → LLM fix → issue → branch → commit → push → PR. Own-repo push mode; never merges. |
+| `fritz_find_contributions` | READ_ONLY | `gh search issues` for open-source opportunities |
+| `gogetajob_scan` | READ_ONLY | Discover a repo's open issues via the real `@kagura-agent/gogetajob` npm package |
+| `gogetajob_feed` | READ_ONLY | Browse gogetajob's job queue |
+| `gogetajob_start` | MUTATING | Take a gogetajob job (fork/clone/branch) |
+| `gogetajob_submit` | MUTATING | Push + PR + record via gogetajob, now also logs to `contribution_log` (fixed 2026-09-08 — was previously silent on the webapp) |
+| `gogetajob_stats` | READ_ONLY | gogetajob's own work-log statistics |
+| `gogetajob_sync` | MUTATING | Check PR/issue status via gogetajob |
+
+### Job Finder (3 tools, new 2026-09-08) — see §3.7
+| Tool | Type | Description |
+|---|---|---|
+| `fritz_analyze_repo` | READ_ONLY | Local-LLM issue analysis + age/engagement signal + unlinted-repo scan |
+| `fritz_discover_and_analyze` | READ_ONLY | gh-search-based candidate-repo crawler, analyzes each |
+| `fritz_act_on_finding` | MUTATING | File an issue, or (own repos only) attempt a PR |
+
+### GitHub (9 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `github_create_branch` | MUTATING | Create a branch |
+| `github_commit` | MUTATING | Commit staged changes |
+| `github_push` | MUTATING | Push a branch |
+| `github_create_pr` | MUTATING | Open a PR |
+| `github_list_prs` | READ_ONLY | List PRs |
+| `github_get_pr` | READ_ONLY | PR detail |
+| `github_review_pr` | MUTATING | Post a review |
+| `github_merge_pr` | MUTATING | Merge a PR |
+| `github_status` | READ_ONLY | `git status` |
+
+### Gate — Mechanical Gate Engine wrappers (3 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `gate_evaluate` | READ_ONLY | Run `synthesize()` — deterministic verdict from eval findings |
+| `gate_verify` | READ_ONLY | Independence/oscillation checks |
+| `criteria_lint` | READ_ONLY | Pre-flight acceptance-criteria lint |
+
+### Fleet Bridge (5 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `fleet_refresh_from_hub` | MUTATING | Refresh the server-alias registry from the fleet hub |
+| `fleet_discover` | READ_ONLY | List known fleet servers |
+| `fleet_call_tool` | MUTATING | Cross-server MCP invocation |
+| `fleet_inspect_repo` | READ_ONLY | Repo aspect inspection via opencode |
+| `fleet_list_tools` | READ_ONLY | List a fleet server's tools |
+
+### Intel Hub (4 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `intel_reports_publish` | MUTATING | HTML report → hub :11027 |
+| `intel_reports_list` | READ_ONLY | Catalog |
+| `aiwatcher_push_event` | MUTATING | Fleet Events feed |
+| `intel_public_site_generate` | MUTATING | Generate the public-facing static site |
+
+### Scripts (7 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `script_create` / `script_get` / `script_update` / `script_delete` / `script_list` | mixed | CRUD for the ad-hoc scripts table (Python/Shell/PowerShell/`mcp_call`) |
+| `script_run` | MUTATING | Execute a saved script |
+| `script_generate` | MUTATING | AI-generate a script from a natural-language prompt |
+
+### Notify (3 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `notify_email` | MUTATING | SMTP delivery with attachments |
+| `cron_start` | MUTATING | Start the internal recurring-task scheduler loop |
+| `cron_status` | READ_ONLY | Scheduler status |
+
+### Codegen (3 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `code_generate` | MUTATING | LLM-generate code from a prompt |
+| `file_write` | MUTATING | Write a file |
+| `file_edit` | MUTATING | Edit a file (find/replace) |
+
+### Board / SFB Comms (4 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `fleet_board` | READ_ONLY | Read the fleet hub board |
+| `agent_send` | MUTATING | Post to the board |
+| `sfb_post` | MUTATING | Post to Discord (crosspost layer, `[agent]`-attributed) |
+| `agent_poll` | READ_ONLY | Poll for board updates |
+
+### Dev Ops (1 portmanteau tool covering several operations)
+| Tool | Type | Description |
+|---|---|---|
+| `dev_ops` | mixed | `start_webapp`, `gpu_status` (nvidia-smi), `invokeai_kick`/`status`, `list_webapps`, `opencode_send` |
+
+### Voice (2 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `route_voice_command` | MUTATING | Route a parsed voice command to the right receiver |
+| `fritz_voice_agent` | MUTATING | Voice-driven agent entry point |
+
+### Assist (1 portmanteau tool)
+| Tool | Type | Description |
+|---|---|---|
+| `voice_assist` | MUTATING | Clause-chained voice commands — timers (speech-mcp), Plex playback/search, Calibre book search |
+
+### Surveil (1 tool)
+| Tool | Type | Description |
+|---|---|---|
+| `fritz_surveil` | READ_ONLY | Fleet health surveillance snapshot |
+
+### Log Tools (2 tools)
+| Tool | Type | Description |
+|---|---|---|
+| `query_logs` | READ_ONLY | Query the internal log store |
+| `check_log_errors` | READ_ONLY | Recent error-level entries |
 
 ## 6. Ports
 
@@ -237,11 +393,18 @@ The agent's wake-up routine:
 - [ ] Auto-discovery of fleet repos for project notes
 - [ ] North-star-aligned task auto-prioritization (LLM-assisted)
 
+### v0.2.4 (2026-09-08) — see CHANGELOG.md for full detail
+- [x] **VRAM/stuck-loop incident fixed** — hard-ceiling reaper in `agentic_loop.py`, test-DB isolation (`tests/conftest.py`)
+- [x] **PC/service supervision** — `gpu_vram_watch`, `workflow_health_watch`, `task_backlog_watch`, `disk_watch` coworker flows
+- [x] **Open source contribution pipeline (gogetajob equivalent)** — see §3.7. `fritz_contribute` own-repo mode, `gemma4` timeout root-caused and fixed, extended no-LLM fallback safety net
+- [x] **job_finder.py** — local-LLM issue analysis replacing gogetajob's label-only classification, age/engagement signal, unlinted-repo scanning, friendly-tone issue filing, `analysis_log` postmortem trail
+- [x] Webapp: Tasks filters/export, Automaton stats-bug fix + schedule board filters, sidebar chevron relocation, Contributions "Find Work" panel
+- [ ] **Aspirational**: land a real merged PR on `kovidgoyal/calibre`; scope a contribution path to `mixxxdj/mixxx` for video support (deferred — needs more fleet testing first, see CHANGELOG)
+
 ### v0.3.0 (planned)
 - [ ] Multi-agent collaboration (Moltbook-style social)
 - [ ] Agent Behavioral Type Indicator (ABTI equivalent)
 - [ ] Lobster-post style agent-to-agent letters
-- [ ] Open source contribution pipeline (gogetajob equivalent)
 - [ ] Full instance snapshot (complete ~/.fleet-agent/ backup)
 
 ## 9. Standards Alignment

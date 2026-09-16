@@ -372,6 +372,61 @@ async def api_contribution_get(request: Request) -> JSONResponse:
     return JSONResponse({"success": True, "contribution": entry})
 
 
+async def api_repo_analyze(request: Request) -> JSONResponse:
+    body = await request.json() or {}
+    r = await _call_tool(
+        "fritz_analyze_repo",
+        {
+            "repo_url": body.get("repo_url", ""),
+            "max_issues": body.get("max_issues", 5),
+        },
+    )
+    return JSONResponse(r)
+
+
+async def api_repo_act(request: Request) -> JSONResponse:
+    body = await request.json() or {}
+    r = await _call_tool(
+        "fritz_act_on_finding",
+        {
+            "repo_url": body.get("repo_url", ""),
+            "action": body.get("action", "issue"),
+            "summary": body.get("summary", ""),
+            "issue_number": body.get("issue_number", ""),
+        },
+    )
+    return JSONResponse(r)
+
+
+async def api_repo_discover(request: Request) -> JSONResponse:
+    body = await request.json() or {}
+    r = await _call_tool(
+        "fritz_discover_and_analyze",
+        {
+            "language": body.get("language", ""),
+            "min_stars": body.get("min_stars", 5),
+            "max_stars": body.get("max_stars", 5000),
+            "active_days": body.get("active_days", 90),
+            "topic": body.get("topic", ""),
+            "repo_limit": body.get("repo_limit", 3),
+        },
+    )
+    return JSONResponse(r)
+
+
+async def api_analysis_log(request: Request) -> JSONResponse:
+    from .engine.sqlite_store import get_store
+
+    repo = request.query_params.get("repo") or None
+    limit_str = request.query_params.get("limit", "100")
+    try:
+        limit = int(limit_str)
+    except ValueError:
+        limit = 100
+    entries = get_store().analysis_log_list(repo=repo, limit=limit)
+    return JSONResponse({"success": True, "entries": entries, "count": len(entries)})
+
+
 async def api_health(request: Request) -> JSONResponse:
     """GET /api/health - fleet-standard health check."""
     if _SHUTTING_DOWN:
@@ -560,6 +615,10 @@ def build_app() -> Starlette:
             Route("/api/fleet/list-tools", endpoint=api_fleet_list_tools, methods=["POST"]),
             Route("/api/contributions", endpoint=api_contributions_list),
             Route("/api/contributions/{id}", endpoint=api_contribution_get),
+            Route("/api/repo-analysis", endpoint=api_repo_analyze, methods=["POST"]),
+            Route("/api/repo-analysis/act", endpoint=api_repo_act, methods=["POST"]),
+            Route("/api/repo-analysis/discover", endpoint=api_repo_discover, methods=["POST"]),
+            Route("/api/analysis-log", endpoint=api_analysis_log),
             Route("/api/health", endpoint=api_health),
             Route("/api/v1/diagnostics", endpoint=api_diagnostics),
             Route("/api/shutdown", endpoint=api_shutdown, methods=["POST"]),

@@ -54,6 +54,8 @@ def coworker_type(task: dict[str, Any]) -> str | None:
         return "cursor_spend_watch"
     if "devices watch" in text or "devices priority" in text:
         return "devices_watch"
+    if "grade watch" in text:
+        return "grade_watch"
     return None
 
 

@@ -32,6 +32,13 @@ def _build_payload(
         "model": model,
         "messages": messages,
         "stream": stream,
+        # Hybrid-reasoning models (gemma4, qwen3, deepseek-r1...) emit a verbose
+        # "thinking" trace before the real answer unless told not to - nothing
+        # in this client reads that field, so it's pure latency for no benefit.
+        # A real fritz_contribute fix prompt (~2000 chars) timed out past 120s
+        # with thinking on; the same prompt returns in ~2s with it off. Safe
+        # for non-reasoning models too (Ollama just ignores the field).
+        "think": False,
         "options": {"temperature": 0.7},
     }
 

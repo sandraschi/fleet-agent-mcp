@@ -5,9 +5,11 @@ import {
 	ChevronDown,
 	ChevronRight,
 	Clock,
+	Download,
 	ListChecks,
 	Play,
 	RefreshCw,
+	Search,
 	Trash2,
 	Zap,
 } from "lucide-react";
@@ -344,6 +346,13 @@ export function Tasks() {
 	const [runResultId, setRunResultId] = useState<string | null>(null);
 	const [runResult, setRunResult] = useState<{ success: boolean; exit_code?: number; message?: string; stdout?: string; stderr?: string } | null>(null);
 
+	const [search, setSearch] = useState("");
+	const [statusFilter, setStatusFilter] = useState("pending");
+	const [groupFilter, setGroupFilter] = useState("all");
+	const [priorityFilter, setPriorityFilter] = useState("all");
+	const [recurFilter, setRecurFilter] = useState("all");
+	const [sortBy, setSortBy] = useState("created_desc");
+
 	const fetchTasks = useCallback(async () => {
 		try {
 			const r = await fetch(`${API_BASE}/api/tasks`);
@@ -413,6 +422,54 @@ export function Tasks() {
 
 	const toggleExpand = (id: string) => setExpandedId(expandedId === id ? null : id);
 
+	const filteredTasks = useMemo(() => {
+		let result = tasks;
+		if (statusFilter !== "all") result = result.filter((t) => t.status === statusFilter);
+		if (groupFilter !== "all") result = result.filter((t) => t.group_name === groupFilter);
+		if (priorityFilter !== "all") result = result.filter((t) => t.priority === priorityFilter);
+		if (recurFilter === "recurring") result = result.filter((t) => !!t.recurrence);
+		if (recurFilter === "one_off") result = result.filter((t) => !t.recurrence);
+		if (search.trim()) {
+			const q = search.trim().toLowerCase();
+			result = result.filter(
+				(t) =>
+					t.task.toLowerCase().includes(q) ||
+					(t.description || "").toLowerCase().includes(q)
+			);
+		}
+
+		const sorted = [...result];
+		const prioRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+		if (sortBy === "created_desc") sorted.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+		else if (sortBy === "created_asc") sorted.sort((a, b) => (a.created_at || "").localeCompare(b.created_at || ""));
+		else if (sortBy === "priority") sorted.sort((a, b) => (prioRank[a.priority] ?? 3) - (prioRank[b.priority] ?? 3));
+		else if (sortBy === "alpha") sorted.sort((a, b) => a.task.localeCompare(b.task));
+		return sorted;
+	}, [tasks, search, statusFilter, groupFilter, priorityFilter, recurFilter, sortBy]);
+
+	const exportCsv = () => {
+		const header = ["id", "task", "description", "priority", "group", "status", "recurrence", "created_at"];
+		const rows = filteredTasks.map((t) => [
+			t.id,
+			t.task,
+			t.description || "",
+			t.priority,
+			t.group_name || "",
+			t.status,
+			t.recurrence || "",
+			t.created_at || "",
+		]);
+		const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+		const csv = [header, ...rows].map((row) => row.map((c) => escape(String(c))).join(",")).join("\n");
+		const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `fritz-tasks-${new Date().toISOString().slice(0, 10)}.csv`;
+		a.click();
+		URL.revokeObjectURL(url);
+	};
+
 	const runScript = async (task: Task) => {
 		const scriptId = task.metadata?.script_id as string | undefined;
 		if (!scriptId) return;
@@ -451,6 +508,57 @@ export function Tasks() {
 				>
 					<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
 				</button>
+				<button
+					onClick={exportCsv}
+					disabled={filteredTasks.length === 0}
+					className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 disabled:opacity-40"
+				>
+					<Download className="w-3.5 h-3.5" /> Export CSV
+				</button>
+			</div>
+
+			{/* Filter / sort / search toolbar */}
+			<div className="flex items-center gap-2 flex-wrap border border-slate-800 rounded-lg bg-slate-900/40 p-2">
+				<div className="relative">
+					<Search className="w-3.5 h-3.5 text-slate-600 absolute left-2 top-1/2 -translate-y-1/2" />
+					<input
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+						placeholder="Search tasks..."
+						className="bg-slate-950 border border-slate-700 rounded-lg pl-7 pr-2 py-1.5 text-xs text-slate-200 outline-none focus:border-fleet-500 w-48"
+					/>
+				</div>
+				<select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-zinc-800 text-zinc-100 border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+					<option value="all">All statuses</option>
+					<option value="pending">Pending</option>
+					<option value="done">Done</option>
+					<option value="failed">Failed</option>
+				</select>
+				<select value={groupFilter} onChange={(e) => setGroupFilter(e.target.value)} className="bg-zinc-800 text-zinc-100 border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+					<option value="all">All groups</option>
+					<option value="self">Self</option>
+					<option value="human">Human</option>
+					<option value="external">External</option>
+				</select>
+				<select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="bg-zinc-800 text-zinc-100 border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+					<option value="all">All priorities</option>
+					<option value="high">High</option>
+					<option value="medium">Medium</option>
+					<option value="low">Low</option>
+				</select>
+				<select value={recurFilter} onChange={(e) => setRecurFilter(e.target.value)} className="bg-zinc-800 text-zinc-100 border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+					<option value="all">Recurring + one-off</option>
+					<option value="recurring">Recurring only</option>
+					<option value="one_off">One-off only</option>
+				</select>
+				<select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-zinc-800 text-zinc-100 border-zinc-600 rounded-lg px-2 py-1.5 text-xs">
+					<option value="created_desc">Newest first</option>
+					<option value="created_asc">Oldest first</option>
+					<option value="priority">Priority</option>
+					<option value="alpha">A-Z</option>
+				</select>
+				<div className="flex-1" />
+				<span className="text-[10px] text-slate-600">{filteredTasks.length} of {tasks.length} tasks</span>
 			</div>
 
 			{error && (
@@ -541,8 +649,11 @@ export function Tasks() {
 
 			{/* Task list */}
 			{tasks.length === 0 && !loading && <p className="text-sm text-slate-500 text-center py-8">No tasks. Create one above.</p>}
+			{tasks.length > 0 && filteredTasks.length === 0 && !loading && (
+				<p className="text-sm text-slate-500 text-center py-8">No tasks match the current filters.</p>
+			)}
 			<div className="grid grid-cols-1 gap-2">
-				{tasks.map((t) => {
+				{filteredTasks.map((t) => {
 					const desc = t.description || (t.metadata?.description as string | undefined);
 					const schedule = parseRecurrence(t.recurrence);
 					const isExpanded = expandedId === t.id;

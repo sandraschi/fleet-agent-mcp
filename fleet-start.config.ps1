@@ -5,10 +5,11 @@
     BackendPort  = 10996
     FrontendPort = 10997
     HealthPath   = '/api/whoami'
-    WebRoot      = 'D:\Dev\repos\fleet-agent-mcp\webapp'
-    NssmService  = 'fleet-agent-mcp'
+    WebRoot      = 'webapp'
     Backend = @{
-        Kind = 'nssm'
+        Kind       = 'module-serve'
+        Module     = 'fleet_agent_mcp'
+        SyncExtras = @('dev')
     }
     Frontend = @{
         Kind           = 'vite-npm'

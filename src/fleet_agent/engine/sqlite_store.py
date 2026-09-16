@@ -105,6 +105,22 @@ CREATE TABLE IF NOT EXISTS contribution_log (
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS analysis_log (
+    id TEXT PRIMARY KEY,
+    repo TEXT NOT NULL,
+    issue_number TEXT DEFAULT '',
+    issue_url TEXT DEFAULT '',
+    source TEXT DEFAULT '',
+    age_signal TEXT DEFAULT '',
+    tractability TEXT DEFAULT '',
+    confidence REAL DEFAULT 0,
+    reasoning TEXT DEFAULT '',
+    recommendation TEXT DEFAULT '',
+    action_taken TEXT DEFAULT '',
+    llm_provider TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
 """
 
 
@@ -557,6 +573,77 @@ class SqliteStore:
                 ),
             )
         return existing
+
+    def analysis_log_add(
+        self,
+        repo: str,
+        source: str,
+        recommendation: str,
+        issue_number: str = "",
+        issue_url: str = "",
+        age_signal: str = "",
+        tractability: str = "",
+        confidence: float = 0.0,
+        reasoning: str = "",
+        action_taken: str = "",
+        llm_provider: str = "",
+    ) -> dict[str, Any]:
+        """Record one job-finder analysis decision - kept separate from
+        contribution_log so a postmortem can see *why* Fritz skipped or
+        attempted something, not just the outcomes of things it acted on."""
+        item = {
+            "id": str(uuid.uuid4())[:8],
+            "repo": repo,
+            "issue_number": issue_number,
+            "issue_url": issue_url,
+            "source": source,
+            "age_signal": age_signal,
+            "tractability": tractability,
+            "confidence": confidence,
+            "reasoning": reasoning,
+            "recommendation": recommendation,
+            "action_taken": action_taken,
+            "llm_provider": llm_provider,
+            "created_at": datetime.now(UTC).isoformat(),
+        }
+        with self._connect() as conn:
+            conn.execute(
+                """INSERT INTO analysis_log (id, repo, issue_number, issue_url, source,
+                    age_signal, tractability, confidence, reasoning, recommendation,
+                    action_taken, llm_provider, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    item["id"],
+                    item["repo"],
+                    item["issue_number"],
+                    item["issue_url"],
+                    item["source"],
+                    item["age_signal"],
+                    item["tractability"],
+                    item["confidence"],
+                    item["reasoning"],
+                    item["recommendation"],
+                    item["action_taken"],
+                    item["llm_provider"],
+                    item["created_at"],
+                ),
+            )
+        return item
+
+    def analysis_log_list(
+        self, repo: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        with self._connect() as conn:
+            if repo:
+                rows = conn.execute(
+                    "SELECT * FROM analysis_log WHERE repo = ? ORDER BY created_at DESC LIMIT ?",
+                    (repo, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM analysis_log ORDER BY created_at DESC LIMIT ?", (limit,)
+                ).fetchall()
+            return [dict(r) for r in rows]
 
     def todo_add(
         self,

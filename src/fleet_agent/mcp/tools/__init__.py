@@ -4,6 +4,7 @@ All tool modules must be imported here for FastMCP discovery during server boot.
 """
 
 from . import (
+    agentic,
     assist,
     board,
     codegen,
@@ -18,6 +19,7 @@ from . import (
     heartbeat,
     identity,
     intel_hub,
+    job_finder,
     log_tools,  # noqa: F401  # import registers tools
     memory,
     notify,
@@ -29,6 +31,7 @@ from . import (
 )
 
 __all__ = [
+    "agentic",
     "flowforge",
     "pulse",
     "memory",
@@ -40,6 +43,7 @@ __all__ = [
     "codegen",
     "github",
     "contribute",
+    "job_finder",
     "notify",
     "coworker",
     "board",

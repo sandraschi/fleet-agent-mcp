@@ -112,6 +112,18 @@ FLEET_SERVERS: dict[str, dict[str, Any]] = {
             "arxiv_agentic_assist",
         ],
     },
+    "scraper": {
+        "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
+        "url": "http://127.0.0.1:10998/mcp",
+        "description": "scraper-mcp - ToolBench/Glama/LobeHub grade aggregator, coverage matrix, drop alerts",
+        "category": "infra",
+        "key_tools": [
+            "scraper_refresh",
+            "scraper_matrix",
+            "scraper_repo",
+            "scraper_reassess",
+        ],
+    },
     "aiwatcher": {
         "daemon": True,  # runs as a 24/7 HTTP daemon (NSSM/opencode)
         "url": "http://127.0.0.1:10946/mcp",

@@ -31,6 +31,69 @@ def _get_interval() -> int:
         return 30
 
 
+def _get_max_instance_age_hours() -> float:
+    try:
+        from ..settings_store import get_settings_store
+
+        return float(get_settings_store().get("workflow_instance_max_age_hours", 6))
+    except Exception:
+        return 6.0
+
+
+def _get_max_instance_history_len() -> int:
+    try:
+        from ..settings_store import get_settings_store
+
+        return int(get_settings_store().get("workflow_instance_max_history", 50))
+    except Exception:
+        return 50
+
+
+async def _reap_if_stalled(instance: Any) -> bool:
+    """Force-archive a workflow instance that has run too long or cycled too
+    many times without reaching a terminal node.
+
+    get_active_instance() just returns the most-recently-touched non-archived
+    row with no completion check, so a workflow oscillating between two nodes
+    (e.g. gate <-> review, each hop resetting failure_count since it's a move
+    to a *different* node) refreshes its own updated_at forever and never
+    stops winning that query - which starves _handle_task_tick() from ever
+    running. (Found 2026-09-08: a leftover 'gate-test' instance did exactly
+    this from 2026-08-30 onward, blocking a week of real task processing.)
+    This is a hard ceiling independent of the existing blocked/failure_count
+    mechanism, which only detects a stall at the *same* node.
+    """
+    from ..engine.sqlite_store import get_store
+    from ..log_store import get_log_store
+
+    try:
+        started = datetime.fromisoformat(instance.started_at)
+    except ValueError:
+        started = datetime.now(UTC)
+    age_hours = (datetime.now(UTC) - started).total_seconds() / 3600
+    max_age = _get_max_instance_age_hours()
+    max_history = _get_max_instance_history_len()
+
+    if age_hours <= max_age and len(instance.history) <= max_history:
+        return False
+
+    reason = (
+        f"stalled: age={age_hours:.1f}h (max {max_age}h), "
+        f"history={len(instance.history)} entries (max {max_history})"
+    )
+    logger.error("Reaping stalled workflow instance '%s': %s", instance.workflow_name, reason)
+    logs = get_log_store()
+    logs.add("error", f"Reaped stalled workflow '{instance.workflow_name}': {reason}", "agentic")
+
+    store = get_store()
+    instance.blocked = True
+    instance.blocked_reason = reason
+    store.save_instance(instance)
+    store.log_event(instance.workflow_name, "blocked", reason)
+    store.archive_instance(instance)
+    return True
+
+
 async def _execute_nonrecurring_task(task: dict[str, Any]) -> dict[str, Any]:
     """Execute a non-recurring task and mark it done.
 
@@ -171,45 +234,71 @@ async def _handle_workflow_tick() -> None:
         if result.get("completed"):
             logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
     elif node_type == "agent":
-        # SFB reasoning step: run cline-mcp agent_run (ollama/muse-glimmer),
-        # store the output on the instance, then advance.
+        # SFB reasoning step: cline-mcp real session API (start/status/stop),
+        # not a one-shot blocking call - see agent_step.py's module docstring
+        # and docs/AGENT_ARCHITECTURE_AND_SAFETY.md for why. One tick either
+        # starts a session or polls an existing one; completion or failure
+        # both stop at exactly one workflow_next() call, same as before.
         from ..engine.state_machine import get_state_machine
-        from .agent_step import run_agent_step
+        from .agent_step import tick_agent_step
 
         sm = get_state_machine()
         task_desc = status.get("task", "") or current_node
         prior = sm.get_node_outputs()
-        logs.add("info", f"Agent step '{current_node}': invoking brain tier...", "agentic")
         try:
-            result = await run_agent_step(
+            result = await tick_agent_step(
                 workflow_name=workflow_name,
                 node_name=current_node,
                 task=task_desc,
                 prior_outputs=prior,
             )
-            sm.record_node_output(current_node, result)
-            if result.get("success"):
-                ctx_chars = result.get("prompt_chars", 0)
-                logs.add(
-                    "info",
-                    f"Agent step '{current_node}' OK ({ctx_chars} ctx chars)",
-                    "agentic",
-                )
-            else:
-                logs.add(
-                    "warning",
-                    f"Agent step '{current_node}' failed: {result.get('error', 'unknown')}",
-                    "agentic",
-                )
         except Exception as exc:
             logger.exception("Agent step '%s' raised", current_node)
-            sm.record_node_output(current_node, {"success": False, "error": str(exc)})
-            logs.add("error", f"Agent step '{current_node}' raised: {exc}", "agentic")
-        # Advance regardless - a failed agent step records the error for the
-        # next node/gate instead of stalling the workflow forever.
-        result = await workflow_next()
-        if result.get("completed"):
-            logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
+            result = {"phase": "failed", "session_id": None, "error": str(exc)}
+
+        sm.record_node_output(current_node, result)
+        phase = result.get("phase")
+
+        if phase == "started":
+            logs.add(
+                "info",
+                f"Agent step '{current_node}': session {result['session_id']} started",
+                "agentic",
+            )
+            return  # next tick polls it - do not advance the workflow yet
+
+        if phase == "running":
+            logs.add(
+                "info",
+                f"Agent step '{current_node}': session {result['session_id']} still running "
+                f"({result.get('age_seconds', 0):.0f}s)",
+                "agentic",
+            )
+            return  # still waiting - check again next tick
+
+        if phase == "completed":
+            logs.add(
+                "info",
+                f"Agent step '{current_node}' OK - "
+                f"{result.get('input_tokens', '?')} in / {result.get('output_tokens', '?')} out tokens, "
+                f"cost ${result.get('total_cost', 0) or 0:.4f}",
+                "agentic",
+            )
+            result2 = await workflow_next()
+            if result2.get("completed"):
+                logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
+            return
+
+        # phase in ("failed", "timeout"): real failure, not a silent advance -
+        # reuses the existing anti-spin guard so repeated agent-step failures
+        # visibly block the instance (workflow_health_watch surfaces this)
+        # instead of degrading silently forever.
+        logs.add(
+            "warning",
+            f"Agent step '{current_node}' {phase}: {result.get('error', 'unknown')}",
+            "agentic",
+        )
+        sm.failure_record(reason=f"agent step '{current_node}' {phase}: {result.get('error', '')}")
     elif node_type in ("build", "execute", "discussion"):
         result = await workflow_next()
         if result.get("completed"):
@@ -282,6 +371,21 @@ async def _handle_task_tick() -> None:
                     f"- {result.get('message', '')[:120]}",
                     "agentic",
                 )
+                try:
+                    from ..memory.evolution import get_evolution_log
+
+                    get_evolution_log().record(
+                        correction=(
+                            f"Task gave up after 3 failed attempts: {task['task'][:150]}"
+                        ),
+                        lesson=(
+                            f"{result.get('message', 'unknown error')[:200]} - "
+                            "investigate the dispatch/routing path for this task type"
+                        ),
+                        context="agentic_loop._handle_task_tick, 3-attempt exhaustion",
+                    )
+                except Exception:
+                    logger.exception("Failed to record evolution entry for exhausted task")
             else:
                 store.todo_upsert(
                     {
@@ -339,6 +443,9 @@ async def _agentic_loop() -> None:
 
             sm = get_state_machine()
             instance = sm.status()
+
+            if instance is not None and await _reap_if_stalled(instance):
+                instance = None  # fall through to task_tick this same iteration
 
             if instance is not None:
                 logs.add(

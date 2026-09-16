@@ -50,11 +50,26 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 				collapsed ? "w-16" : "w-56",
 			)}
 		>
-			<div className="flex h-14 items-center border-b border-slate-800 px-4">
-				<div className="flex items-center gap-2 font-semibold text-slate-100">
-					<span className="text-lg">🌸</span>
-					{!collapsed && <span>fleet-agent</span>}
-				</div>
+			<div
+				className={cn(
+					"flex h-14 items-center border-b border-slate-800 px-3",
+					collapsed ? "justify-center" : "justify-between",
+				)}
+			>
+				{!collapsed && (
+					<div className="flex items-center gap-2 font-semibold text-slate-100 min-w-0">
+						<span className="text-lg shrink-0">🌸</span>
+						<span className="truncate">fleet-agent</span>
+					</div>
+				)}
+				<button
+					type="button"
+					onClick={onToggle}
+					className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+					title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+				>
+					{collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+				</button>
 			</div>
 
 			<nav className="flex-1 space-y-1 p-2 overflow-y-auto">
@@ -88,9 +103,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 				})}
 			</nav>
 
-			<div className="border-t border-slate-800 p-2">
-				<div className="px-3 pb-2">
-					{!collapsed && (
+			{!collapsed && (
+				<div className="border-t border-slate-800 p-2">
+					<div className="px-3 py-2">
 						<p className="text-[10px] text-slate-600 leading-tight">
 							Inspired by
 							<br />
@@ -105,23 +120,9 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 							<br />
 							887+ PRs, 52 repos
 						</p>
-					)}
+					</div>
 				</div>
-				<button
-					type="button"
-					onClick={onToggle}
-					className="flex w-full items-center justify-center rounded-md p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
-				>
-					{collapsed ? (
-						<ChevronRight className="h-5 w-5" />
-					) : (
-						<span className="flex items-center w-full">
-							<ChevronLeft className="h-5 w-5 mr-2" />
-							Collapse
-						</span>
-					)}
-				</button>
-			</div>
+			)}
 		</aside>
 	);
 }

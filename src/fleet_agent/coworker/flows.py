@@ -9,17 +9,6 @@ FlowRunner = Callable[..., Awaitable[dict[str, Any]]]
 
 # recurrence formats: HH:MM | wd:HH:MM | sun:HH:MM | 0 H * * * | 3600 | 30m
 COWORKER_FLOWS: dict[str, dict[str, Any]] = {
-    "activity_pulse": {
-        "id": "coworker-activity-pulse",
-        "label": "Fritz Activity Pulse",
-        "task": "Fritz Activity Pulse - coworker:activity_pulse",
-        "category": "fleet",
-        "recurrence_setting": "activity_pulse_interval",
-        "default_recurrence": "6h",
-        "enabled_setting": "coworker_activity_pulse_enabled",
-        "default_enabled": True,
-        "description": "Periodic status report to Fleet Hub :11027/reports/fritz-activity",
-    },
     "fleet_pulse": {
         "id": "coworker-fleet-pulse",
         "label": "Morning Fleet Pulse",
@@ -97,6 +86,17 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "default_enabled": True,
         "description": "Weekly combined ~/.fleet-agent/artifacts → styled PDF",
     },
+    "grade_watch": {
+        "id": "coworker-grade-watch",
+        "label": "Grade Watch",
+        "task": "Grade Watch - coworker:grade_watch",
+        "category": "fleet",
+        "recurrence_setting": "grade_watch_time",
+        "default_recurrence": "sun:19:00",
+        "enabled_setting": "coworker_grade_watch_enabled",
+        "default_enabled": True,
+        "description": "Weekly ToolBench/Glama/LobeHub grade refresh via scraper-mcp (Sunday)",
+    },
     "cursor_spend_watch": {
         "id": "coworker-cursor-spend-watch",
         "label": "Cursor Spend Watch",
@@ -154,6 +154,70 @@ COWORKER_FLOWS: dict[str, dict[str, Any]] = {
         "enabled_setting": "coworker_check_email_enabled",
         "default_enabled": True,
         "description": "Scan inbox: password resets, breaches, suspicious logins",
+    },
+    "gpu_vram_watch": {
+        "id": "coworker-gpu-vram-watch",
+        "label": "GPU/VRAM Watch",
+        "task": "GPU VRAM Watch - coworker:gpu_vram_watch",
+        "category": "system",
+        "recurrence_setting": "gpu_vram_watch_interval",
+        "default_recurrence": "15m",
+        "enabled_setting": "coworker_gpu_vram_watch_enabled",
+        "default_enabled": True,
+        "description": "nvidia-smi + ollama ps - escalate if VRAM stays pinned high",
+    },
+    "workflow_health_watch": {
+        "id": "coworker-workflow-health-watch",
+        "label": "Workflow Instance Health",
+        "task": "Workflow Instance Health - coworker:workflow_health_watch",
+        "category": "system",
+        "recurrence_setting": "workflow_health_watch_interval",
+        "default_recurrence": "30m",
+        "enabled_setting": "coworker_workflow_health_watch_enabled",
+        "default_enabled": True,
+        "description": "Non-archived workflow instances approaching the stall reaper's ceiling",
+    },
+    "task_backlog_watch": {
+        "id": "coworker-task-backlog-watch",
+        "label": "Task Backlog Age Watch",
+        "task": "Task Backlog Age Watch - coworker:task_backlog_watch",
+        "category": "system",
+        "recurrence_setting": "task_backlog_watch_interval",
+        "default_recurrence": "6h",
+        "enabled_setting": "coworker_task_backlog_watch_enabled",
+        "default_enabled": True,
+        "description": "Oldest pending task age + backlog size - catches a silently starved queue",
+    },
+    "disk_watch": {
+        "id": "coworker-disk-watch",
+        "label": "Disk Watch",
+        "task": "Disk Watch - coworker:disk_watch",
+        "category": "system",
+        "recurrence_setting": "disk_watch_interval",
+        "default_recurrence": "6h",
+        "enabled_setting": "coworker_disk_watch_enabled",
+        "default_enabled": True,
+        "description": "Free space on C:\\ and D:\\ - model weights, .bak files, LanceDB growth",
+    },
+    "contribution_dogfood": {
+        "id": "coworker-contribution-dogfood",
+        "label": "Contribution Dogfood",
+        "task": "Contribution Dogfood - coworker:contribution_dogfood",
+        "category": "fleet",
+        "recurrence_setting": "contribution_dogfood_time",
+        "default_recurrence": "sun:20:00",
+        "enabled_setting": "coworker_contribution_dogfood_enabled",
+        # Disabled by default: _own_repo_urls() found 233 repos on the account,
+        # not just the active fleet. Running fritz_contribute unattended
+        # against all of them weekly is a much bigger blast radius than
+        # dogfooding the fleet - enable only after scoping the repo list
+        # (settings key "contribution_dogfood_repos": list[str] to restrict).
+        "default_enabled": False,
+        "description": (
+            "fritz_contribute against own repos (ruff findings only) - real "
+            "issues/PRs, never auto-merged. DISABLED by default - 233 repos "
+            "found, scope to the active fleet before enabling"
+        ),
     },
 }
 

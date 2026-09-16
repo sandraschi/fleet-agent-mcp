@@ -47,6 +47,7 @@ Registered fleet servers and their MCP endpoints:
 | robofang | Fleet command center, robotics | 10871 |
 | arxiv | arXiv research paper tools | 10770 |
 | aiwatcher | Fleet observability | 10946 |
+| scraper | ToolBench/Glama/LobeHub grade aggregator | 10998 |
 | browser | Browser control, bookmarks | 10781 |
 | speech | Speech-to-text, wake word | 10909 |
 | email | Email management | 10813 |
@@ -80,6 +81,7 @@ Fritz runs these automation flows on a schedule:
 | Artifact Pack | Sunday 18:00 | Batch artifacts → styled PDF |
 | Cursor Spend Watch | Every 2h | Cursor-mcp spend guardrail check |
 | Devices Watch | Every 5m | Home safety: CO, smoke, Ring |
+| Grade Watch | Sunday 19:00 | ToolBench/Glama/LobeHub refresh via scraper-mcp |
 
 All flows use the recurrence format: HH:MM (daily), wd:HH:MM (weekdays), sun:HH:MM (specific day), dN:HH:MM (day of month), or Nh/Nm (interval).""",
     },

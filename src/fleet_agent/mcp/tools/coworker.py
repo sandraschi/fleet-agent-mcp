@@ -14,27 +14,16 @@ from pydantic import Field
 from ...coworker.artifact_pack import run_artifact_pack
 from ...coworker.board_pack import run_board_pack
 from ...coworker.bootstrap import ensure_coworker_tasks
-from ...coworker.cursor_spend_watch import run_cursor_spend_watch
-from ...coworker.day_prep import run_day_prep
-from ...coworker.devices_watch import run_devices_watch
-from ...coworker.docs_drift import run_docs_drift
-from ...coworker.fleet_pulse import run_fleet_pulse
 from ...coworker.flows import OFFICE_FLOW_IDEAS, list_flow_catalog
-from ...coworker.inbox_briefing import run_inbox_briefing
-from ...coworker.weekly_report_pdf import run_weekly_report_pdf
+from ...coworker.tasks import _COWORKER_RUNNERS
 from ..registry import mcp
 
-_FlowName = Literal[
-    "fleet_pulse",
-    "inbox_briefing",
-    "day_prep",
-    "docs_drift",
-    "weekly_report_pdf",
-    "board_pack",
-    "artifact_pack",
-    "devices_watch",
-    "cursor_spend_watch",
-]
+# Kept as a plain tuple->Literal instead of hand-maintaining a duplicate list:
+# this drifted out of sync with _COWORKER_RUNNERS before (scribe_watch,
+# surveillance_watch, check_email were all missing here) since nothing forced
+# the two to stay aligned. Deriving from _COWORKER_RUNNERS.keys() means adding
+# a flow to coworker/tasks.py is enough - no second place to remember.
+_FlowName = Literal[tuple(_COWORKER_RUNNERS.keys())]  # type: ignore[valid-type]
 
 
 @mcp.tool(annotations={"readonly": False}, version="0.2.0")
@@ -69,27 +58,18 @@ async def coworker_execute(
     except Exception:
         pass
 
-    runners = {
-        "fleet_pulse": lambda: run_fleet_pulse(deliver=deliver),
-        "inbox_briefing": lambda: run_inbox_briefing(deliver=deliver),
-        "day_prep": lambda: run_day_prep(deliver=deliver),
-        "docs_drift": lambda: run_docs_drift(deliver=deliver),
-        "weekly_report_pdf": lambda: run_weekly_report_pdf(deliver=deliver),
-        "board_pack": lambda: run_board_pack(
-            deliver=deliver,
-            template=template or "fleet-board-pack.odt",
-        ),
-        "artifact_pack": lambda: run_artifact_pack(
-            deliver=deliver,
-            template=template or "fleet-artifact-pack.odt",
-        ),
-        "devices_watch": lambda: run_devices_watch(deliver=deliver),
-        "cursor_spend_watch": lambda: run_cursor_spend_watch(deliver=deliver),
-    }
-    runner = runners.get(flow)
+    runner = _COWORKER_RUNNERS.get(flow)
     if runner is None:
         return {"success": False, "message": f"Unknown flow: '{flow}'."}
-    result = await runner()
+
+    if flow == "board_pack":
+        result = await run_board_pack(deliver=deliver, template=template or "fleet-board-pack.odt")
+    elif flow == "artifact_pack":
+        result = await run_artifact_pack(
+            deliver=deliver, template=template or "fleet-artifact-pack.odt"
+        )
+    else:
+        result = await runner(deliver=deliver)
     return {**result, "flow": flow}
 
 
