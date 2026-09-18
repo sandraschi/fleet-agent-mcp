@@ -19,8 +19,7 @@ start-backend:
 
 # Start webapp dev server only
 start-webapp:
-    Set-Location '{{justfile_directory()}}\webapp'
-    npm run dev
+    Set-Location '{{justfile_directory()}}\webapp'; npm run dev
 
 # Force rebuild: reinstall editable, clear pycache, restart
 rebuild:
@@ -32,9 +31,7 @@ rebuild:
 
 # Build webapp for production
 build-webapp:
-    Set-Location '{{justfile_directory()}}\webapp'
-    npm install
-    npm run build
+    Set-Location '{{justfile_directory()}}\webapp'; npm install; npm run build
 
 # Run tests
 test:

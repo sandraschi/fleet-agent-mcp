@@ -14,6 +14,17 @@ Heartbeat is the agent's pulse. On each wake-up:
 
 The heartbeat returns the *next action* — it's up to the caller (cron + LLM) to execute it.
 
+**Fleet session log (2026-09-18):** whenever a workflow tick completes a
+workflow (any of the three completion points in `engine/agentic_loop.py`),
+Fritz writes a provenance-marked entry to
+`mcp-central-docs/operations/session-log/YYYY-MM-DD.md` via
+`session_log.log_workflow_completed()` — best-effort, never blocks or fails
+the tick. This is how other agents (Claude Code, opencode, Cursor,
+Antigravity) find out what Fritz did autonomously without reading its
+internal log store. See `mcp-central-docs/operations/session-log/README.md`
+for the convention; `evolution_list()` stays the place for mistakes/lessons,
+this is just "what happened."
+
 ## Tools
 
 ### `heartbeat_wake()` — What should I do right now?
