@@ -157,6 +157,51 @@ def format_fleet_pulse_report(
     return "\n".join(lines)
 
 
+def _pulse_diary_summary(
+    *,
+    pulse_date: str,
+    online: int,
+    total: int,
+    git_rows: list[dict[str, Any]],
+    pipeline: dict[str, Any] | None,
+) -> tuple[str, str, dict[str, Any]]:
+    """Daily dev-diary heartbeat from data the pulse already gathered.
+
+    Keeps the vla dev notebook (and the public diary aggregates) fresh even
+    when no agent logs repo work: one honest ops snapshot per pulse run,
+    tagged repo:fleet-agent-mcp so the digest buckets it correctly.
+    """
+    day = pulse_date.split()[0]
+    healthy = bool((pipeline or {}).get("healthy", False))
+    try:
+        critical = int((pipeline or {}).get("critical_count", 0) or 0)
+    except (TypeError, ValueError):
+        critical = 0
+    watched: list[str] = []
+    for row in git_rows or []:
+        name = row.get("repo", "?")
+        if row.get("error"):
+            watched.append(f"{name}: {row['error']}")
+        else:
+            watched.append(f"{name}: {row.get('last_commit', 'unknown')}")
+    title = f"Fleet Pulse - {day}: {online}/{total} MCP online"
+    lines = [
+        f"Pipeline: {'healthy' if healthy else 'DEGRADED'} ({critical} critical).",
+        f"MCP daemons online: {online}/{total}.",
+        "Watched repos:",
+        *(f"- {w}" for w in watched),
+    ]
+    metrics = {
+        "outcome": "posted",
+        "flow": "fleet_pulse",
+        "servers_online": online,
+        "servers_total": total,
+        "pipeline_healthy": healthy,
+        "critical_count": critical,
+    }
+    return title, "\n".join(lines), metrics
+
+
 async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
     """Run Morning Fleet Pulse: discover fleet, git snapshot, report, persist, deliver."""
     from ..engine.sqlite_store import get_store
@@ -305,6 +350,32 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         ingest_result = {"success": False, "message": str(exc)}
         urgent_result = {"success": False, "message": str(exc)}
 
+    diary_result: dict[str, Any] = {}
+    try:
+        from .crosspost import log_diary_entry
+
+        agent = (getattr(settings, "agent_name", "") or "Fritz").strip().lower()
+        d_title, d_body, d_metrics = _pulse_diary_summary(
+            pulse_date=pulse_date,
+            online=online,
+            total=len(servers),
+            git_rows=git_rows,
+            pipeline=pipeline,
+        )
+        diary_entry_id = log_diary_entry(
+            notebook="dev",
+            category="note",
+            title=d_title,
+            body=d_body,
+            author=f"agent:{agent}",
+            tags=[f"agent:{agent}", "target:work", "repo:fleet-agent-mcp", "fleet-pulse"],
+            metrics=d_metrics,
+        )
+        diary_result = {"success": True, "diary_entry_id": diary_entry_id}
+    except Exception as exc:
+        logger.warning("Fleet pulse diary heartbeat failed: %s", exc)
+        diary_result = {"success": False, "message": str(exc)}
+
     try:
         from ..intel_hub.public_site import generate_public_site
 
@@ -323,6 +394,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         "aiwatcher_ingest": ingest_result,
         "urgent_alert": urgent_result,
         "public_site": public_site_result,
+        "diary_heartbeat": diary_result,
         "stats": {
             "servers_online": online,
             "servers_total": len(servers),
