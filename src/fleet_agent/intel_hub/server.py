@@ -41,8 +41,14 @@ def hub_port() -> int:
 def hub_root_path() -> str:
     """URL prefix uvicorn strips before routing (e.g. '/intel' when the hub
     sits behind a tailscale funnel subpath). Empty string = no prefix.
+
+    Defaults to '/intel': the fleet funnel always serves the hub under /intel/
+    (landing page owns domain root), and start-intel-hub.ps1 documents the
+    same default - so the hub routes and links correctly even when the
+    launcher (e.g. the fleet-hub NSSM service) does not set the env var.
+    Override with INTEL_REPORTS_HUB_ROOT_PATH (including empty) as needed.
     """
-    return os.environ.get("INTEL_REPORTS_HUB_ROOT_PATH", "").strip()
+    return os.environ.get("INTEL_REPORTS_HUB_ROOT_PATH", "/intel").strip()
 
 
 def hub_auth_credentials() -> tuple[str, str] | None:
@@ -84,6 +90,37 @@ def _unauthorized() -> JSONResponse:
     )
 
 
+def _route_path(scope) -> str:
+    """Scope path minus the funnel prefix (mirrors Starlette's stripping).
+
+    uvicorn 0.47+ keeps root_path prepended in scope["path"], so the raw
+    path is e.g. /intel/health when served under a funnel subpath. Auth
+    and link logic must compare the stripped route path instead.
+
+    Fallback: when the hub runs without INTEL_REPORTS_HUB_ROOT_PATH (e.g.
+    the NSSM service env predates the setting) root_path is empty but the
+    funnel still forwards the full subpath - strip the well-known prefix
+    so /intel/public keeps working with or without upstream stripping.
+    """
+    path = scope.get("path", "")
+    root = (scope.get("root_path") or "").rstrip("/")
+    # Loop: strip root_path and/or the well-known funnel prefix repeatedly
+    # so /intel/public, /intel/intel/public etc. all collapse to /public
+    # regardless of which layer already stripped what.
+    for _ in range(3):
+        if root and path.startswith(root) and path != root:
+            rest = path[len(root) :]
+            if rest.startswith("/"):
+                path = rest or "/"
+                continue
+        prefix = "/intel"
+        if path == prefix or path.startswith(prefix + "/"):
+            path = path[len(prefix) :] or "/"
+            continue
+        break
+    return path or "/"
+
+
 class _BasicAuthMiddleware:
     """HTTP Basic auth gate for the hub.
 
@@ -99,7 +136,12 @@ class _BasicAuthMiddleware:
             await self.app(scope, receive, send)
             return
 
-        path = scope.get("path", "")
+        path = _route_path(scope)
+        if path != scope.get("path"):
+            # Funnel forwarded the full subpath - expose the stripped route
+            # path downstream so Starlette routing matches (/intel/public
+            # behaves exactly like /public).
+            scope["path"] = path
         if any(path == p or path.startswith(p + "/") for p in PUBLIC_PATHS):
             await self.app(scope, receive, send)
             return
@@ -185,9 +227,24 @@ async def api_reports_publish(request: Request) -> JSONResponse:
         return JSONResponse({"success": False, "error": str(exc)}, status_code=400)
 
 
+def _hub_base(request: Request) -> str:
+    """Funnel subpath prefix for absolute links (e.g. "/intel").
+
+    Prefers the ASGI scope root_path (set by uvicorn when
+    INTEL_REPORTS_HUB_ROOT_PATH is configured); falls back to the env value
+    so links are still prefixed when the scope carries none. Empty = serve
+    from domain root. Absolute base-prefixed links keep card taps working
+    whether the index URL has a trailing slash or not.
+    """
+    scope_base = (request.scope.get("root_path") or "").strip()
+    if scope_base:
+        return scope_base
+    return hub_root_path()
+
+
 async def page_index(request: Request) -> HTMLResponse:
     reports = list_reports(limit=80)
-    return HTMLResponse(render_index_page(reports))
+    return HTMLResponse(render_index_page(reports, base=_hub_base(request)))
 
 
 async def page_public(request: Request) -> HTMLResponse:
@@ -202,6 +259,7 @@ async def page_public(request: Request) -> HTMLResponse:
 
     meta = hub_meta()
     now = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
+    signin_href = (_hub_base(request).rstrip("/") + "/") if _hub_base(request).rstrip("/") else "/"
     return HTMLResponse(
         f"""<!DOCTYPE html>
 <html lang="en">
@@ -224,7 +282,7 @@ async def page_public(request: Request) -> HTMLResponse:
   <h1>Fleet Intel Reports</h1>
   <p>Service operational - {meta.get("reports_count", 0)} reports stored.</p>
   <p>Generated {now}</p>
-  <p><a href="/">Sign in to view reports</a></p>
+  <p><a href="{signin_href}">Sign in to view reports</a></p>
 </div>
 </body>
 </html>"""
@@ -236,6 +294,14 @@ async def page_report(request: Request) -> HTMLResponse:
     html_content = get_report_html(report_id)
     if not html_content:
         return HTMLResponse("<p>Report not found</p>", status_code=404)
+    # Stored reports were rendered with a root-absolute back link (href="/").
+    # Rewrite it to the funnel-aware base so the back button works both via
+    # the funnel (/intel/) and direct (:11027). New renders already carry it.
+    base = _hub_base(request).rstrip("/")
+    back_href = (base + "/") if base else "/"
+    if back_href != "/":
+        old_link = 'class="back" href="/"'
+        html_content = html_content.replace(old_link, f'class="back" href="{back_href}"')
     return HTMLResponse(html_content)
 
 

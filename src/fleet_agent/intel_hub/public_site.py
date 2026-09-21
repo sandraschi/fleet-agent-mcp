@@ -20,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import os
 import re
 import sqlite3
 from datetime import UTC, datetime
@@ -34,6 +35,73 @@ _GH_USER = "sandraschi"
 _AIWATCHER_BASE = "http://127.0.0.1:10946"
 
 GENERATED_AT_LABEL = "fleet-intel-public-v1"
+
+
+def _github_token() -> str:
+    """Token for headless service accounts (fleet-hub runs as LocalSystem).
+
+    gh CLI auth lives in the interactive user's keyring, which the service
+    cannot see - hence repos=[] on the live page. Resolution order:
+    GH_TOKEN/GITHUB_TOKEN env, then the token file (written by the
+    interactive user, ACLed to user+SYSTEM). Without any token the REST
+    fallback still works until the shared-IP unauthenticated quota (60/hr)
+    is exhausted.
+    """
+    token = os.environ.get("GH_TOKEN", "").strip() or os.environ.get("GITHUB_TOKEN", "").strip()
+    if token:
+        return token
+    token_file = os.environ.get("GH_TOKEN_FILE", r"C:\Users\sandr\.fleet-intel\.gh_token")
+    try:
+        return Path(token_file).read_text(encoding="utf-8").strip()
+    except OSError:
+        return ""
+
+
+def _github_headers() -> dict[str, str]:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "sandrafleet-intel-hub",
+    }
+    token = _github_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    return headers
+
+
+async def _github_repos_fallback() -> list[dict[str, Any]]:
+    """Unauthenticated/token REST fallback when `gh` has no auth (service)."""
+    repos: list[dict[str, Any]] = []
+    try:
+        async with httpx.AsyncClient(timeout=15.0, headers=_github_headers()) as client:
+            for page in range(1, 4):
+                resp = await client.get(
+                    f"https://api.github.com/users/{_GH_USER}/repos",
+                    params={"per_page": "100", "sort": "updated", "page": str(page)},
+                )
+                if resp.status_code != 200:
+                    break
+                batch = resp.json()
+                if not isinstance(batch, list) or not batch:
+                    break
+                for item in batch:
+                    if not isinstance(item, dict):
+                        continue
+                    repos.append(
+                        {
+                            "name": item.get("name"),
+                            "description": item.get("description"),
+                            "stargazers_count": item.get("stargazers_count", 0),
+                            "language": item.get("language"),
+                            "pushed_at": item.get("pushed_at"),
+                            "html_url": item.get("html_url"),
+                            "fork": item.get("fork", False),
+                        }
+                    )
+                if len(batch) < 100:
+                    break
+    except httpx.HTTPError:
+        pass
+    return repos
 
 
 async def github_repos() -> list[dict[str, Any]]:
@@ -66,6 +134,13 @@ async def github_repos() -> list[dict[str, Any]]:
         if len(batch) < 100:
             break
         page += 1
+
+    if not repos:
+        # Service account (LocalSystem) has no gh keyring - REST fallback.
+        repos = await _github_repos_fallback()
+
+    if not repos:
+        return repos
 
     sem = asyncio.Semaphore(8)
     summaries = await asyncio.gather(*(_readme_summary(r["name"], sem) for r in repos))
@@ -119,11 +194,26 @@ async def _readme_summary(name: str, sem: asyncio.Semaphore) -> str:
             stderr=asyncio.subprocess.DEVNULL,
         )
         out, _ = await proc.communicate()
-    if proc.returncode != 0 or not out.strip():
-        return ""
+    if proc.returncode == 0 and out.strip():
+        try:
+            raw = base64.b64decode(out.strip().replace(b"\n", b"")).decode(
+                "utf-8", errors="replace"
+            )
+        except (ValueError, UnicodeDecodeError):
+            return ""
+        return _extract_summary(raw)
+    # gh has no auth on the service account - REST fallback (token or unauth).
     try:
-        raw = base64.b64decode(out.strip().replace(b"\n", b"")).decode("utf-8", errors="replace")
-    except (ValueError, UnicodeDecodeError):
+        async with httpx.AsyncClient(timeout=10.0, headers=_github_headers()) as client:
+            resp = await client.get(f"https://api.github.com/repos/{_GH_USER}/{name}/readme")
+            if resp.status_code != 200:
+                return ""
+            payload = resp.json()
+            content = payload.get("content", "") if isinstance(payload, dict) else ""
+            if not content:
+                return ""
+            raw = base64.b64decode(content.replace("\n", "")).decode("utf-8", errors="replace")
+    except (httpx.HTTPError, ValueError, UnicodeDecodeError):
         return ""
     return _extract_summary(raw)
 
