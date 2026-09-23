@@ -35,10 +35,10 @@ class Settings(BaseSettings):
     # Agent step (SFB brain tier): cline-mcp REST endpoint + local model
     cline_mcp_url: str = "http://127.0.0.1:11103"
     cline_mcp_provider: str = "ollama"
-    cline_mcp_model: str = "muse-glimmer"
+    cline_mcp_model: str = "MobiusDevelopment/Bonsai-27B-Q1_0-gguf"
     cline_mcp_timeout_s: float = 300.0
     llm_fallback_providers: list[dict[str, str]] = [
-        {"provider": "ollama", "model": "muse-glimmer"},
+        {"provider": "ollama", "model": "MobiusDevelopment/Bonsai-27B-Q1_0-gguf"},
         {"provider": "ollama", "model": "llama3"},
     ]
 
