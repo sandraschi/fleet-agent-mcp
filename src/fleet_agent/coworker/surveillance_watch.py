@@ -1,5 +1,6 @@
 """Fleet health surveillance - checks NSSM services for errors, escalates."""
 
+import json
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -38,26 +39,34 @@ async def check_server_health(name: str, base_url: str) -> dict[str, Any]:
         result["error"] = str(e)
         return result
 
-    # Log check - try query_logs MCP tool via fleet bridge
+    # Log check - query_logs MCP tool via fastmcp.Client, which performs the
+    # initialize handshake and Mcp-Session-Id tracking live FastMCP 3.x
+    # servers require (a hand-rolled tools/call POST gets rejected 307/404/405)
     try:
-        async with httpx.AsyncClient(timeout=10) as client:
-            r = await client.post(
-                f"{base_url}/mcp/",
-                json={
-                    "jsonrpc": "2.0",
-                    "method": "tools/call",
-                    "params": {"name": "query_logs", "arguments": {"level": "error", "limit": 5}},
-                    "id": 1,
-                },
+        from fastmcp import Client
+        from fastmcp.client.transports import StreamableHttpTransport
+
+        async with Client(StreamableHttpTransport(f"{base_url}/mcp")) as client:
+            call_result = await client.call_tool(
+                "query_logs", {"level": "error", "limit": 5}
             )
-            if r.status_code == 200:
-                data = r.json()
-                logs = data.get("result", {}).get("logs", [])
-                result["errors"] = [
-                    {"ts": e.get("timestamp", "?"), "msg": e.get("message", "")[:120]}
-                    for e in logs[:5]
-                ]
-                result["log_errors"] = len(logs)
+            logs: list[dict[str, Any]] = []
+            for block in call_result.content:
+                text = getattr(block, "text", None)
+                if not text:
+                    continue
+                try:
+                    parsed = json.loads(text)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(parsed, dict) and isinstance(parsed.get("logs"), list):
+                    logs = parsed["logs"]
+                    break
+            result["errors"] = [
+                {"ts": e.get("timestamp", "?"), "msg": e.get("message", "")[:120]}
+                for e in logs[:5]
+            ]
+            result["log_errors"] = len(logs)
     except Exception:
         result["log_check"] = "unavailable"
 

@@ -36,20 +36,24 @@ def _git(repo_path: str, *args: str) -> str:
 
 
 async def _call_git_server(tool: str, args: dict[str, Any]) -> dict[str, Any]:
-    """Call a tool on git-github-mcp via HTTP."""
-    import httpx
+    """Call a tool on git-github-mcp via the MCP client.
 
-    payload = {
-        "jsonrpc": "2.0",
-        "method": "tools/call",
-        "params": {"name": tool, "arguments": args},
-        "id": 1,
-    }
+    Uses fastmcp.Client, which performs the initialize handshake and
+    Mcp-Session-Id tracking that live FastMCP 3.x servers require -
+    a hand-rolled tools/call POST gets rejected (307/404/405).
+    """
+    from fastmcp import Client
+    from fastmcp.client.transports import StreamableHttpTransport
+
     try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(GIT_GITHUB_URL, json=payload)
-            resp.raise_for_status()
-            return resp.json()
+        async with Client(StreamableHttpTransport(GIT_GITHUB_URL)) as client:
+            result = await client.call_tool(tool, args)
+            if result.is_error:
+                content = "; ".join(
+                    getattr(block, "text", "") for block in result.content
+                ).strip()
+                return {"error": content or "git-github-mcp tool call returned an error"}
+            return {"result": result}
     except Exception as e:
         logger.warning("git-github-mcp call failed (%s), falling back to local git: %s", tool, e)
         return {"error": str(e)}
