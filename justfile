@@ -10,7 +10,7 @@ default:
 
 # Start the agent server + webapp
 start:
-    pwsh -ExecutionPolicy Bypass -File "{{justfile_directory()}}\start.ps1"
+    powershell.exe -ExecutionPolicy Bypass -File "{{justfile_directory()}}\start.ps1"
 
 # Start backend only (no webapp)
 start-backend:
@@ -48,7 +48,7 @@ lint:
 
 # --- Intel Reports Hub  iPad  Tailscale port 11027 ---
 intel-hub:
-    pwsh -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\start-intel-hub.ps1"
+    powershell.exe -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\start-intel-hub.ps1"
 
 # Start with stdio transport (for Cursor/Claude Desktop)
 start-stdio:
