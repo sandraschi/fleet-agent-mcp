@@ -13,6 +13,41 @@ from .day_prep import DAY_PREP_PROJECT
 MORNING_BRIEF_WORKFLOW = "morning_brief"
 
 
+async def _launch_contract_summary() -> str:
+    """Run the fleet launch-contract checker, return a markdown section.
+
+    Never raises: on any error returns a section saying the check was
+    skipped, so a broken checker can never break the morning brief.
+    """
+    import asyncio
+    import os
+    from pathlib import Path
+
+    try:
+        repos_root = os.environ.get("FLEET_REPOS_ROOT") or str(Path(settings.project_root).parent)
+        script = Path(repos_root) / "mcp-central-docs" / "scripts" / "Test-FleetLaunchContract.ps1"
+        if not script.is_file():
+            return "## Launch contract\n\ncheck skipped: script not found.\n"
+        proc = await asyncio.create_subprocess_exec(
+            "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+            "-File", str(script),
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT,
+        )
+        try:
+            out, _ = await asyncio.wait_for(proc.communicate(), timeout=180)
+        except asyncio.TimeoutError:
+            proc.kill()
+            return "## Launch contract\n\ncheck timed out after 180s.\n"
+        text = out.decode("utf-8", errors="replace").strip()
+        fails = [ln for ln in text.splitlines() if ln.startswith("[FAIL]")]
+        if proc.returncode == 0 and not fails:
+            return "## Launch contract\n\nall module-serve backends satisfy the launch contract.\n"
+        body = "\n".join(fails) if fails else text[-2000:]
+        return f"## Launch contract\n\n{len(fails)} FAIL(s) - fix before launchers rot:\n\n```\n{body}\n```\n"
+    except Exception as exc:  # noqa: BLE001 - brief must survive
+        return f"## Launch contract\n\ncheck skipped: {exc}.\n"
+
+
 def _ensure_morning_brief_registered() -> None:
     sm = get_state_machine()
     if sm.get_workflow(MORNING_BRIEF_WORKFLOW):
@@ -52,6 +87,7 @@ async def run_morning_brief(*, deliver: bool = True) -> dict[str, Any]:
     )
 
     pulse_date = now_label()
+    launch_contract = await _launch_contract_summary()
     lines = [
         f"# Morning Brief - {pulse_date}",
         "",
@@ -62,6 +98,7 @@ async def run_morning_brief(*, deliver: bool = True) -> dict[str, Any]:
         "",
         task,
         "",
+        launch_contract,
         "## ViLife snapshot (vienna-life-assistant)",
         "",
         str(vilife.get("data", vilife)),
@@ -80,6 +117,7 @@ async def run_morning_brief(*, deliver: bool = True) -> dict[str, Any]:
         "current_node": instance.current_node,
         "task": task,
         "vilife_brief": vilife,
+        "launch_contract": launch_contract,
         "artifact_path": str(artifact) if artifact else None,
         "report": report,
     }

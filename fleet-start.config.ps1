@@ -8,7 +8,8 @@
     WebRoot      = 'webapp'
     Backend = @{
         Kind       = 'module-serve'
-        Module     = 'fleet_agent_mcp'
+        Module     = 'fleet_agent'
+        ServeArgs  = @('--http', '--port', '10996')
         SyncExtras = @('dev')
     }
     Frontend = @{
