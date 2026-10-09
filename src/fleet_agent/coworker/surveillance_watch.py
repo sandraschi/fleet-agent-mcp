@@ -47,9 +47,7 @@ async def check_server_health(name: str, base_url: str) -> dict[str, Any]:
         from fastmcp.client.transports import StreamableHttpTransport
 
         async with Client(StreamableHttpTransport(f"{base_url}/mcp")) as client:
-            call_result = await client.call_tool(
-                "query_logs", {"level": "error", "limit": 5}
-            )
+            call_result = await client.call_tool("query_logs", {"level": "error", "limit": 5})
             logs: list[dict[str, Any]] = []
             for block in call_result.content:
                 text = getattr(block, "text", None)
@@ -63,8 +61,7 @@ async def check_server_health(name: str, base_url: str) -> dict[str, Any]:
                     logs = parsed["logs"]
                     break
             result["errors"] = [
-                {"ts": e.get("timestamp", "?"), "msg": e.get("message", "")[:120]}
-                for e in logs[:5]
+                {"ts": e.get("timestamp", "?"), "msg": e.get("message", "")[:120]} for e in logs[:5]
             ]
             result["log_errors"] = len(logs)
     except Exception:

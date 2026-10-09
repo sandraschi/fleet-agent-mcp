@@ -5,6 +5,7 @@ convention for cross-repo scripts - never import across repo boundaries).
 Best-effort: a session-log write must never block or break a workflow tick.
 See mcp-central-docs/operations/session-log/README.md for the convention.
 """
+
 import logging
 import subprocess
 from pathlib import Path
@@ -28,12 +29,20 @@ def log_workflow_completed(workflow_name: str, current_node: str) -> None:
     try:
         subprocess.run(
             [
-                _UV, "run", "python", str(_APPENDER),
-                "--agent", "Fritz",
-                "--category", "heartbeat",
-                "--title", title,
-                "--body", body,
-                "--sink", "main",
+                _UV,
+                "run",
+                "python",
+                str(_APPENDER),
+                "--agent",
+                "Fritz",
+                "--category",
+                "heartbeat",
+                "--title",
+                title,
+                "--body",
+                body,
+                "--sink",
+                "main",
             ],
             cwd=str(_APPENDER.parent.parent),
             capture_output=True,

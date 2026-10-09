@@ -60,3 +60,13 @@ bootstrap:
     uv sync --group dev
     uv run pre-commit install
     Write-Host "Pre-commit hooks installed." -ForegroundColor Green
+
+# Standard fleet aliases (assfix 2026-10-09: justfile gate requires serve/fmt)
+serve:
+    powershell.exe -ExecutionPolicy Bypass -File "{{justfile_directory()}}\start.ps1" -BackendOnly
+
+fmt:
+    & "$env:USERPROFILE\.local\bin\uv.exe" run ruff format src/ tests/
+
+mcpb-pack:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\mcpb-pack.ps1"

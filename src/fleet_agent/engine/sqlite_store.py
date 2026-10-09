@@ -630,9 +630,7 @@ class SqliteStore:
             )
         return item
 
-    def analysis_log_list(
-        self, repo: str | None = None, limit: int = 100
-    ) -> list[dict[str, Any]]:
+    def analysis_log_list(self, repo: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
         with self._connect() as conn:
             if repo:
                 rows = conn.execute(

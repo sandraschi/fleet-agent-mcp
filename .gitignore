@@ -7,9 +7,13 @@ build/
 .ruff_cache/
 .pytest_cache/
 *.bak
+*.bak.*
 *.spec
 *.tsbuildinfo
+*.mcpb
 .env
+reports/
+!docs/assess-reports/
 webapp/node_modules/
 webapp/dist/
 

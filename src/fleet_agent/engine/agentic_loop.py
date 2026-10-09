@@ -385,9 +385,7 @@ async def _handle_task_tick() -> None:
                     from ..memory.evolution import get_evolution_log
 
                     get_evolution_log().record(
-                        correction=(
-                            f"Task gave up after 3 failed attempts: {task['task'][:150]}"
-                        ),
+                        correction=(f"Task gave up after 3 failed attempts: {task['task'][:150]}"),
                         lesson=(
                             f"{result.get('message', 'unknown error')[:200]} - "
                             "investigate the dispatch/routing path for this task type"
