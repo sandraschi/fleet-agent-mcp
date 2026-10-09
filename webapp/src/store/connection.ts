@@ -1,7 +1,10 @@
 import { create } from "zustand";
 
 const BACKOFF = [1, 2, 4, 8, 16, 30];
-const BACKEND = "http://127.0.0.1:10996";
+const isTauri =
+	typeof window !== "undefined" &&
+	("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+const BACKEND = isTauri ? "http://127.0.0.1:10996" : "";
 
 interface ConnectionState {
 	state: "connecting" | "connected" | "offline";
@@ -20,7 +23,9 @@ export const useConnection = create<ConnectionState>((set, _get) => ({
 		const tick = async () => {
 			if (stopped) return;
 			try {
-				const r = await fetch(`${BACKEND}/api/health`, { signal: AbortSignal.timeout(5000) });
+				const r = await fetch(`${BACKEND}/api/health`, {
+					signal: AbortSignal.timeout(5000),
+				});
 				if (r.ok) {
 					set({ state: "connected", lastError: null });
 					attempt = 0;
@@ -42,13 +47,16 @@ export const useConnection = create<ConnectionState>((set, _get) => ({
 				const { listen } = await import("@tauri-apps/api/event");
 				await listen<string>("backend-status", (event) => {
 					if (event.payload === "ready") set({ state: "connected" });
-					else if (event.payload?.startsWith("error:")) set({ state: "offline", lastError: event.payload });
+					else if (event.payload?.startsWith("error:"))
+						set({ state: "offline", lastError: event.payload });
 				});
 			} catch {
 				/* not in Tauri */
 			}
 		})();
 
-		return () => { stopped = true; };
+		return () => {
+			stopped = true;
+		};
 	},
 }));

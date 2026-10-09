@@ -143,6 +143,7 @@ class TestNodeTypes:
 class TestAntiSpinGuard:
     def test_failure_record_and_blocking(self):
         import pytest
+
         sm = _reset_sm()
         data = {
             "name": "spin-test",
@@ -179,4 +180,3 @@ class TestAntiSpinGuard:
         # Now next() succeeds
         inst = sm.next()
         assert inst.current_node == "step2"
-

@@ -1,6 +1,31 @@
 
 # Changelog
 
+## [Unreleased] - assfix 2026-10-09
+
+### Security
+- CORS `allow_origins=["*"]` replaced with explicit origins + origin regex
+  (localhost, 127.0.0.1, goliath, Tailscale) in both `server.py` and the
+  Intel Reports Hub server.
+
+### Fixed
+- `fritz_voice_agent` imported non-existent `run_agent_step`; rewired to the
+  real `tick_agent_step` engine with phase-aware replies (HIGH, runtime bug).
+- Pyright clean (0 errors): dev sorted-key, flowforge None-guard, coworker
+  dynamic-Literal exemption documented at both sites.
+- Ruff check + format clean; `T20` (print ban) enabled with CLI/test ignores.
+- Webapp `api.ts`/`connection.ts`: same-origin relative API base, absolute
+  `127.0.0.1:10996` only behind a Tauri gate.
+- MCPB manifest: `${PWD}` -> `${__dirname}` (NONSPEC); added fleet pack shim
+  `scripts/mcpb-pack.ps1`; `.mcpbignore` now excludes webapp/data/target/bak.
+- New `GET /api/capabilities` (fleet standard shape) and `fritz_shutdown`
+  MCP tool (graceful self-termination).
+- glama.json synced to 0.2.3 / 104 tools; justfile gains serve/fmt/mcpb-pack;
+  new Windows CI (ruff, format-check, pyright, pytest, biome:ci, typecheck);
+  session-injection files (.cursorrules, .windsurfrules, copilot-instructions,
+  Claude plugin hook, opencode skill); .pre-commit-config + biome hook;
+  .gitattributes (LF); webapp bun.lock + biome.json + biome:ci/typecheck scripts.
+
 ## [0.2.5] - 2026-09-08
 
 ### Added - Real cline-mcp session integration for flowforge "agent" nodes

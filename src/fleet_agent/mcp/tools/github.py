@@ -49,9 +49,7 @@ async def _call_git_server(tool: str, args: dict[str, Any]) -> dict[str, Any]:
         async with Client(StreamableHttpTransport(GIT_GITHUB_URL)) as client:
             result = await client.call_tool(tool, args)
             if result.is_error:
-                content = "; ".join(
-                    getattr(block, "text", "") for block in result.content
-                ).strip()
+                content = "; ".join(getattr(block, "text", "") for block in result.content).strip()
                 return {"error": content or "git-github-mcp tool call returned an error"}
             return {"result": result}
     except Exception as e:

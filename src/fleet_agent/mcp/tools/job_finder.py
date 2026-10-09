@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
@@ -104,16 +103,17 @@ Output ONLY valid JSON, no markdown:
 {"tractability": "easy"|"medium"|"hard", "confidence": 0.0-1.0, "reasoning": "1-2 sentences", "likely_duplicate_effort": true|false, "recommendation": "attempt"|"skip", "why_skip": "string or null"}"""
 
 
-async def analyze_issue_llm(
-    issue: dict[str, Any], age_signal: dict[str, Any]
-) -> dict[str, Any]:
+async def analyze_issue_llm(issue: dict[str, Any], age_signal: dict[str, Any]) -> dict[str, Any]:
     """LLM-based issue analysis - local model only (chat_completion never
     calls a cloud provider). Replaces gogetajob's label-only classifyIssue().
     """
-    comments_text = "\n".join(
-        f"- {c.get('author', {}).get('login', '?')}: {c.get('body', '')[:300]}"
-        for c in issue.get("comments", [])[:5]
-    ) or "(no comments)"
+    comments_text = (
+        "\n".join(
+            f"- {c.get('author', {}).get('login', '?')}: {c.get('body', '')[:300]}"
+            for c in issue.get("comments", [])[:5]
+        )
+        or "(no comments)"
+    )
 
     user_prompt = (
         f"Title: {issue.get('title', '')}\n"
@@ -333,7 +333,7 @@ def _looks_like_duplicate(owner: str, repo: str, query_terms: str) -> bool:
             f"{owner}/{repo}",
             "--json",
             "title",
-            f"-L5",
+            "-L5",
             "--",
             query_terms,
         ],
@@ -691,7 +691,9 @@ async def fritz_act_on_finding(
         issue_url=issue_url if issue_filed else "",
         recommendation=action,
         action_taken="filed_issue" if issue_filed else "failed",
-        reasoning=summary[:300] if issue_filed else f"{summary[:250]} | gh issue create failed: {issue_url}",
+        reasoning=summary[:300]
+        if issue_filed
+        else f"{summary[:250]} | gh issue create failed: {issue_url}",
     )
 
     if not issue_filed:

@@ -358,7 +358,7 @@ async def import_external_skill(
     if not os.path.exists(path):
         return {"success": False, "message": f"Skill file not found at '{file_path}'."}
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         raw_content = f.read()
 
     meta, body = _parse_skill_md(raw_content)

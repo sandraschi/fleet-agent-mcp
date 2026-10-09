@@ -376,7 +376,13 @@ async def fritz_contribute(
     else:
         _sh(["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
         _sh(
-            ["git", "remote", "add", "fork", f"https://github.com/{_own_gh_user()}/{repo_name}.git"],
+            [
+                "git",
+                "remote",
+                "add",
+                "fork",
+                f"https://github.com/{_own_gh_user()}/{repo_name}.git",
+            ],
             cwd=str(work_dir),
         )
         _sh(["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30)
