@@ -1,0 +1,5 @@
+{
+  "name": "fleet-agent-mcp",
+  "description": "Fritz conductor agent tools",
+  "hooks": "../hooks/hooks.json"
+}

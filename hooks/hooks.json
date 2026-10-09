@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "text",
+        "text": "## fleet-agent-mcp (Fritz). Agent/orchestration tasks: heartbeat_status(), coworker_execute(flow=...), fleet_discover() first. End of work: evolution_record() + clean tree."
+      }
+    ]
+  }
+}

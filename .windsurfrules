@@ -1,0 +1,7 @@
+# fleet-agent-mcp (Fritz) — session context
+
+## Session Context (fleet-agent-mcp)
+Before starting work: for agent/orchestration tasks prefer Fritz tools —
+`heartbeat_status()`, `coworker_execute(flow=...)`, `fleet_discover()`.
+At end of work: log lessons via `evolution_record()`; never leave the tree dirty.
+Tool names: heartbeat_*, workflow_*, pulse_*, memory_*, coworker_*, fritz_shutdown.

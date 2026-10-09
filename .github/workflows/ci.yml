@@ -1,0 +1,31 @@
+name: ci
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+jobs:
+  gates:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - name: Sync deps
+        run: uv sync --group dev
+      - name: Ruff check
+        run: uv run ruff check src/ tests/
+      - name: Ruff format check
+        run: uv run ruff format src/ tests/ --check
+      - name: Pyright
+        run: uv run pyright src/
+      - name: Pytest
+        run: uv run pytest tests/ -q
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Webapp gates
+        working-directory: webapp
+        run: |
+          bun install --frozen-lockfile
+          bun run biome:ci
+          bun run typecheck

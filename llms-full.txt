@@ -71,10 +71,11 @@ Cross-server MCP client. 19 registered servers: opencode, fleet-agent, git-githu
 - evolution_list — List entries
 - evolution_stats — Summary stats
 
-### heartbeat (3 tools)
+### heartbeat (4 tools)
 - heartbeat_status — Health check (uptime, tasks, cards, workflows)
 - pipeline_liveness_check — Probe arxiv+aiwatcher pipeline
 - heartbeat_wake — Core wake-up routine
+- fritz_shutdown — Graceful self-termination (use instead of killing the process)
 
 ### fleet_bridge (4 tools)
 - fleet_discover — List reachable servers
@@ -171,6 +172,7 @@ Pages: Dashboard, Chat, Tools, Tasks, Memory, Evolution, Status, Settings, Logge
 
 ## REST API
 - GET /api/health — Fleet-standard health check
+- GET /api/capabilities — Fleet-standard capability shape (transports, features, tool count)
 - GET /api/v1/diagnostics — Full diagnostics (tool list, system info)
 - GET /api/status — Agent health
 - GET /api/tools — Tool listing
@@ -187,6 +189,7 @@ Pages: Dashboard, Chat, Tools, Tasks, Memory, Evolution, Status, Settings, Logge
 - POST /api/scripts/generate — AI-generate script from prompt
 - GET/PUT/DELETE /api/scripts/{id} — Script get/update/delete
 - POST /api/scripts/{id}/run — Execute script, return result
+- POST /api/shutdown — Graceful shutdown (responds 200, exits ~500 ms later)
 - POST /api/fleet/list-tools — List tools on a fleet server
 - GET /api/memory — Memory cards
 - GET /api/evolution — Evolution log

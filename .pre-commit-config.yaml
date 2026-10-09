@@ -1,0 +1,21 @@
+# Fleet pre-commit template (minimal): ruff + biome local hook + hygiene.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: biome-check
+        name: biome check (webapp)
+        entry: powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/pre-commit-biome.ps1
+        language: system
+        pass_filenames: false
+        always_run: true
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace

@@ -11,7 +11,7 @@
 
 > 📖 **[Installation Guide](INSTALL.md)** — quick start, manual setup, and troubleshooting
 
-Self-evolving AI agent for the fleet ecosystem. **71 FastMCP 3.2 tools across 18 subsystems** (v0.2.2 — Hermes Agent borrowings + anti-spin failure limit).
+Self-evolving AI agent for the fleet ecosystem. **104 FastMCP tools across 25 modules** (v0.2.3 — assfix 2026-10-09: CORS lockdown, capabilities endpoint, fritz_shutdown, voice engine rewire).
 
 **Name**: Fritz (short for Friedrich). When he fouls up: *"Friedrich! Was ist dir!"*
 
@@ -209,7 +209,7 @@ Structured learning: research a topic, synthesize into knowledge cards, document
 | Fleet bridge | — | **19 servers: opencode, git-github, docs, email, libreoffice, libreoffice-ext, notion, onenote, +11 more** |
 | Coworker | — | **11 tools** — pulse, inbox, day prep, docs drift, weekly PDF, board/artifact pack, devices watch, cursor spend |
 | Intel Hub | — | **3 tools** — `intel_reports_publish`, `intel_reports_list`, `aiwatcher_push_event` |
-| Total tools | — | **69 across 15 subsystems** |
+| Total tools | — | **104 across 25 modules** |
 
 ### Path to Kagura Parity
 
