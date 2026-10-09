@@ -18,6 +18,7 @@ Inspired by kagura-agent (github.com/kagura-agent). Named after Sandra's childho
 import argparse
 import asyncio
 import json
+import logging
 import os
 import time as _time
 
@@ -29,6 +30,8 @@ from starlette.responses import JSONResponse, StreamingResponse
 from starlette.routing import Mount, Route
 
 from .config import settings
+
+logger = logging.getLogger(__name__)
 
 _START_MONO: float = 0.0
 
@@ -460,7 +463,7 @@ async def api_health(request: Request) -> JSONResponse:
             task_pending = t
             _conn.close()
     except Exception as exc:
-        print(f"[health] db error: {exc}")
+        logger.warning("[health] db error: %s", exc)
 
     return JSONResponse(
         {
@@ -496,6 +499,46 @@ async def api_shutdown(request: Request) -> JSONResponse:
 
     asyncio.ensure_future(_die())
     return JSONResponse({"success": True, "message": "Shutting down"})
+
+
+async def api_capabilities(request: Request) -> JSONResponse:
+    """GET /api/capabilities - standard fleet capability shape for webapps."""
+    from .mcp.registry import mcp as _mcp
+
+    try:
+        names = sorted(
+            v.name for v in _mcp.local_provider._components.values() if hasattr(v, "name")
+        )
+    except Exception:
+        names = []
+    return JSONResponse(
+        {
+            "success": True,
+            "message": "fleet-agent-mcp capabilities",
+            "data": {
+                "server": "fleet-agent-mcp",
+                "version": "0.2.3",
+                "transports": ["stdio", "http"],
+                "mcp_endpoint": "/mcp",
+                "rest": [
+                    "/api/health",
+                    "/api/status",
+                    "/api/whoami",
+                    "/api/tools",
+                    "/api/capabilities",
+                    "/api/chat",
+                    "/api/voice/intent",
+                    "/api/v1/diagnostics",
+                ],
+                "features": {
+                    "voice_command_bus": True,
+                    "intel_reports_hub": True,
+                    "shutdown": True,
+                },
+                "tool_count": len(names),
+            },
+        }
+    )
 
 
 async def api_diagnostics(request: Request) -> JSONResponse:
@@ -582,7 +625,19 @@ def build_app() -> Starlette:
         logs.add("info", seeded["message"], "system")
 
     mcp_asgi = mcp.http_app(path="/", transport="http", stateless_http=True)
-    cors = Middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+    cors = Middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://127.0.0.1:10997",
+            "http://localhost:10997",
+            "tauri://localhost",
+            "http://tauri.localhost",
+            "https://tauri.localhost",
+        ],
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|goliath|[a-z0-9-]+\.tail[a-z0-9-]*\.ts\.net)(:\d+)?",
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
+    )
     return Starlette(
         routes=[
             Mount("/mcp", app=mcp_asgi),
@@ -620,6 +675,7 @@ def build_app() -> Starlette:
             Route("/api/repo-analysis/discover", endpoint=api_repo_discover, methods=["POST"]),
             Route("/api/analysis-log", endpoint=api_analysis_log),
             Route("/api/health", endpoint=api_health),
+            Route("/api/capabilities", endpoint=api_capabilities),
             Route("/api/v1/diagnostics", endpoint=api_diagnostics),
             Route("/api/shutdown", endpoint=api_shutdown, methods=["POST"]),
         ],

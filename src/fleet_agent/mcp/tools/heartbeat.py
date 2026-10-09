@@ -4,6 +4,7 @@ Inspired by kagura-agent's cron-based heartbeat: every N minutes, the agent
 wakes, checks its state machine, executes the current task, and advances.
 """
 
+import os
 import time
 from typing import Annotated, Any
 
@@ -154,8 +155,14 @@ async def heartbeat_wake(
                 "blocked": True,
                 "blocked_reason": instance.blocked_reason,
                 "failure_count": instance.failure_count,
-                "action": f"Workflow instance is BLOCKED at node '{instance.current_node}'. Resolve issue and call workflow_unblock().",
-                "message": f"Active workflow '{instance.workflow_name}' is BLOCKED at '{instance.current_node}': {instance.blocked_reason}",
+                "action": (
+                    f"Workflow instance is BLOCKED at node '{instance.current_node}'. "
+                    "Resolve issue and call workflow_unblock()."
+                ),
+                "message": (
+                    f"Active workflow '{instance.workflow_name}' is BLOCKED at "
+                    f"'{instance.current_node}': {instance.blocked_reason}"
+                ),
             }
         task = sm.get_current_task()
         branches = sm.get_current_branches()
@@ -238,3 +245,25 @@ async def heartbeat_wake(
         ],
         "message": "No active workflow or pending tasks. Agent is idle.",
     }
+
+
+@mcp.tool(annotations={"readOnly": False}, version="0.1.0")
+async def fritz_shutdown(
+    ctx: Context | None = None,
+) -> dict[str, Any]:
+    """Graceful self-termination - checkpoint state and exit the server process.
+
+    ## Return Format
+    {"success": bool, "message": str}
+
+    ## Examples
+    fritz_shutdown()
+    """
+    import asyncio
+
+    async def _die() -> None:
+        await asyncio.sleep(0.5)
+        os._exit(0)
+
+    asyncio.ensure_future(_die())
+    return {"success": True, "message": "fleet-agent-mcp shutting down in ~500 ms"}

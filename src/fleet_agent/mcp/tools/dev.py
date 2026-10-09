@@ -114,7 +114,8 @@ def _match_start(repo: str, entries: list[dict[str, Any]]) -> dict[str, Any] | N
     if len(contains) > 1:
         return None
     starts = sorted(
-        e for e in entries if _shortname(str(e.get("file_name", ""))).startswith(target[:4])
+        (e for e in entries if _shortname(str(e.get("file_name", ""))).startswith(target[:4])),
+        key=lambda e: str(e.get("file_name", "")),
     )
     return starts[0] if len(starts) == 1 else None
 

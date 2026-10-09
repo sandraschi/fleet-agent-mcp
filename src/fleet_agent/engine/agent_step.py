@@ -105,7 +105,9 @@ async def stop_agent_session(session_id: str) -> dict[str, Any]:
     return await _cline_request("DELETE", f"/api/v1/agents/sessions/{session_id}")
 
 
-def _build_prompt(workflow_name: str, node_name: str, task: str, prior_outputs: dict[str, Any]) -> str:
+def _build_prompt(
+    workflow_name: str, node_name: str, task: str, prior_outputs: dict[str, Any]
+) -> str:
     context_parts = [f"Workflow: {workflow_name}", f"Current step: {node_name}"]
     for key, value in prior_outputs.items():
         if key == node_name:
@@ -138,9 +140,15 @@ async def tick_agent_step(
 
     if not session_id:
         prompt = _build_prompt(workflow_name, node_name, task, prior_outputs)
-        result = await start_agent_session(prompt, settings.cline_mcp_provider, settings.cline_mcp_model)
+        result = await start_agent_session(
+            prompt, settings.cline_mcp_provider, settings.cline_mcp_model
+        )
         if result.get("error") or not result.get("session_id"):
-            return {"phase": "failed", "session_id": None, "error": result.get("error", "no session_id returned")}
+            return {
+                "phase": "failed",
+                "session_id": None,
+                "error": result.get("error", "no session_id returned"),
+            }
         return {
             "phase": "started",
             "session_id": result["session_id"],

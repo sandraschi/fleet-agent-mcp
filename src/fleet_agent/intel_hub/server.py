@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import hmac
+import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -16,6 +17,8 @@ from starlette.routing import Route
 
 from .render import render_index_page, wrap_markdown_report
 from .store import get_report_html, hub_meta, list_reports, publish_report
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PORT = 11027
 DEFAULT_HOST = "0.0.0.0"
@@ -320,8 +323,12 @@ def build_app() -> Starlette:
     app.add_middleware(_BasicAuthMiddleware, credentials=hub_auth_credentials())
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
-        allow_methods=["*"],
+        allow_origins=[
+            "http://127.0.0.1:10997",
+            "http://localhost:10997",
+        ],
+        allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|goliath|[a-z0-9-]+\.tail[a-z0-9-]*\.ts\.net)(:\d+)?",
+        allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
     )
     return app
@@ -336,14 +343,14 @@ def main() -> None:
     root_path = hub_root_path()
     credentials = hub_auth_credentials()
     if credentials:
-        print(f"Intel Reports Hub on http://{host}:{port} (HTTP Basic auth: user={credentials[0]})")
+        logger.info("Intel Reports Hub on http://%s:%s (auth user=%s)", host, port, credentials[0])
     else:
-        print(
-            "WARNING: Intel Reports Hub serving WITHOUT authentication - set "
+        logger.warning(
+            "Intel Reports Hub serving WITHOUT authentication - set "
             "INTEL_REPORTS_HUB_USER/INTEL_REPORTS_HUB_PASS to enable HTTP Basic auth"
         )
     if root_path:
-        print(f"root_path: {root_path} (paths stripped before routing - tailscale funnel subpath)")
+        logger.info("root_path: %s (tailscale funnel subpath)", root_path)
     uvicorn.run(app, host=host, port=port, root_path=root_path, log_level="info")
 
 

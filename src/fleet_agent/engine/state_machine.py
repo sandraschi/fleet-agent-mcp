@@ -160,8 +160,8 @@ class StateMachine:
 
         if instance.blocked:
             raise ValueError(
-                f"Workflow instance '{instance.workflow_name}' is BLOCKED: {instance.blocked_reason}. "
-                "Call workflow_unblock to resolve."
+                f"Workflow instance '{instance.workflow_name}' is BLOCKED: "
+                f"{instance.blocked_reason}. Call workflow_unblock to resolve."
             )
 
         wf = self._store.get_workflow(instance.workflow_name)

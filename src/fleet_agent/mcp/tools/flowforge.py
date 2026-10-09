@@ -245,7 +245,7 @@ async def workflow_status(
         "message": (
             f"At node '{instance.current_node}' ({node_type or 'build'})"
             f" in workflow '{instance.workflow_name}'."
-            f"{' [BLOCKED: ' + instance.blocked_reason + ']' if instance.blocked else ''}"
+            f"{' [BLOCKED: ' + (instance.blocked_reason or '') + ']' if instance.blocked else ''}"
             f"{' Last gate: ' + last_verdict if last_verdict else ''}"
         ),
     }

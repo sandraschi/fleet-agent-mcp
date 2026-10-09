@@ -52,18 +52,29 @@ async def fritz_voice_agent(
     ## Examples
     fritz_voice_agent(prompt="give me the morning briefing")
     """
-    from ...engine.agent_step import run_agent_step
+    from ...engine.agent_step import tick_agent_step
 
-    result = await run_agent_step(
+    result = await tick_agent_step(
         workflow_name="voice",
         node_name="voice_agent",
         task=prompt,
         prior_outputs={},
     )
-    if not result.get("success"):
+    if result.get("phase") == "failed":
         return {"success": False, "error": result.get("error", "agent run failed")}
+    if result.get("phase") != "completed":
+        return {
+            "success": True,
+            "output": (
+                f"Agent session {result.get('phase')} "
+                f"(session {result.get('session_id')}) - poll again for the reply."
+            ),
+            "spoken": False,
+            "phase": result.get("phase"),
+            "session_id": result.get("session_id"),
+        }
 
-    output = str(result.get("output", ""))[:2000]
+    output = str(result.get("output_text", ""))[:2000]
     spoken = False
     if speak and output.strip():
         try:

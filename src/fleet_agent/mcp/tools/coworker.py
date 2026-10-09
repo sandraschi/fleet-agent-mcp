@@ -23,12 +23,14 @@ from ..registry import mcp
 # surveillance_watch, check_email were all missing here) since nothing forced
 # the two to stay aligned. Deriving from _COWORKER_RUNNERS.keys() means adding
 # a flow to coworker/tasks.py is enough - no second place to remember.
-_FlowName = Literal[tuple(_COWORKER_RUNNERS.keys())]  # type: ignore[valid-type]
+# Dynamic Literal args are beyond pyright's static model; exempt by design
+# (runtime is correct: FastMCP validates the Literal values at call time).
+_FlowName = Literal[tuple(_COWORKER_RUNNERS.keys())]  # type: ignore[valid-type] # pyright: ignore[reportInvalidTypeForm]
 
 
 @mcp.tool(annotations={"readonly": False}, version="0.2.0")
 async def coworker_execute(
-    flow: Annotated[_FlowName, Field(description="Scheduled coworker flow to run.")],
+    flow: Annotated[_FlowName, Field(description="Scheduled coworker flow to run.")],  # pyright: ignore[reportInvalidTypeForm]
     deliver: Annotated[
         bool,
         Field(description="Send report via email when SMTP configured."),

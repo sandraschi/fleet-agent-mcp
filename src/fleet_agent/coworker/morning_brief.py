@@ -29,13 +29,18 @@ async def _launch_contract_summary() -> str:
         if not script.is_file():
             return "## Launch contract\n\ncheck skipped: script not found.\n"
         proc = await asyncio.create_subprocess_exec(
-            "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-            "-File", str(script),
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT,
+            "powershell.exe",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(script),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
         try:
             out, _ = await asyncio.wait_for(proc.communicate(), timeout=180)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return "## Launch contract\n\ncheck timed out after 180s.\n"
         text = out.decode("utf-8", errors="replace").strip()
@@ -43,7 +48,8 @@ async def _launch_contract_summary() -> str:
         if proc.returncode == 0 and not fails:
             return "## Launch contract\n\nall module-serve backends satisfy the launch contract.\n"
         body = "\n".join(fails) if fails else text[-2000:]
-        return f"## Launch contract\n\n{len(fails)} FAIL(s) - fix before launchers rot:\n\n```\n{body}\n```\n"
+        header = f"## Launch contract\n\n{len(fails)} FAIL(s) - fix before launchers rot:\n\n```\n"
+        return header + body + "\n```\n"
     except Exception as exc:  # noqa: BLE001 - brief must survive
         return f"## Launch contract\n\ncheck skipped: {exc}.\n"
 
