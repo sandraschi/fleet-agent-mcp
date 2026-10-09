@@ -191,7 +191,14 @@ def _fmt_time(iso: str) -> str:
         return iso[:16]
 
 
-def render_index_page(reports: list[dict[str, Any]], *, hub_name: str = "Fleet Intel") -> str:
+def render_index_page(
+    reports: list[dict[str, Any]], *, hub_name: str = "Fleet Intel", base: str = ""
+) -> str:
+    # base = funnel subpath prefix (e.g. "/intel"). Absolute base-prefixed
+    # links work whether the index URL has a trailing slash or not - a bare
+    # relative "reports/..." resolves to /reports/... when the page is at
+    # /intel (no slash), which is outside the funnel mapping (white page).
+    prefix = base.rstrip("/")
     cards: list[str] = []
     for r in reports:
         rid = html.escape(str(r.get("id", "")))
@@ -200,7 +207,7 @@ def render_index_page(reports: list[dict[str, Any]], *, hub_name: str = "Fleet I
         created = _fmt_time(str(r.get("created_at", "")))
         badge = _source_badge(str(r.get("source", "")))
         cards.append(
-            f'<a class="card" href="reports/{rid}">'
+            f'<a class="card" href="{prefix}/reports/{rid}">'
             f"<h2>{title}</h2>"
             f'<div class="meta">{badge}{created}</div>'
             f"{'<div class=summary>' + summary + '</div>' if summary else ''}"
@@ -236,10 +243,12 @@ def render_report_page(
     source: str,
     created_at: str,
     body_html: str,
+    base: str = "",
 ) -> str:
     badge = _source_badge(source)
     created = _fmt_time(created_at)
     safe_title = html.escape(title)
+    back_href = (base.rstrip("/") + "/") if base.rstrip("/") else "/"
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -251,7 +260,7 @@ def render_report_page(
 </head>
 <body>
 <div class="wrap">
-<a class="back" href="/">← All reports</a>
+<a class="back" href="{back_href}">← All reports</a>
 <header>
 <h1>{safe_title}</h1>
 <p>{badge}<span style="color:var(--muted)">{created}</span></p>

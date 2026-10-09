@@ -1,4 +1,4 @@
-﻿# Per-repo fleet start config for fleet-agent-mcp
+# Per-repo fleet start config for fleet-agent-mcp
 # Edit ports/backend target here - start.ps1 is fleet-standard.
 @{
     Name         = 'fleet-agent-mcp'
@@ -11,6 +11,7 @@
         Module     = 'fleet_agent'
         ServeArgs  = @('--http', '--port', '10996')
         SyncExtras = @('dev')
+        SyncOnStart  = $true
     }
     Frontend = @{
         Kind           = 'vite-npm'
