@@ -42,7 +42,21 @@ uv sync
 .\start.ps1
 # Server at http://127.0.0.1:10996
 Or for Cursor / Claude Desktop (stdio):
-uv run -m fleet_agent.server --stdio
+uv run python -m fleet_agent --stdio
+# (`python -m fleet_agent_mcp --stdio` is an equivalent alias.)
+
+### Claude Desktop add-on
+
+Windows only. `.mcpb` add-ons are a Claude Desktop format. Open **Windows PowerShell** and run:
+
+```powershell
+irm https://github.com/sandraschi/fleet-agent-mcp/releases/latest/download/install.ps1 | iex
+```
+
+This installs the `fleet-agent-mcp.mcpb` add-on from the latest GitHub release (and `uv` if it is missing).
+Alternatively: download `fleet-agent-mcp.mcpb` from the [latest release](https://github.com/sandraschi/fleet-agent-mcp/releases/latest)
+and double-click it, or restart Claude Desktop after editing its config to launch
+`uv run --directory <bundle> python -m fleet_agent --stdio` (see `mcpb/manifest.json`).
 
 ## Architecture
 

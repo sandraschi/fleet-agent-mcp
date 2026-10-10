@@ -2,7 +2,6 @@ set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 
 # fleet-agent-mcp justfile
 import 'scripts/just/fleet.just'
-# fleet-agent-mcp justfile
 
 # Open the interactive recipe dashboard in the browser
 default:
@@ -70,3 +69,13 @@ fmt:
 
 mcpb-pack:
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\mcpb-pack.ps1"
+
+# Build Tauri native desktop app (Rust + WebView2); cua-nsis-test and
+# cua-webapp-test come from the fleet.just import above (scripts/just/*.ps1).
+build-native:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\native\build.ps1"
+
+# Full certification gate: style + types + behavior + webapp (single-line body;
+# just runs each recipe line as its own process, so no bare Set-Location lines).
+certify: lint
+    & "$env:USERPROFILE\.local\bin\uv.exe" run pyright src/; & "$env:USERPROFILE\.local\bin\uv.exe" run pytest tests/ -q; Set-Location '{{justfile_directory()}}\webapp'; & "$env:USERPROFILE\.bun\bin\bun.exe" run typecheck; & "$env:USERPROFILE\.bun\bin\bun.exe" run biome:ci

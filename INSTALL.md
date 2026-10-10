@@ -1,6 +1,18 @@
 # Installation
 
-## 🚀 Quick Start (recommended)
+## Claude Desktop add-on (Windows)
+
+`.mcpb` add-ons are a Claude Desktop format. Open **Windows PowerShell** and run:
+
+```powershell
+irm https://github.com/sandraschi/fleet-agent-mcp/releases/latest/download/install.ps1 | iex
+```
+
+This installs the `fleet-agent-mcp.mcpb` add-on from the latest GitHub release (and `uv` if it is missing).
+Alternatively: download `fleet-agent-mcp.mcpb` from the [latest release](https://github.com/sandraschi/fleet-agent-mcp/releases/latest)
+and double-click it, then fully restart Claude Desktop.
+
+## Quick Start (source)
 
 ```powershell
 # Install just if you don't have it
@@ -42,13 +54,15 @@ If you prefer not to use `just`:
    uv sync --all-extras
    ```
 4. Start the server:
-   ```powershell
-   # stdio mode (for MCP clients like Claude Desktop)
-   uv run python -m fleet_agent_mcp.server
+    ```powershell
+    # stdio mode (for MCP clients like Claude Desktop)
+    uv run python -m fleet_agent --stdio
+    # (`python -m fleet_agent_mcp --stdio` is an equivalent alias.)
 
-   # HTTP mode (for web dashboard)
-   uv run uvicorn fleet_agent_mcp.server:app --port 10996
-   ```
+    # HTTP mode (for web dashboard)
+    .\start.ps1 -BackendOnly
+    # (serves the REST API + /mcp on http://127.0.0.1:10996)
+    ```
 
 4. (optional) Start the frontend:
    ```powershell
