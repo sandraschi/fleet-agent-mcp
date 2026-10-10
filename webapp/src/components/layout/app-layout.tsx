@@ -1,8 +1,8 @@
+import { useZoom } from "@/lib/use-zoom";
+import { useConnection } from "@/store/connection";
 import { useEffect, useRef, useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
-import { useZoom } from "@/lib/use-zoom";
-import { useConnection } from "@/store/connection";
 
 interface AppLayoutProps {
 	children: React.ReactNode;
@@ -10,7 +10,11 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
 	const [collapsed, setCollapsed] = useState(() => {
-		try { return localStorage.getItem("fleet-sidebar-collapsed") === "true"; } catch { return false; }
+		try {
+			return localStorage.getItem("fleet-sidebar-collapsed") === "true";
+		} catch {
+			return false;
+		}
 	});
 	const pollingStarted = useRef(false);
 

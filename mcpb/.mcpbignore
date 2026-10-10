@@ -1,10 +1,13 @@
 # Logic/Dev Bloat
 .venv/
 node_modules/
+webapp/
 __pycache__/
 .ruff_cache/
 .pytest_cache/
 tests/
+*.bak
+*.bak.*
 
 # Discovery & Fleet Metadata
 glama.json
@@ -17,22 +20,13 @@ llms-full.txt
 # Build Artifacts
 dist/
 build/
+target/
+data/
 *.mcpb
 
-# Editor / tooling backups (MCPB_PACKAGING_STANDARDS.md section 2.4)
-*.bak
-*.bak.*
-*.bak-*
-*.orig
-*.rej
-
-# Pack build tooling itself -- not runtime code
-mcpb/pack.ps1
-mcpb/verify_pack.py
-pack.ps1
-verify_pack.py
-
-# Non-MCP components detected in this repo
-webapp/
+# Non-MCP components (webapp, native, scripts)
 native/
+src-tauri/
+web_sota/
+web/
 scripts/
