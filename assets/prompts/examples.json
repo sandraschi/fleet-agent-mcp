@@ -335,13 +335,6 @@
     }
   },
   {
-    "name": "fleet_bridge-fleet_list_servers-ex1",
-    "description": "Execute fleet_list_servers in fleet_bridge subsystem (variant 1)",
-    "prompt": "Run fleet_list_servers on fleet_bridge",
-    "tool": "fleet_list_servers",
-    "arguments": {}
-  },
-  {
     "name": "fleet_bridge-fleet_list_tools-ex1",
     "description": "Execute fleet_list_tools in fleet_bridge subsystem (variant 1)",
     "prompt": "Run fleet_list_tools on fleet_bridge",
@@ -436,16 +429,6 @@
     "tool": "github_list_prs",
     "arguments": {
       "repo": "fritz-test"
-    }
-  },
-  {
-    "name": "github-github_view_pr-ex1",
-    "description": "Execute github_view_pr in github subsystem (variant 1)",
-    "prompt": "Run github_view_pr on github",
-    "tool": "github_view_pr",
-    "arguments": {
-      "repo": "fritz-test",
-      "pr_number": "1"
     }
   },
   {
@@ -563,22 +546,6 @@
       "title": "Event",
       "summary": "Details"
     }
-  },
-  {
-    "name": "voice-voice_router_dispatch-ex1",
-    "description": "Execute voice_router_dispatch in voice subsystem (variant 1)",
-    "prompt": "Run voice_router_dispatch on voice",
-    "tool": "voice_router_dispatch",
-    "arguments": {
-      "text": "set timer 10 minutes"
-    }
-  },
-  {
-    "name": "voice-voice_router_status-ex1",
-    "description": "Execute voice_router_status in voice subsystem (variant 1)",
-    "prompt": "Run voice_router_status on voice",
-    "tool": "voice_router_status",
-    "arguments": {}
   },
   {
     "name": "scripts-script_create-ex1",
@@ -914,5 +881,236 @@
     "arguments": {
       "output_path": "backup.soul"
     }
+  },
+  {
+    "name": "agent_poll-ex",
+    "description": "Execute agent_poll (registry-derived example)",
+    "prompt": "Run agent_poll",
+    "tool": "agent_poll",
+    "arguments": {}
+  },
+  {
+    "name": "agent_send-ex",
+    "description": "Execute agent_send (registry-derived example)",
+    "prompt": "Run agent_send",
+    "tool": "agent_send",
+    "arguments": {}
+  },
+  {
+    "name": "agentic_start-ex",
+    "description": "Execute agentic_start (registry-derived example)",
+    "prompt": "Run agentic_start",
+    "tool": "agentic_start",
+    "arguments": {}
+  },
+  {
+    "name": "agentic_status-ex",
+    "description": "Execute agentic_status (registry-derived example)",
+    "prompt": "Run agentic_status",
+    "tool": "agentic_status",
+    "arguments": {}
+  },
+  {
+    "name": "agentic_stop-ex",
+    "description": "Execute agentic_stop (registry-derived example)",
+    "prompt": "Run agentic_stop",
+    "tool": "agentic_stop",
+    "arguments": {}
+  },
+  {
+    "name": "check_log_errors-ex",
+    "description": "Execute check_log_errors (registry-derived example)",
+    "prompt": "Run check_log_errors",
+    "tool": "check_log_errors",
+    "arguments": {}
+  },
+  {
+    "name": "criteria_lint-ex",
+    "description": "Execute criteria_lint (registry-derived example)",
+    "prompt": "Run criteria_lint",
+    "tool": "criteria_lint",
+    "arguments": {}
+  },
+  {
+    "name": "fleet_board-ex",
+    "description": "Execute fleet_board (registry-derived example)",
+    "prompt": "Run fleet_board",
+    "tool": "fleet_board",
+    "arguments": {}
+  },
+  {
+    "name": "fleet_discover-ex",
+    "description": "Execute fleet_discover (registry-derived example)",
+    "prompt": "Run fleet_discover",
+    "tool": "fleet_discover",
+    "arguments": {}
+  },
+  {
+    "name": "fleet_refresh_from_hub-ex",
+    "description": "Execute fleet_refresh_from_hub (registry-derived example)",
+    "prompt": "Run fleet_refresh_from_hub",
+    "tool": "fleet_refresh_from_hub",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_act_on_finding-ex",
+    "description": "Execute fritz_act_on_finding (registry-derived example)",
+    "prompt": "Run fritz_act_on_finding",
+    "tool": "fritz_act_on_finding",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_analyze_repo-ex",
+    "description": "Execute fritz_analyze_repo (registry-derived example)",
+    "prompt": "Run fritz_analyze_repo",
+    "tool": "fritz_analyze_repo",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_discover_and_analyze-ex",
+    "description": "Execute fritz_discover_and_analyze (registry-derived example)",
+    "prompt": "Run fritz_discover_and_analyze",
+    "tool": "fritz_discover_and_analyze",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_find_contributions-ex",
+    "description": "Execute fritz_find_contributions (registry-derived example)",
+    "prompt": "Run fritz_find_contributions",
+    "tool": "fritz_find_contributions",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_shutdown-ex",
+    "description": "Execute fritz_shutdown (registry-derived example)",
+    "prompt": "Run fritz_shutdown",
+    "tool": "fritz_shutdown",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_surveil-ex",
+    "description": "Execute fritz_surveil (registry-derived example)",
+    "prompt": "Run fritz_surveil",
+    "tool": "fritz_surveil",
+    "arguments": {}
+  },
+  {
+    "name": "fritz_voice_agent-ex",
+    "description": "Execute fritz_voice_agent (registry-derived example)",
+    "prompt": "Run fritz_voice_agent",
+    "tool": "fritz_voice_agent",
+    "arguments": {}
+  },
+  {
+    "name": "gate_evaluate-ex",
+    "description": "Execute gate_evaluate (registry-derived example)",
+    "prompt": "Run gate_evaluate",
+    "tool": "gate_evaluate",
+    "arguments": {}
+  },
+  {
+    "name": "gate_verify-ex",
+    "description": "Execute gate_verify (registry-derived example)",
+    "prompt": "Run gate_verify",
+    "tool": "gate_verify",
+    "arguments": {}
+  },
+  {
+    "name": "github_get_pr-ex",
+    "description": "Execute github_get_pr (registry-derived example)",
+    "prompt": "Run github_get_pr",
+    "tool": "github_get_pr",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_feed-ex",
+    "description": "Execute gogetajob_feed (registry-derived example)",
+    "prompt": "Run gogetajob_feed",
+    "tool": "gogetajob_feed",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_scan-ex",
+    "description": "Execute gogetajob_scan (registry-derived example)",
+    "prompt": "Run gogetajob_scan",
+    "tool": "gogetajob_scan",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_start-ex",
+    "description": "Execute gogetajob_start (registry-derived example)",
+    "prompt": "Run gogetajob_start",
+    "tool": "gogetajob_start",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_stats-ex",
+    "description": "Execute gogetajob_stats (registry-derived example)",
+    "prompt": "Run gogetajob_stats",
+    "tool": "gogetajob_stats",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_submit-ex",
+    "description": "Execute gogetajob_submit (registry-derived example)",
+    "prompt": "Run gogetajob_submit",
+    "tool": "gogetajob_submit",
+    "arguments": {}
+  },
+  {
+    "name": "gogetajob_sync-ex",
+    "description": "Execute gogetajob_sync (registry-derived example)",
+    "prompt": "Run gogetajob_sync",
+    "tool": "gogetajob_sync",
+    "arguments": {}
+  },
+  {
+    "name": "intel_public_site_generate-ex",
+    "description": "Execute intel_public_site_generate (registry-derived example)",
+    "prompt": "Run intel_public_site_generate",
+    "tool": "intel_public_site_generate",
+    "arguments": {}
+  },
+  {
+    "name": "query_logs-ex",
+    "description": "Execute query_logs (registry-derived example)",
+    "prompt": "Run query_logs",
+    "tool": "query_logs",
+    "arguments": {}
+  },
+  {
+    "name": "route_voice_command-ex",
+    "description": "Execute route_voice_command (registry-derived example)",
+    "prompt": "Run route_voice_command",
+    "tool": "route_voice_command",
+    "arguments": {}
+  },
+  {
+    "name": "sfb_post-ex",
+    "description": "Execute sfb_post (registry-derived example)",
+    "prompt": "Run sfb_post",
+    "tool": "sfb_post",
+    "arguments": {}
+  },
+  {
+    "name": "suggestion_ack-ex",
+    "description": "Execute suggestion_ack (registry-derived example)",
+    "prompt": "Run suggestion_ack",
+    "tool": "suggestion_ack",
+    "arguments": {}
+  },
+  {
+    "name": "suggestion_list-ex",
+    "description": "Execute suggestion_list (registry-derived example)",
+    "prompt": "Run suggestion_list",
+    "tool": "suggestion_list",
+    "arguments": {}
+  },
+  {
+    "name": "workflow_nodes-ex",
+    "description": "Execute workflow_nodes (registry-derived example)",
+    "prompt": "Run workflow_nodes",
+    "tool": "workflow_nodes",
+    "arguments": {}
   }
 ]

@@ -12,11 +12,20 @@ export default defineConfig({
 		headless: true,
 		screenshot: "only-on-failure",
 	},
-	webServer: {
-		command: `uv run python -m fleet_agent.server --http --port ${BACKEND_PORT} --host 127.0.0.1`,
-		port: BACKEND_PORT,
-		cwd: "../",
-		timeout: 30000,
-		reuseExistingServer: true,
-	},
+	webServer: [
+		{
+			command: `uv run python -m fleet_agent.server --http --port ${BACKEND_PORT} --host 127.0.0.1`,
+			port: BACKEND_PORT,
+			cwd: "../",
+			timeout: 30000,
+			reuseExistingServer: true,
+		},
+		{
+			command: "bun run dev",
+			port: FRONTEND_PORT,
+			cwd: "./",
+			timeout: 120000,
+			reuseExistingServer: true,
+		},
+	],
 });
