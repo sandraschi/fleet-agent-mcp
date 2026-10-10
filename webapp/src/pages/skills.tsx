@@ -1,4 +1,4 @@
-import { API_BASE } from "@/lib/api";
+﻿import { API_BASE } from "@/lib/api";
 import { AlertCircle, RefreshCw, Search, Sparkles } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -57,7 +57,7 @@ export function SkillsPage() {
 					<h2 className="text-xl font-bold text-white">Skills</h2>
 					<p className="text-sm text-slate-400" data-testid="skills-count">
 						{skills.length} learned skill{skills.length === 1 ? "" : "s"}
-						{notice ? ` — ${notice}` : ""}
+						{notice ? ` â€” ${notice}` : ""}
 					</p>
 				</div>
 				<div className="flex-1" />
@@ -72,6 +72,7 @@ export function SkillsPage() {
 					/>
 				</div>
 				<button
+					type="button"
 					onClick={fetchSkills}
 					disabled={loading}
 					data-testid="skills-refresh"
@@ -94,6 +95,7 @@ export function SkillsPage() {
 				<div className="flex items-center gap-2 border border-red-800 rounded-lg bg-red-950/50 p-3 text-sm text-red-300">
 					<AlertCircle className="w-4 h-4 shrink-0" /> {error}
 					<button
+						type="button"
 						onClick={fetchSkills}
 						className="ml-auto text-sm underline hover:text-red-200"
 					>
@@ -149,6 +151,7 @@ export function SkillsPage() {
 							)}
 							{(s.tags ?? []).map((t) => (
 								<button
+									type="button"
 									key={t}
 									onClick={() => setQuery(t)}
 									className="text-sm bg-fleet-900/50 text-fleet-400 px-2 py-0.5 rounded hover:bg-fleet-800 transition-colors"

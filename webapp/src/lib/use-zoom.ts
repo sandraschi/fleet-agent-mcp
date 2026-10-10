@@ -6,7 +6,7 @@ export function useZoom() {
 	const [_zoomIndex, _setZoomIndex] = useState(() => {
 		try {
 			const saved = localStorage.getItem("tauri-zoom");
-			return saved ? ZOOM_LEVELS.indexOf(parseFloat(saved)) : 0;
+			return saved ? ZOOM_LEVELS.indexOf(Number.parseFloat(saved)) : 0;
 		} catch {
 			return 0;
 		}
@@ -16,7 +16,10 @@ export function useZoom() {
 		localStorage.setItem("tauri-zoom", String(level));
 		try {
 			const { getCurrentWindow } = await import("@tauri-apps/api/window");
-			(getCurrentWindow() as any).setZoom(level);
+			const win = getCurrentWindow() as unknown as {
+				setZoom?: (level: number) => Promise<void>;
+			};
+			await win.setZoom?.(level);
 		} catch {
 			/* dev browser -- no-op */
 		}
@@ -37,7 +40,7 @@ export function useZoom() {
 		};
 		window.addEventListener("wheel", handler, { passive: false });
 		const saved = localStorage.getItem("tauri-zoom");
-		if (saved) applyZoom(parseFloat(saved));
+		if (saved) applyZoom(Number.parseFloat(saved));
 		return () => window.removeEventListener("wheel", handler);
 	}, [applyZoom]);
 }

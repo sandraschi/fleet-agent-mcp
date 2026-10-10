@@ -1,4 +1,4 @@
-import { API_BASE } from "@/lib/api";
+﻿import { API_BASE } from "@/lib/api";
 import { AlertCircle, Inbox as InboxIcon, RefreshCw, Send } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -38,8 +38,7 @@ export function InboxPage() {
 	}, []);
 
 	useEffect(() => {
-		fetchInbox(entity);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		fetchInbox("fritz");
 	}, [fetchInbox]);
 
 	const handleSubmit = (e: React.FormEvent) => {
@@ -78,6 +77,7 @@ export function InboxPage() {
 					</button>
 				</form>
 				<button
+					type="button"
 					onClick={() => fetchInbox(entity.trim() || "fritz")}
 					disabled={loading}
 					data-testid="inbox-refresh"
@@ -103,6 +103,7 @@ export function InboxPage() {
 				<div className="flex items-center gap-2 border border-red-800 rounded-lg bg-red-950/50 p-3 text-sm text-red-300">
 					<AlertCircle className="w-4 h-4 shrink-0" /> {error}
 					<button
+						type="button"
 						onClick={() => fetchInbox(entity.trim() || "fritz")}
 						className="ml-auto text-sm underline hover:text-red-200"
 					>
@@ -114,7 +115,7 @@ export function InboxPage() {
 			{!loading && !error && hubError && (
 				<div className="flex items-center gap-2 border border-amber-800 rounded-lg bg-amber-950/30 p-3 text-sm text-amber-300">
 					<AlertCircle className="w-4 h-4 shrink-0" />
-					Hub unreachable ({hubError}) — showing last poll result (may be
+					Hub unreachable ({hubError}) â€” showing last poll result (may be
 					empty).
 				</div>
 			)}
@@ -139,8 +140,8 @@ export function InboxPage() {
 							{m.subject || "(no subject)"}
 						</h3>
 						<p className="text-[10px] font-mono text-slate-500 mb-2">
-							{m.from_entity ?? "?"} → {m.to_entity ?? "?"}
-							{m.created_at ? ` · ${m.created_at}` : ""}
+							{m.from_entity ?? "?"} â†’ {m.to_entity ?? "?"}
+							{m.created_at ? ` Â· ${m.created_at}` : ""}
 						</p>
 						{m.body && (
 							<p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">

@@ -1,8 +1,9 @@
-import { API_BASE } from "@/lib/api";
+﻿import { API_BASE } from "@/lib/api";
 import { Bot, Download, Send, Terminal, Trash2, User } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Message {
+	id: string;
 	role: "user" | "assistant" | "system";
 	content: string;
 	ts?: string;
@@ -63,12 +64,19 @@ function loadMessages(): Message[] {
 		const raw = localStorage.getItem(STORAGE_KEY);
 		if (raw) {
 			const msgs = JSON.parse(raw) as Message[];
-			return msgs.slice(-100);
+			// Backfill stable ids for history persisted before ids existed.
+			return msgs
+				.slice(-100)
+				.map((m, idx) => ({ ...m, id: m.id ?? `${m.ts ?? "legacy"}-${idx}` }));
 		}
 	} catch {
 		/* corrupt storage */
 	}
 	return [];
+}
+
+function newId(): string {
+	return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 function saveMessages(messages: Message[]) {
@@ -159,6 +167,7 @@ export function ChatPage() {
 			.catch(() => setSkillCount(null));
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `messages` is the intentional retrigger (scroll on new message), not a read dependency.
 	useEffect(() => {
 		bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [messages]);
@@ -170,6 +179,7 @@ export function ChatPage() {
 		setError(null);
 
 		const userMsg: Message = {
+			id: newId(),
 			role: "user",
 			content: text,
 			ts: new Date().toISOString(),
@@ -179,7 +189,11 @@ export function ChatPage() {
 		saveMessages(updated);
 		setStreaming(true);
 
-		const assistantMsg: Message = { role: "assistant", content: "" };
+		const assistantMsg: Message = {
+			id: newId(),
+			role: "assistant",
+			content: "",
+		};
 		setMessages((prev) => [...prev, assistantMsg]);
 
 		const systemPrompt = buildSystemPrompt(
@@ -379,6 +393,7 @@ export function ChatPage() {
 
 				{/* Export */}
 				<button
+					type="button"
 					onClick={exportChat}
 					disabled={messages.length === 0}
 					data-testid="chat-export"
@@ -394,6 +409,7 @@ export function ChatPage() {
 
 				{/* Clear */}
 				<button
+					type="button"
 					onClick={clearChat}
 					disabled={messages.length === 0}
 					data-testid="chat-clear"
@@ -427,16 +443,16 @@ export function ChatPage() {
 				{messages.length === 0 && (
 					<div className="flex flex-col items-center justify-center h-full text-slate-500">
 						<Bot className="w-12 h-12 mb-3 text-slate-700" />
-						<p className="text-sm">Chat with Fritz — your fleet agent</p>
+						<p className="text-sm">Chat with Fritz â€” your fleet agent</p>
 						<p className="text-xs text-slate-600 mt-1">
 							Personality: {personality.name}
 						</p>
 					</div>
 				)}
 
-				{messages.map((msg, i) => (
+				{messages.map((msg) => (
 					<div
-						key={i}
+						key={msg.id}
 						className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
 					>
 						{msg.role === "assistant" && (
@@ -487,6 +503,7 @@ export function ChatPage() {
 					>
 						{EXAMPLE_PROMPTS.map((p) => (
 							<button
+								type="button"
 								key={p.label}
 								onClick={() => setInput(p.text)}
 								className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-full text-xs text-slate-300 hover:bg-slate-700 hover:border-fleet-600 transition-colors"
@@ -525,6 +542,7 @@ export function ChatPage() {
 					className="flex-1 bg-transparent border-none outline-none text-sm text-slate-200 placeholder-slate-500 resize-none px-2 py-1.5"
 				/>
 				<button
+					type="button"
 					onClick={handleSend}
 					disabled={!input.trim() || streaming}
 					data-testid="chat-send"
