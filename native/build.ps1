@@ -132,6 +132,18 @@ if (Test-Path $envExample) {
     Write-Host "  WARNING: .env.example not found at repo root" -ForegroundColor DarkYellow
 }
 
+# Vendor fleet AI-client registration into the installer (onenote-mcp pattern):
+# mcp-clients.nsh + install-mcp-clients.ps1 live in mcp-central-docs and are
+# copied here at build time, so fixes reach every repo without vendored drift.
+$Central = Join-Path (Split-Path -Parent $Root) 'mcp-central-docs\scripts'
+if (Test-Path $Central) {
+    Copy-Item "$Central\install-mcp-clients.ps1" "$ResourceDir\install-mcp-clients.ps1" -Force
+    Copy-Item "$Central\nsis\mcp-clients.nsh" "$PSScriptRoot\windows\mcp-clients.nsh" -Force
+    Write-Host "  Vendored mcp-clients.nsh + install-mcp-clients.ps1" -ForegroundColor Green
+} else {
+    Write-Host "  WARNING: mcp-central-docs not found - installer will not register AI clients" -ForegroundColor DarkYellow
+}
+
 # Step 4: Single NSIS installer
 Write-Host "-> [4/6] Tauri NSIS bundle..." -ForegroundColor Yellow
 Push-Location $PSScriptRoot
