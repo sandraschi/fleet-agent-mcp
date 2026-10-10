@@ -16,6 +16,9 @@ reports/
 !docs/assess-reports/
 webapp/node_modules/
 webapp/dist/
+webapp/test-results/
+webapp/playwright-report/
+playwright-report/
 
 # Runtime logs (services write here - untracked)
 *.log
