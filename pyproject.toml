@@ -28,6 +28,13 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src/fleet_agent"]
 
+# Non-breaking alias: src/fleet_agent_mcp.py re-exports fleet_agent.server.main
+# so `python -m fleet_agent_mcp` works (INSTALL.md documents that name, but the
+# shipped package dir stays fleet_agent - renaming it would break NSSM
+# command lines, imports, and the MCPB stage).
+[tool.hatch.build.targets.wheel.force-include]
+"src/fleet_agent_mcp.py" = "fleet_agent_mcp.py"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"

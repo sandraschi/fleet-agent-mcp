@@ -8,6 +8,8 @@ REST endpoints:
   /api/settings       GET/PUT - LLM provider settings
   /api/models         GET  - Available models from provider
   /api/chat           POST - Streaming chat (SSE)
+  /api/inbox          GET  - Hub inbox poll for an entity (query: entity)
+  /api/skills         GET  - Skill memory cards (category=skill or tag=skill)
   /api/logs           GET  - Recent log entries
   /api/logs/stream    GET  - SSE log stream
   /api/log            POST - Add a log entry
@@ -430,6 +432,68 @@ async def api_analysis_log(request: Request) -> JSONResponse:
     return JSONResponse({"success": True, "entries": entries, "count": len(entries)})
 
 
+async def api_inbox(request: Request) -> JSONResponse:
+    """GET /api/inbox - hub inbox poll for an entity (query: entity, default fritz).
+
+    Same source as the Fritz console (console.py::api_inbox) but served on the
+    main backend port so the webapp Inbox page has live data. Returns
+    {"messages": [...]} on success, {"messages": [], "error": ...} when the hub
+    is unreachable - never a 500, so the page can render hub-down states.
+    """
+    import httpx
+
+    entity = request.query_params.get("entity", "fritz")
+    headers = (
+        {"Authorization": f"Bearer {settings.fleet_hub_token}"} if settings.fleet_hub_token else {}
+    )
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(
+                f"{settings.fleet_hub_url.rstrip('/')}/api/v1/inbox/poll",
+                params={"entity": entity, "mark_read": False},
+                headers=headers,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        return JSONResponse({"success": True, "messages": data.get("messages", [])})
+    except Exception as exc:
+        logger.warning("[inbox] hub poll failed: %s", exc)
+        return JSONResponse({"success": True, "messages": [], "error": str(exc)})
+
+
+async def api_skills(request: Request) -> JSONResponse:
+    """GET /api/skills - skill memory cards (category=skill or tag=skill).
+
+    Real data from fleet-agent.db memory_cards. Empty list (not 404) when no
+    skill cards exist yet - the webapp Skills page renders an explicit empty
+    state pointing at the import_external_skill tool. Never 500s when the db
+    is missing (fresh install): returns the empty shape instead.
+    """
+    try:
+        from .engine.sqlite_store import get_store
+
+        cards = get_store().cards_list()
+    except Exception as exc:
+        logger.warning("[skills] store read failed: %s", exc)
+        return JSONResponse(
+            {
+                "success": True,
+                "skills": [],
+                "count": 0,
+                "message": "skill store unavailable (fresh install?)",
+            }
+        )
+    skills = [c for c in cards if c.get("category") == "skill" or "skill" in (c.get("tags") or [])]
+    return JSONResponse(
+        {
+            "success": True,
+            "skills": skills,
+            "count": len(skills),
+            "message": f"{len(skills)} skill cards",
+        }
+    )
+
+
 async def api_health(request: Request) -> JSONResponse:
     """GET /api/health - fleet-standard health check."""
     if _SHUTTING_DOWN:
@@ -527,6 +591,8 @@ async def api_capabilities(request: Request) -> JSONResponse:
                     "/api/tools",
                     "/api/capabilities",
                     "/api/chat",
+                    "/api/inbox",
+                    "/api/skills",
                     "/api/voice/intent",
                     "/api/v1/diagnostics",
                 ],
@@ -648,6 +714,8 @@ def build_app() -> Starlette:
             Route("/api/settings", endpoint=api_settings_put, methods=["PUT"]),
             Route("/api/models", endpoint=api_models),
             Route("/api/chat", endpoint=api_chat, methods=["POST"]),
+            Route("/api/inbox", endpoint=api_inbox),
+            Route("/api/skills", endpoint=api_skills),
             Route("/api/logs", endpoint=api_logs),
             Route("/api/logs/stream", endpoint=api_logs_stream),
             Route("/api/log", endpoint=api_log_add, methods=["POST"]),
