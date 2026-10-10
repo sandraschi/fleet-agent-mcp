@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { API_BASE } from "@/lib/api";
 import { Network } from "lucide-react";
-import { API_BASE } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
 
 interface Task {
 	id: string;
@@ -42,8 +42,8 @@ export default function Automaton() {
 			fetch(`${API_BASE}/api/status`).then((r) => r.json()),
 		])
 			.then(([t, w, s]) => {
-				setTasks(Array.isArray(t) ? t : t.tasks ?? []);
-				setWorkflows(Array.isArray(w) ? w : w.workflows ?? []);
+				setTasks(Array.isArray(t) ? t : (t.tasks ?? []));
+				setWorkflows(Array.isArray(w) ? w : (w.workflows ?? []));
 				setStatus(s);
 			})
 			.catch((e) => setErr(e instanceof Error ? e.message : String(e)));
@@ -66,7 +66,7 @@ export default function Automaton() {
 		});
 		lines.push('  SCR["Agent scripts"]');
 		if (tasks.length) lines.push("  CRON --> SCR");
-		lines.push("  SCR --> OUT[\"Actions: tasks, reports, email, voice\"]");
+		lines.push('  SCR --> OUT["Actions: tasks, reports, email, voice"]');
 		lines.push("  OUT --> HB");
 		return lines.join("\n");
 	}, [tasks, workflows]);
@@ -90,7 +90,10 @@ export default function Automaton() {
 						tertiaryColor: "#0f0f12",
 					},
 				});
-				const { svg: rendered } = await mermaid.render("automaton-graph", diagram);
+				const { svg: rendered } = await mermaid.render(
+					"automaton-graph",
+					diagram,
+				);
 				if (!cancelled) setSvg(rendered);
 			} catch (e) {
 				if (!cancelled) setErr(e instanceof Error ? e.message : String(e));
@@ -108,8 +111,8 @@ export default function Automaton() {
 				<div>
 					<h1 className="text-2xl font-bold text-white">Fleet Automaton</h1>
 					<p className="text-slate-400 text-sm">
-						Heartbeat scheduler, recurring tasks, workflows and scripts - the machinery
-						behind Fritz.
+						Heartbeat scheduler, recurring tasks, workflows and scripts - the
+						machinery behind Fritz.
 					</p>
 				</div>
 			</div>
@@ -118,9 +121,12 @@ export default function Automaton() {
 
 			<div className="rounded-2xl border border-white/10 bg-[#0f0f12]/80 p-4 overflow-x-auto">
 				{svg ? (
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: svg is mermaid-generated from workflow YAML (same-origin data, no user HTML).
 					<div dangerouslySetInnerHTML={{ __html: svg }} />
 				) : (
-					<p className="text-slate-500 text-sm py-8 text-center">Rendering automaton diagram...</p>
+					<p className="text-slate-500 text-sm py-8 text-center">
+						Rendering automaton diagram...
+					</p>
 				)}
 			</div>
 
@@ -140,7 +146,9 @@ export default function Automaton() {
 					</div>
 					<div className="rounded-2xl border border-white/10 bg-[#0f0f12]/80 p-4">
 						<p className="text-slate-500 text-xs">Workflows</p>
-						<p className="text-2xl font-semibold text-white">{workflows.length}</p>
+						<p className="text-2xl font-semibold text-white">
+							{workflows.length}
+						</p>
 					</div>
 					<div className="rounded-2xl border border-white/10 bg-[#0f0f12]/80 p-4">
 						<p className="text-slate-500 text-xs">Memory cards</p>
@@ -168,28 +176,41 @@ function ScheduleBoard({ tasks }: { tasks: Task[] }) {
 
 	const filtered = useMemo(() => {
 		let result = recurring;
-		if (statusFilter !== "all") result = result.filter((t) => t.status === statusFilter);
+		if (statusFilter !== "all")
+			result = result.filter((t) => t.status === statusFilter);
 		if (search.trim()) {
 			const q = search.trim().toLowerCase();
 			result = result.filter((t) => t.task.toLowerCase().includes(q));
 		}
 		const sorted = [...result];
 		if (sortBy === "task") sorted.sort((a, b) => a.task.localeCompare(b.task));
-		else if (sortBy === "status") sorted.sort((a, b) => a.status.localeCompare(b.status));
-		else if (sortBy === "updated") sorted.sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""));
+		else if (sortBy === "status")
+			sorted.sort((a, b) => a.status.localeCompare(b.status));
+		else if (sortBy === "updated")
+			sorted.sort((a, b) =>
+				(b.updated_at || "").localeCompare(a.updated_at || ""),
+			);
 		return sorted;
 	}, [recurring, search, statusFilter, sortBy]);
 
-	useEffect(() => { setPage(0); }, [search, statusFilter, sortBy]);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: intentional page reset — must re-run when filters change without reading them.
+	useEffect(() => {
+		setPage(0);
+	}, [search, statusFilter, sortBy]);
 
 	const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-	const pageItems = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+	const pageItems = filtered.slice(
+		page * PAGE_SIZE,
+		page * PAGE_SIZE + PAGE_SIZE,
+	);
 
 	return (
 		<div className="rounded-2xl border border-white/10 bg-[#0f0f12]/80 p-5">
 			<div className="flex items-center justify-between mb-3 flex-wrap gap-2">
 				<h2 className="text-lg font-semibold text-white">Schedule board</h2>
-				<span className="text-xs text-slate-500">{filtered.length} of {recurring.length} recurring</span>
+				<span className="text-xs text-slate-500">
+					{filtered.length} of {recurring.length} recurring
+				</span>
 			</div>
 
 			<div className="flex items-center gap-2 flex-wrap mb-3">
@@ -199,13 +220,21 @@ function ScheduleBoard({ tasks }: { tasks: Task[] }) {
 					placeholder="Search..."
 					className="bg-black/40 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-amber-500 w-40"
 				/>
-				<select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-black/40 border border-white/10 text-slate-200 rounded-lg px-2 py-1.5 text-xs">
+				<select
+					value={statusFilter}
+					onChange={(e) => setStatusFilter(e.target.value)}
+					className="bg-black/40 border border-white/10 text-slate-200 rounded-lg px-2 py-1.5 text-xs"
+				>
 					<option value="all">All statuses</option>
 					<option value="pending">Pending</option>
 					<option value="done">Done</option>
 					<option value="failed">Failed</option>
 				</select>
-				<select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="bg-black/40 border border-white/10 text-slate-200 rounded-lg px-2 py-1.5 text-xs">
+				<select
+					value={sortBy}
+					onChange={(e) => setSortBy(e.target.value)}
+					className="bg-black/40 border border-white/10 text-slate-200 rounded-lg px-2 py-1.5 text-xs"
+				>
 					<option value="task">Sort: A-Z</option>
 					<option value="status">Sort: status</option>
 					<option value="updated">Sort: last updated</option>
@@ -225,10 +254,14 @@ function ScheduleBoard({ tasks }: { tasks: Task[] }) {
 					{pageItems.map((t) => (
 						<tr key={t.id} className="border-t border-white/5">
 							<td className="py-2 text-slate-200">{t.task}</td>
-							<td className="py-2 font-mono text-amber-300 text-xs">{t.recurrence}</td>
+							<td className="py-2 font-mono text-amber-300 text-xs">
+								{t.recurrence}
+							</td>
 							<td className="py-2 text-slate-400">{t.status}</td>
 							<td className="py-2 text-slate-500 text-xs">
-								{t.updated_at ? t.updated_at.slice(0, 19).replace("T", " ") : "-"}
+								{t.updated_at
+									? t.updated_at.slice(0, 19).replace("T", " ")
+									: "-"}
 							</td>
 						</tr>
 					))}
@@ -245,14 +278,18 @@ function ScheduleBoard({ tasks }: { tasks: Task[] }) {
 			{pageCount > 1 && (
 				<div className="flex items-center justify-end gap-2 mt-3 text-xs text-slate-400">
 					<button
+						type="button"
 						onClick={() => setPage((p) => Math.max(0, p - 1))}
 						disabled={page === 0}
 						className="px-2 py-1 rounded bg-black/40 border border-white/10 disabled:opacity-30"
 					>
 						Prev
 					</button>
-					<span>Page {page + 1} / {pageCount}</span>
+					<span>
+						Page {page + 1} / {pageCount}
+					</span>
 					<button
+						type="button"
 						onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
 						disabled={page >= pageCount - 1}
 						className="px-2 py-1 rounded bg-black/40 border border-white/10 disabled:opacity-30"

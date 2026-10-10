@@ -1,4 +1,4 @@
-import {
+﻿import {
 	Activity,
 	Brain,
 	Briefcase,
@@ -96,7 +96,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "workflow_status",
 				type: "R",
 				description:
-					"Get current workflow instance status — node, task, and available branches.",
+					"Get current workflow instance status â€” node, task, and available branches.",
 				params: [],
 				returns:
 					'{"success": bool, "workflow": str, "current_node": str, "task": str, "branches": list|null, "is_terminal": bool, "message": str}',
@@ -420,7 +420,7 @@ const SUBSYSTEMS: Subsystem[] = [
 					{
 						name: "content",
 						type: "str",
-						description: "Note content — what you learned or observed.",
+						description: "Note content â€” what you learned or observed.",
 						required: true,
 					},
 					{
@@ -469,7 +469,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "identity_whoami",
 				type: "R",
 				description:
-					"Return the agent's self-introduction — name, human partner, and purpose preview.",
+					"Return the agent's self-introduction â€” name, human partner, and purpose preview.",
 				params: [],
 				returns: '{"success": bool, "identity": dict, "message": str}',
 				examples: ["identity_whoami()"],
@@ -478,7 +478,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "identity_soul",
 				type: "R",
 				description:
-					"Read the agent's full SOUL.md — core identity, personality, and constraints.",
+					"Read the agent's full SOUL.md â€” core identity, personality, and constraints.",
 				params: [],
 				returns: '{"success": bool, "soul": str, "message": str}',
 				examples: ["identity_soul()"],
@@ -487,7 +487,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "identity_north_star",
 				type: "R",
 				description:
-					"Read the agent's NORTH_STAR.md — purpose, long-term goals, guiding principles. Used by pulse_align().",
+					"Read the agent's NORTH_STAR.md â€” purpose, long-term goals, guiding principles. Used by pulse_align().",
 				params: [],
 				returns: '{"success": bool, "north_star": str, "message": str}',
 				examples: ["identity_north_star()"],
@@ -496,7 +496,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "identity_user",
 				type: "R",
 				description:
-					"Read USER.md — information about the agent's human partner.",
+					"Read USER.md â€” information about the agent's human partner.",
 				params: [],
 				returns: '{"success": bool, "user_info": str, "message": str}',
 				examples: ["identity_user()"],
@@ -537,7 +537,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "teleport_inspect",
 				type: "R",
 				description:
-					"Inspect a .soul archive without unpacking — show manifest and file listing.",
+					"Inspect a .soul archive without unpacking â€” show manifest and file listing.",
 				params: [
 					{
 						name: "soul_path",
@@ -554,7 +554,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "teleport_unpack",
 				type: "D",
 				description:
-					"Unpack a .soul archive — restore agent identity, memory, workflows, and database.",
+					"Unpack a .soul archive â€” restore agent identity, memory, workflows, and database.",
 				note: "WARNING: Overwrites existing files in the target directory. DESTRUCTIVE operation.",
 				params: [
 					{
@@ -601,7 +601,7 @@ const SUBSYSTEMS: Subsystem[] = [
 						name: "lesson",
 						type: "str",
 						description:
-							"The lesson learned — stated as a rule to follow going forward.",
+							"The lesson learned â€” stated as a rule to follow going forward.",
 						required: true,
 					},
 					{
@@ -621,7 +621,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "evolution_list",
 				type: "R",
 				description:
-					"List recent evolution log entries — corrections and lessons.",
+					"List recent evolution log entries â€” corrections and lessons.",
 				params: [
 					{
 						name: "limit",
@@ -639,7 +639,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "evolution_stats",
 				type: "R",
 				description:
-					"Get evolution log statistics — total corrections, unique lessons, patterns.",
+					"Get evolution log statistics â€” total corrections, unique lessons, patterns.",
 				params: [],
 				returns:
 					'{"success": bool, "stats": dict, "duplicate_lessons": list, "message": str}',
@@ -658,7 +658,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "heartbeat_status",
 				type: "R",
 				description:
-					"Agent health check — uptime, active workflows, task count, memory stats.",
+					"Agent health check â€” uptime, active workflows, task count, memory stats.",
 				params: [],
 				returns: '{"success": bool, "health": dict, "message": str}',
 				examples: ["heartbeat_status()"],
@@ -667,7 +667,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "heartbeat_wake",
 				type: "W",
 				description:
-					"Agent wake-up routine — check state machine, get current task, suggest next action.",
+					"Agent wake-up routine â€” check state machine, get current task, suggest next action.",
 				note: "Checks active workflow first; if none, checks pending tasks; returns next recommended action.",
 				params: [],
 				returns: '{"success": bool, "action": dict, "message": str}',
@@ -686,7 +686,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "coworker_fleet_pulse",
 				type: "W",
 				description:
-					"Morning Fleet Pulse — MCP health, git snapshot, hub publish.",
+					"Morning Fleet Pulse â€” MCP health, git snapshot, hub publish.",
 				params: [
 					{
 						name: "deliver",
@@ -707,7 +707,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "coworker_devices_watch",
 				type: "W",
 				description:
-					"Poll devices-mcp /api/fleet/priority — kitchen temp, CO, smoke, Ring.",
+					"Poll devices-mcp /api/fleet/priority â€” kitchen temp, CO, smoke, Ring.",
 				params: [
 					{
 						name: "deliver",
@@ -724,7 +724,7 @@ const SUBSYSTEMS: Subsystem[] = [
 				name: "coworker_day_prep",
 				type: "W",
 				description:
-					"Office Day Prep — inbox + pulse tasks + AIWatcher hot items.",
+					"Office Day Prep â€” inbox + pulse tasks + AIWatcher hot items.",
 				params: [
 					{
 						name: "deliver",
@@ -807,7 +807,7 @@ const SUBSYSTEMS: Subsystem[] = [
 					{
 						name: "urgency_hint",
 						type: "float",
-						description: "0–10 pre-score.",
+						description: "0â€“10 pre-score.",
 						required: false,
 					},
 				],
@@ -831,9 +831,9 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_LONG: Record<string, string> = {
-	R: "Safe to call any time — no side effects.",
-	W: "Modifies state — call with awareness.",
-	D: "Irreversible — confirm before use.",
+	R: "Safe to call any time â€” no side effects.",
+	W: "Modifies state â€” call with awareness.",
+	D: "Irreversible â€” confirm before use.",
 };
 
 export function Tools() {
@@ -890,11 +890,12 @@ export function Tools() {
 					</div>
 					<div className="space-y-1">
 						{ss.tools.map((tool) => (
-							<div
+							<button
+								type="button"
 								key={tool.name}
 								onClick={() => setSelected(tool)}
-								className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/50 transition-colors cursor-pointer"
-								title={`${tool.name} — ${tool.description}`}
+								className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-800/50 transition-colors cursor-pointer w-full text-left"
+								title={`${tool.name} â€” ${tool.description}`}
 							>
 								<span
 									className={`text-[10px] font-mono font-bold px-1.5 py-0.5 rounded border uppercase ${TYPE_BADGES[tool.type]}`}
@@ -907,7 +908,7 @@ export function Tools() {
 								<span className="text-xs text-slate-400 flex-1 truncate">
 									— {tool.description}
 								</span>
-							</div>
+							</button>
 						))}
 					</div>
 				</div>
@@ -917,7 +918,12 @@ export function Tools() {
 				<div
 					className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
 					onClick={() => setSelected(null)}
+					onKeyDown={(e) => {
+						if (e.key === "Escape") setSelected(null);
+					}}
+					tabIndex={-1}
 				>
+					{/* biome-ignore lint/a11y/useKeyWithClickEvents: inner stopper only halts backdrop-close propagation — no user action to mirror for keyboard users. */}
 					<div
 						className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-2xl w-full mx-4 shadow-2xl max-h-[85vh] overflow-y-auto"
 						onClick={(e) => e.stopPropagation()}
@@ -934,6 +940,7 @@ export function Tools() {
 								</code>
 							</div>
 							<button
+								type="button"
 								onClick={() => setSelected(null)}
 								className="p-1 rounded-md hover:bg-slate-800 transition-colors"
 							>
@@ -955,7 +962,7 @@ export function Tools() {
 							>
 								{TYPE_LABELS[selected.type]}
 							</span>
-							{" — "}
+							{" â€” "}
 							{TYPE_LONG[selected.type]}
 						</p>
 
@@ -1004,7 +1011,7 @@ export function Tools() {
 									Parameters
 								</h4>
 								<p className="text-xs text-slate-600 italic">
-									None — this tool takes no arguments.
+									None â€” this tool takes no arguments.
 								</p>
 							</div>
 						)}
@@ -1023,9 +1030,9 @@ export function Tools() {
 								Examples
 							</h4>
 							<div className="space-y-1">
-								{selected.examples.map((ex, i) => (
+								{selected.examples.map((ex) => (
 									<pre
-										key={i}
+										key={ex}
 										className="bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs font-mono text-emerald-300 overflow-x-auto"
 									>
 										await {ex}

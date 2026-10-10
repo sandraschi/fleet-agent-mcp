@@ -1,3 +1,4 @@
+import { API_BASE } from "@/lib/api";
 import {
 	Activity,
 	Brain,
@@ -9,7 +10,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE } from "@/lib/api";
 
 interface HealthData {
 	status: string;
@@ -71,9 +71,10 @@ export function Dashboard() {
 			.catch(() => {});
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: mount-only probe; retries are timeout-driven inside refreshHealth (a dep would tight-loop while the backend is down).
 	useEffect(() => {
 		refreshHealth();
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		fetch(`${API_BASE}/api/contributions?limit=1`)
@@ -142,9 +143,7 @@ export function Dashboard() {
 						{whoami?.name ?? "Fritz"}
 					</h2>
 					<p className="text-sm text-slate-400">
-						{whoami
-							? `Partnered with ${whoami.human ?? "Sandra"} · `
-							: ""}
+						{whoami ? `Partnered with ${whoami.human ?? "Sandra"} · ` : ""}
 						{now.toLocaleDateString("en-US", {
 							weekday: "long",
 							year: "numeric",
@@ -157,9 +156,7 @@ export function Dashboard() {
 				<div className="flex items-center gap-2" data-testid="backend-dot">
 					<div
 						className={`w-2 h-2 rounded-full ${
-							backendOnline
-								? "bg-green-500 animate-pulse"
-								: "bg-red-500"
+							backendOnline ? "bg-green-500 animate-pulse" : "bg-red-500"
 						}`}
 					/>
 					<span className="text-xs text-slate-500">
@@ -201,7 +198,8 @@ export function Dashboard() {
 			{/* Stats grid */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 				{stats.map((stat) => (
-					<div
+					<button
+						type="button"
 						key={stat.label}
 						data-testid={stat.testid}
 						onClick={() =>
@@ -209,7 +207,7 @@ export function Dashboard() {
 								? navigate(stat.route)
 								: window.open("https://github.com/kagura-agent", "_blank")
 						}
-						className="border border-slate-800 rounded-lg bg-slate-900/50 p-4 hover:border-fleet-600 transition-colors cursor-pointer"
+						className="border border-slate-800 rounded-lg bg-slate-900/50 p-4 hover:border-fleet-600 transition-colors cursor-pointer text-left"
 					>
 						<div className="flex items-center gap-3">
 							<div className="p-2 rounded-md bg-slate-800">
@@ -223,7 +221,7 @@ export function Dashboard() {
 								<p className="text-xs text-slate-400">{stat.sub}</p>
 							</div>
 						</div>
-					</div>
+					</button>
 				))}
 			</div>
 
@@ -233,7 +231,8 @@ export function Dashboard() {
 					Architecture
 				</h3>
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-					<div
+					<button
+						type="button"
 						onClick={() => navigate("/tools")}
 						className="border border-slate-700 rounded-lg bg-slate-800/50 p-4 hover:border-fleet-600 transition-colors cursor-pointer"
 					>
@@ -242,8 +241,9 @@ export function Dashboard() {
 						<p className="text-xs text-slate-400">
 							State machine - <em>what</em> to do
 						</p>
-					</div>
-					<div
+					</button>
+					<button
+						type="button"
 						onClick={() => navigate("/status")}
 						className="border border-slate-700 rounded-lg bg-slate-800/50 p-4 hover:border-fleet-600 transition-colors cursor-pointer"
 					>
@@ -252,8 +252,9 @@ export function Dashboard() {
 						<p className="text-xs text-slate-400">
 							Coordinator - <em>when</em> to do it
 						</p>
-					</div>
-					<div
+					</button>
+					<button
+						type="button"
 						onClick={() => navigate("/tools")}
 						className="border border-slate-700 rounded-lg bg-slate-800/50 p-4 hover:border-fleet-600 transition-colors cursor-pointer"
 					>
@@ -262,7 +263,7 @@ export function Dashboard() {
 						<p className="text-xs text-slate-400">
 							Worker - <em>does</em> the work
 						</p>
-					</div>
+					</button>
 				</div>
 				<div className="flex items-center justify-center gap-2 mt-4 text-xs text-slate-500 flex-wrap">
 					<span className="bg-slate-800 px-2 py-1 rounded">cron (30 min)</span>
