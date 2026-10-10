@@ -1,6 +1,6 @@
+﻿import { API_BASE } from "@/lib/api";
 import { Activity, AlertCircle, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { useCallback, useEffect, useState } from "react";
 
 interface HealthData {
 	health: {
@@ -22,11 +22,11 @@ export function Status() {
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 
-	const fetchStatus = async () => {
+	const fetchStatus = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 		try {
-			const res = await fetch(API_BASE + "/api/status");
+			const res = await fetch(`${API_BASE}/api/status`);
 			if (!res.ok) throw new Error(`HTTP ${res.status}`);
 			const data: HealthData = await res.json();
 			setHealth(data.health ?? data);
@@ -35,11 +35,11 @@ export function Status() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchStatus();
-	}, []);
+	}, [fetchStatus]);
 
 	return (
 		<div className="space-y-6">
@@ -48,6 +48,7 @@ export function Status() {
 				<h2 className="text-xl font-bold text-white">Agent Status</h2>
 				<div className="flex-1" />
 				<button
+					type="button"
 					onClick={fetchStatus}
 					disabled={loading}
 					className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 transition-colors disabled:opacity-50"
@@ -62,7 +63,7 @@ export function Status() {
 			{error && (
 				<div className="flex items-center gap-2 border border-red-800 rounded-lg bg-red-950/50 p-3 text-sm text-red-300">
 					<AlertCircle className="w-4 h-4 shrink-0" />
-					{error} — start the backend first (
+					{error} â€” start the backend first (
 					<code className="text-red-200 bg-red-900/50 px-1 rounded">
 						.\start.ps1
 					</code>
@@ -85,7 +86,7 @@ export function Status() {
 						label="Active Workflow"
 						value={health.active_workflow ?? "none"}
 					/>
-					<StatCard label="Current Node" value={health.current_node ?? "—"} />
+					<StatCard label="Current Node" value={health.current_node ?? "â€”"} />
 					<StatCard
 						label="Pending Tasks"
 						value={String(health.tasks.pending)}

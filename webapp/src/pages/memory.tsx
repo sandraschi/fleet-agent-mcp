@@ -1,6 +1,6 @@
+﻿import { API_BASE } from "@/lib/api";
 import { AlertCircle, Brain, RefreshCw, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
 
 interface Card {
 	id: string;
@@ -51,7 +51,9 @@ export function Memory() {
 		}
 	}, []);
 
-	useEffect(() => { fetchMemory(); }, [fetchMemory]);
+	useEffect(() => {
+		fetchMemory();
+	}, [fetchMemory]);
 
 	const handleSearch = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -73,17 +75,23 @@ export function Memory() {
 						placeholder="Search cards..."
 						className="w-48 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-600 outline-none focus:border-fleet-500"
 					/>
-					<button type="submit" className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white">
+					<button
+						type="submit"
+						className="p-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white"
+					>
 						<Search className="w-3.5 h-3.5" />
 					</button>
 				</form>
 
 				<button
+					type="button"
 					onClick={() => fetchMemory()}
 					disabled={loading}
 					className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 transition-colors"
 				>
-					<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+					<RefreshCw
+						className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+					/>
 				</button>
 			</div>
 
@@ -101,7 +109,10 @@ export function Memory() {
 
 			<div className="grid grid-cols-1 gap-3">
 				{cards.map((card) => (
-					<div key={card.id} className="border border-slate-800 rounded-lg bg-slate-900/50 p-4">
+					<div
+						key={card.id}
+						className="border border-slate-800 rounded-lg bg-slate-900/50 p-4"
+					>
 						<h3 className="text-sm font-semibold text-white mb-1">
 							{card.title || extractTitle(card.content, card.id)}
 						</h3>
@@ -111,12 +122,18 @@ export function Memory() {
 						</p>
 						<div className="flex items-center gap-2 mt-3">
 							{card.category && (
-								<span className="text-[10px] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded">{card.category}</span>
+								<span className="text-[10px] text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded">
+									{card.category}
+								</span>
 							)}
 							{(card.tags || []).map((t) => (
 								<button
+									type="button"
 									key={t}
-									onClick={() => { setSearch(t); fetchMemory(t); }}
+									onClick={() => {
+										setSearch(t);
+										fetchMemory(t);
+									}}
 									className="text-xs bg-fleet-900/50 text-fleet-400 px-2 py-0.5 rounded hover:bg-fleet-800 transition-colors"
 								>
 									{t}

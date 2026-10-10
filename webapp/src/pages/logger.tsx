@@ -1,3 +1,4 @@
+﻿import { API_BASE } from "@/lib/api";
 import {
 	Activity,
 	AlertTriangle,
@@ -8,7 +9,6 @@ import {
 	XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE } from "@/lib/api";
 
 interface LogEntry {
 	id: string;
@@ -42,7 +42,7 @@ export function LoggerPage() {
 
 	const fetchLogs = useCallback(async () => {
 		try {
-			const res = await fetch(API_BASE + "/api/logs?limit=200");
+			const res = await fetch(`${API_BASE}/api/logs?limit=200`);
 			if (res.ok) {
 				const data = await res.json();
 				setLogs(data.logs ?? []);
@@ -74,6 +74,7 @@ export function LoggerPage() {
 		};
 	}, [fetchLogs]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `logs` is the intentional retrigger (scroll on new log), not a read dependency.
 	useEffect(() => {
 		if (autoScroll) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 	}, [logs, autoScroll]);
@@ -106,6 +107,7 @@ export function LoggerPage() {
 					<div className="flex bg-slate-900 border border-slate-800 rounded-lg overflow-hidden text-xs">
 						{["all", "info", "warn", "error", "debug"].map((lvl) => (
 							<button
+								type="button"
 								key={lvl}
 								onClick={() => setFilter(lvl)}
 								className={`px-2.5 py-1.5 font-medium transition-colors ${
@@ -122,6 +124,7 @@ export function LoggerPage() {
 					</div>
 
 					<button
+						type="button"
 						onClick={() => setAutoScroll(!autoScroll)}
 						className={`px-2.5 py-1.5 text-xs rounded-lg border transition-colors ${
 							autoScroll
@@ -133,6 +136,7 @@ export function LoggerPage() {
 					</button>
 
 					<button
+						type="button"
 						onClick={fetchLogs}
 						className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-400 hover:text-white transition-colors"
 					>
@@ -141,6 +145,7 @@ export function LoggerPage() {
 					</button>
 
 					<button
+						type="button"
 						onClick={() => setLogs([])}
 						className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-400 hover:text-white transition-colors"
 					>
@@ -153,7 +158,7 @@ export function LoggerPage() {
 			{/* Log count */}
 			<p className="text-xs text-slate-500 mb-2 shrink-0">
 				{filtered.length} entries{filter !== "all" ? ` (level: ${filter})` : ""}
-				{esRef.current ? " · Live" : ""}
+				{esRef.current ? " Â· Live" : ""}
 			</p>
 
 			{/* Log list */}

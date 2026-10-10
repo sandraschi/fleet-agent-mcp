@@ -1,6 +1,6 @@
+﻿import { API_BASE } from "@/lib/api";
 import { AlertCircle, RefreshCw, TrendingUp } from "lucide-react";
-import { useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { useCallback, useEffect, useState } from "react";
 
 interface EvoEntry {
 	id: string;
@@ -15,10 +15,10 @@ export function Evolution() {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
-	const fetchEvolution = async () => {
+	const fetchEvolution = useCallback(async () => {
 		setLoading(true);
 		try {
-			const r = await fetch(API_BASE + "/api/evolution");
+			const r = await fetch(`${API_BASE}/api/evolution`);
 			if (!r.ok) throw new Error(`HTTP ${r.status}`);
 			const d = await r.json();
 			setEntries(d.entries ?? []);
@@ -27,11 +27,11 @@ export function Evolution() {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		fetchEvolution();
-	}, []);
+	}, [fetchEvolution]);
 
 	return (
 		<div className="space-y-6">
@@ -40,6 +40,7 @@ export function Evolution() {
 				<h2 className="text-xl font-bold text-white">Evolution Log</h2>
 				<div className="flex-1" />
 				<button
+					type="button"
 					onClick={fetchEvolution}
 					disabled={loading}
 					className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 transition-colors"

@@ -1,4 +1,4 @@
-import {
+﻿import {
 	Activity,
 	Brain,
 	Briefcase,
@@ -39,16 +39,16 @@ const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
 ];
 
 const TAB_SUBS: Record<Tab, string> = {
-	overview: "71 tools, 18 subsystems — Fritz on FastMCP 3.2",
-	flowforge: "11 tools — YAML state machine, anti-spin failure limits",
-	pulse: "6 tools — task management, north-star alignment",
-	memory: "8 tools — compile-time knowledge wiki, SKILL.md importer",
-	identity: "4 tools — agent self-definition, SOUL.md, north star",
-	teleport: "3 tools — pack, inspect, unpack .soul archives",
-	evolution: "3 tools — mistake log, correction, lesson extraction",
-	heartbeat: "3 tools — cron wake-up, health monitoring",
-	coworker: "11 tools — scheduled office + fleet flows",
-	intel: "3 tools — HTML reports hub + AIWatcher ingest",
+	overview: "71 tools, 18 subsystems â€” Fritz on FastMCP 3.2",
+	flowforge: "11 tools â€” YAML state machine, anti-spin failure limits",
+	pulse: "6 tools â€” task management, north-star alignment",
+	memory: "8 tools â€” compile-time knowledge wiki, SKILL.md importer",
+	identity: "4 tools â€” agent self-definition, SOUL.md, north star",
+	teleport: "3 tools â€” pack, inspect, unpack .soul archives",
+	evolution: "3 tools â€” mistake log, correction, lesson extraction",
+	heartbeat: "3 tools â€” cron wake-up, health monitoring",
+	coworker: "11 tools â€” scheduled office + fleet flows",
+	intel: "3 tools â€” HTML reports hub + AIWatcher ingest",
 };
 
 function mdToHtml(md: string): string {
@@ -60,12 +60,13 @@ function mdToHtml(md: string): string {
 			.replace(/"/g, "&quot;");
 
 	const blocks: string[] = [];
+	const NUL = String.fromCharCode(0);
 	const out = md.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, _lang, code) => {
 		const idx = blocks.length;
 		blocks.push(
 			`<div class="relative my-4"><pre class="bg-slate-900 border border-slate-800 rounded-lg p-4 overflow-x-auto text-sm font-mono text-slate-300"><code>${esc(code.trimEnd())}</code></pre></div>`,
 		);
-		return `\x00BLOCK${idx}\x00`;
+		return `${NUL}BLOCK${idx}${NUL}`;
 	});
 
 	const lines = out.split("\n");
@@ -75,9 +76,9 @@ function mdToHtml(md: string): string {
 	while (i < lines.length) {
 		const line = lines[i];
 
-		if (/^\x00BLOCK\d+\x00$/.test(line.trim())) {
+		if (new RegExp(`^${NUL}BLOCK\\d+${NUL}$`).test(line.trim())) {
 			const idx = Number.parseInt(
-				line.trim().replace(/\x00BLOCK(\d+)\x00/, "$1"),
+				line.trim().replace(new RegExp(`${NUL}BLOCK(\\d+)${NUL}`), "$1"),
 			);
 			result.push(blocks[idx]);
 			i++;
@@ -173,15 +174,15 @@ function mdToHtml(md: string): string {
 	return result.join("");
 }
 
-// ── Markdown content per tab ──────────────────────────────────────────────
+// â”€â”€ Markdown content per tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-const OVERVIEW = `# fleet-agent — Fritz
+const OVERVIEW = `# fleet-agent â€” Fritz
 
 Self-evolving AI agent. **71 FastMCP 3.2 tools** across **18 subsystems**.
 
-**Inspired by [kagura-agent](https://github.com/kagura-agent)** — 887+ PRs across 52 repos.
+**Inspired by [kagura-agent](https://github.com/kagura-agent)** â€” 887+ PRs across 52 repos.
 
-> *"Friedrich! Was ist dir!"* — Sandra, when Fritz messes up
+> *"Friedrich! Was ist dir!"* â€” Sandra, when Fritz messes up
 
 ---
 
@@ -213,7 +214,7 @@ uv sync
 
 See **Coworker** and **Intel Hub** tabs for scheduled flows and iPad reports.`;
 
-const FLOWFORGE = `# FlowForge — State Machine
+const FLOWFORGE = `# FlowForge â€” State Machine
 
 YAML-defined, enforced workflow engine. Prevents agents from skipping steps.
 
@@ -256,25 +257,25 @@ nodes:
 
 ## 11 Tools
 
-- \`workflow_define\` — Register YAML workflow
-- \`workflow_autodiscover\` — Scan ./workflows/ for .yaml files
-- \`workflow_start\` — New instance
-- \`workflow_status\` — Current node, task, branches, blocked state
-- \`workflow_next\` — Advance (pass branch=N for branching)
-- \`workflow_failure_record\` — Record node failure & enforce failure_limit auto-blocking
-- \`workflow_unblock\` — Clear blocked state and reset failure counter
-- \`workflow_log\` — Execution history
-- \`workflow_list\` — All registered workflows
-- \`workflow_active\` — Active instances
-- \`workflow_reset\` — Restart from start
+- \`workflow_define\` â€” Register YAML workflow
+- \`workflow_autodiscover\` â€” Scan ./workflows/ for .yaml files
+- \`workflow_start\` â€” New instance
+- \`workflow_status\` â€” Current node, task, branches, blocked state
+- \`workflow_next\` â€” Advance (pass branch=N for branching)
+- \`workflow_failure_record\` â€” Record node failure & enforce failure_limit auto-blocking
+- \`workflow_unblock\` â€” Clear blocked state and reset failure counter
+- \`workflow_log\` â€” Execution history
+- \`workflow_list\` â€” All registered workflows
+- \`workflow_active\` â€” Active instances
+- \`workflow_reset\` â€” Restart from start
 
 ## Included
 
-- **daily** — review → maintain → learn → act
-- **contribution** — study → implement → test → submit → verify → done
-- **learning** — research → synthesize → document → apply`;
+- **daily** â€” review â†’ maintain â†’ learn â†’ act
+- **contribution** â€” study â†’ implement â†’ test â†’ submit â†’ verify â†’ done
+- **learning** â€” research â†’ synthesize â†’ document â†’ apply`;
 
-const PULSE = `# Pulse — Task Management
+const PULSE = `# Pulse â€” Task Management
 
 Unified task management with north-star alignment.
 
@@ -290,12 +291,12 @@ Unified task management with north-star alignment.
 
 ## 6 Tools
 
-- \`pulse_add(task, group?, priority?, recurrence?)\` — Add task
-- \`pulse_list(group?, status?)\` — List with filters
-- \`pulse_complete(task_id)\` — Mark done
-- \`pulse_delete(task_id)\` — Remove permanently
-- \`pulse_stale(days?)\` — Find untouched (default 3 days)
-- \`pulse_align()\` — Top 5 by priority then age
+- \`pulse_add(task, group?, priority?, recurrence?)\` â€” Add task
+- \`pulse_list(group?, status?)\` â€” List with filters
+- \`pulse_complete(task_id)\` â€” Mark done
+- \`pulse_delete(task_id)\` â€” Remove permanently
+- \`pulse_stale(days?)\` â€” Find untouched (default 3 days)
+- \`pulse_align()\` â€” Top 5 by priority then age
 
 \`\`\`python
 pulse_add("Write SPEC.md", group="self", priority="high")
@@ -306,11 +307,11 @@ pulse_align()       # Strategic priority ordering
 
 ## Recurrence
 
-\`"0 */4 * * *"\` — Every 4h
-\`"0 9 * * *"\` — Daily at 9 AM
-\`"0 0 * * 1"\` — Every Monday`;
+\`"0 */4 * * *"\` â€” Every 4h
+\`"0 9 * * *"\` â€” Daily at 9 AM
+\`"0 0 * * 1"\` â€” Every Monday`;
 
-const MEMORY = `# Memory — Knowledge Wiki
+const MEMORY = `# Memory â€” Knowledge Wiki
 
 Compile-time knowledge accumulation. Cards integrated at write time, not assembled at query time.
 
@@ -326,14 +327,14 @@ Compile-time knowledge accumulation. Cards integrated at write time, not assembl
 
 ## 8 Tools
 
-- \`memory_card_create(title, content, tags?, category?)\` — New card
-- \`import_external_skill(file_path, tags?)\` — Import SKILL.md from OpenClaw/Anthropic/Hermes
-- \`memory_card_search(query)\` — Full-text search
-- \`memory_card_update(card_id, content, tags?)\` — Update (query-writeback)
-- \`memory_cards_list()\` — All cards
-- \`memory_lint()\` — Broken refs, stale (30d), untagged
-- \`memory_project_note(project, content, tags?)\` — Log observation
-- \`memory_project_notes(project?)\` — List notes
+- \`memory_card_create(title, content, tags?, category?)\` â€” New card
+- \`import_external_skill(file_path, tags?)\` â€” Import SKILL.md from OpenClaw/Anthropic/Hermes
+- \`memory_card_search(query)\` â€” Full-text search
+- \`memory_card_update(card_id, content, tags?)\` â€” Update (query-writeback)
+- \`memory_cards_list()\` â€” All cards
+- \`memory_lint()\` â€” Broken refs, stale (30d), untagged
+- \`memory_project_note(project, content, tags?)\` â€” Log observation
+- \`memory_project_notes(project?)\` â€” List notes
 
 \`\`\`python
 memory_card_create(
@@ -342,14 +343,14 @@ memory_card_create(
     tags=["sqlite", "performance"]
 )
 memory_lint()
-# → issues: broken_refs, stale, untagged
+# â†’ issues: broken_refs, stale, untagged
 \`\`\`
 
 ## Query Writeback
 
-Search → find outdated info → update → knowledge compounds. Answers feed back into the wiki so you never re-derive them.`;
+Search â†’ find outdated info â†’ update â†’ knowledge compounds. Answers feed back into the wiki so you never re-derive them.`;
 
-const IDENTITY = `# Identity — Agent Self-Definition
+const IDENTITY = `# Identity â€” Agent Self-Definition
 
 Core identity system defining who the agent is, what it stands for, and who it serves.
 
@@ -365,10 +366,10 @@ Files cascade: \`~/.fleet-agent/identity/\` overrides \`./identity/\`.
 
 ## 4 Tools
 
-- \`identity_whoami()\` — Name, human, soul preview
-- \`identity_soul()\` — Full SOUL.md
-- \`identity_north_star()\` — Purpose and goals
-- \`identity_user()\` — Human partner info
+- \`identity_whoami()\` â€” Name, human, soul preview
+- \`identity_soul()\` â€” Full SOUL.md
+- \`identity_north_star()\` â€” Purpose and goals
+- \`identity_user()\` â€” Human partner info
 
 ## Custom Identity
 
@@ -383,7 +384,7 @@ New-Item -Type Dir -Force "$env:USERPROFILE\\.fleet-agent\\identity"
 **Partner:** Sandra (Vienna)
 **North Star:** Truly become a human companion`;
 
-const TELEPORT = `# Teleport — Soul Migration
+const TELEPORT = `# Teleport â€” Soul Migration
 
 Pack an agent's identity, memory, workflows, and database into a portable archive for migration.
 
@@ -398,37 +399,37 @@ Pack an agent's identity, memory, workflows, and database into a portable archiv
 
 ## 3 Tools
 
-- \`teleport_pack(output_path?)\` — Create .soul archive
-- \`teleport_inspect(soul_path)\` — Preview without extracting
-- \`teleport_unpack(soul_path, target_dir?)\` — Full restore (DESTRUCTIVE)
+- \`teleport_pack(output_path?)\` â€” Create .soul archive
+- \`teleport_inspect(soul_path)\` â€” Preview without extracting
+- \`teleport_unpack(soul_path, target_dir?)\` â€” Full restore (DESTRUCTIVE)
 
 \`\`\`python
 teleport_pack()
-# → ~/.fleet-agent/lumen_20260519.soul
+# â†’ ~/.fleet-agent/lumen_20260519.soul
 
 teleport_inspect("lumen_20260519.soul")
-# → manifest, files, count
+# â†’ manifest, files, count
 
 teleport_unpack("lumen_20260519.soul")
-# → restores identity + workflows + DB + memory
+# â†’ restores identity + workflows + DB + memory
 \`\`\`
 
 ## Archive Structure
 
 \`\`\`
 lumen_20260519.soul (tar.gz)
-├── manifest.json
-├── identity/SOUL.md
-├── workflows/*.yaml
-├── data/fleet-agent.db
-└── memory/cards/*.md
+â”œâ”€â”€ manifest.json
+â”œâ”€â”€ identity/SOUL.md
+â”œâ”€â”€ workflows/*.yaml
+â”œâ”€â”€ data/fleet-agent.db
+â””â”€â”€ memory/cards/*.md
 \`\`\``;
 
-const EVOLUTION = `# Evolution Log — Learn From Every Mistake
+const EVOLUTION = `# Evolution Log â€” Learn From Every Mistake
 
 Systematic recording of mistakes, corrections, and lessons. No curation, no hiding.
 
-> "When I mess up, it's in the git history. When I learn something, it goes into my wiki." — Kagura
+> "When I mess up, it's in the git history. When I learn something, it goes into my wiki." â€” Kagura
 
 ## Entry Format
 
@@ -440,30 +441,30 @@ Systematic recording of mistakes, corrections, and lessons. No curation, no hidi
 
 ## 3 Tools
 
-- \`evolution_record(correction, lesson, context?)\` — Log it
-- \`evolution_list(limit?)\` — Browse (default 50)
-- \`evolution_stats()\` — Stats + duplicate detection
+- \`evolution_record(correction, lesson, context?)\` â€” Log it
+- \`evolution_list(limit?)\` â€” Browse (default 50)
+- \`evolution_stats()\` â€” Stats + duplicate detection
 
 \`\`\`python
 evolution_record(
-    correction="Used shell=True — switched to create_subprocess_exec",
+    correction="Used shell=True â€” switched to create_subprocess_exec",
     lesson="NEVER use shell=True for subprocess calls",
     context="Building the state machine engine"
 )
 
 evolution_stats()
-# → {"total_corrections": 47, "unique_lessons": 31,
+# â†’ {"total_corrections": 47, "unique_lessons": 31,
 #    "duplicate_lessons": [...], "recent": [...]}
 \`\`\`
 
 ## Best Practices
 
-1. Record immediately — log while context is fresh
+1. Record immediately â€” log while context is fresh
 2. State lessons as rules: "ALWAYS X", "NEVER Y"
-3. Include context — what were you trying to do?
-4. Review daily — the daily workflow checks evolution stats`;
+3. Include context â€” what were you trying to do?
+4. Review daily â€” the daily workflow checks evolution stats`;
 
-const HEARTBEAT = `# Heartbeat — Wake-Up & Health
+const HEARTBEAT = `# Heartbeat â€” Wake-Up & Health
 
 Cron-based agent wake-up routine and health monitoring.
 
@@ -473,15 +474,15 @@ Cron-based agent wake-up routine and health monitoring.
 
 \`\`\`
 heartbeat_wake()
-  → Active workflow? Return current task + branches
-  → Pending tasks? Return highest priority
-  → Idle? Suggest maintenance
+  â†’ Active workflow? Return current task + branches
+  â†’ Pending tasks? Return highest priority
+  â†’ Idle? Suggest maintenance
 \`\`\`
 
 ## 2 Tools
 
-- \`heartbeat_wake()\` — What to do right now
-- \`heartbeat_status()\` — Full health check
+- \`heartbeat_wake()\` â€” What to do right now
+- \`heartbeat_status()\` â€” Full health check
 
 ### heartbeat_wake() output
 
@@ -502,12 +503,12 @@ heartbeat_wake()
 
 \`\`\`python
 heartbeat_status()
-# → {"health": {"agent_name": "Fritz", "uptime_human": "2h 15m",
+# â†’ {"health": {"agent_name": "Fritz", "uptime_human": "2h 15m",
 #    "active_workflow": "daily", "tasks": {"pending": 3, "done": 12},
 #    "memory_cards": 23, "evolution_entries": 47}}
 \`\`\``;
 
-const COWORKER = `# Coworker — Poor Man's Viktor
+const COWORKER = `# Coworker â€” Poor Man's Viktor
 
 Scheduled office + fleet flows (Europe/Vienna). See \`docs/coworker-plan.md\`.
 
@@ -518,7 +519,7 @@ Scheduled office + fleet flows (Europe/Vienna). See \`docs/coworker-plan.md\`.
 | \`coworker_fleet_pulse\` | Daily 07:00 |
 | \`coworker_inbox_briefing\` | Weekdays 08:00 |
 | \`coworker_day_prep\` | Weekdays 08:30 |
-| \`coworker_devices_watch\` | Every 5m — kitchen temp, CO, Ring |
+| \`coworker_devices_watch\` | Every 5m â€” kitchen temp, CO, Ring |
 | \`coworker_docs_drift\` | Sunday 10:00 |
 | \`coworker_weekly_report_pdf\` | Friday 17:00 |
 | \`coworker_bootstrap()\` | Seed recurring tasks on boot |
@@ -531,9 +532,9 @@ Pretty HTML reports for iPad (Tailscale / Funnel). Port **11027**.
 
 ## MCP tools
 
-- \`intel_reports_publish(title, markdown, ...)\` — publish any report
-- \`intel_reports_list(limit=20)\` — catalog
-- \`aiwatcher_push_event(title, summary, urgency_hint?)\` — Fleet Events feed
+- \`intel_reports_publish(title, markdown, ...)\` â€” publish any report
+- \`intel_reports_list(limit=20)\` â€” catalog
+- \`aiwatcher_push_event(title, summary, urgency_hint?)\` â€” Fleet Events feed
 
 ## Urgent path
 
@@ -565,6 +566,7 @@ export function Help() {
 			<nav className="flex overflow-x-auto border-b border-slate-800 -mx-6 px-6">
 				{TABS.map((tab) => (
 					<button
+						type="button"
 						key={tab.id}
 						onClick={() => setActiveTab(tab.id)}
 						className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
@@ -583,17 +585,18 @@ export function Help() {
 			{/* Content */}
 			<div
 				className="prose prose-invert max-w-none"
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: CONTENT is a bundled constant rendered through esc()-escaping mdToHtml (no user input reaches __html).
 				dangerouslySetInnerHTML={{ __html: mdToHtml(CONTENT[activeTab]) }}
 			/>
 
 			{/* Footer */}
 			<footer className="border-t border-slate-800 pt-6 mt-8 flex items-center gap-3 text-xs text-slate-500">
 				<span>fleet-agent v0.2.1-pre</span>
-				<span>·</span>
+				<span>Â·</span>
 				<span>Fritz</span>
-				<span>·</span>
+				<span>Â·</span>
 				<span>Sandra (Vienna)</span>
-				<span>·</span>
+				<span>Â·</span>
 				<span>10996 / 10997 / 11027</span>
 				<div className="flex-1" />
 				<a
@@ -603,7 +606,7 @@ export function Help() {
 					className="flex items-center gap-1 hover:text-fleet-400 transition-colors"
 				>
 					<ExternalLink className="w-3 h-3" />
-					Kagura — 887+ PRs, 52 repos
+					Kagura â€” 887+ PRs, 52 repos
 				</a>
 			</footer>
 		</div>
