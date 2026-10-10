@@ -1,3 +1,4 @@
+﻿import { API_BASE } from "@/lib/api";
 import {
 	Check,
 	Eye,
@@ -8,7 +9,6 @@ import {
 	X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
 
 interface Settings {
 	provider: string;
@@ -44,7 +44,7 @@ export function SettingsPage() {
 
 	const fetchSettings = useCallback(async () => {
 		try {
-			const res = await fetch(API_BASE + "/api/settings");
+			const res = await fetch(`${API_BASE}/api/settings`);
 			if (res.ok) setSettings(await res.json());
 		} catch {
 			/* ignore */
@@ -55,7 +55,7 @@ export function SettingsPage() {
 	const fetchModels = useCallback(async () => {
 		setModelLoading(true);
 		try {
-			const res = await fetch(API_BASE + "/api/models");
+			const res = await fetch(`${API_BASE}/api/models`);
 			if (res.ok) {
 				const data = await res.json();
 				setModels(data.models ?? []);
@@ -81,7 +81,7 @@ export function SettingsPage() {
 		if (!settings) return;
 		setSaving(true);
 		try {
-			const res = await fetch(API_BASE + "/api/settings", {
+			const res = await fetch(`${API_BASE}/api/settings`, {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(settings),
@@ -97,17 +97,17 @@ export function SettingsPage() {
 		setTesting(true);
 		setTestResult(null);
 		try {
-			const res = await fetch(API_BASE + "/api/models");
+			const res = await fetch(`${API_BASE}/api/models`);
 			if (res.ok) {
 				const data = await res.json();
 				if (data.models?.length) {
 					setTestResult({
 						ok: true,
-						msg: `Connected — ${data.models.length} models found`,
+						msg: `Connected â€” ${data.models.length} models found`,
 					});
 					setModels(data.models);
 				} else {
-					setTestResult({ ok: true, msg: "Connected — no models loaded" });
+					setTestResult({ ok: true, msg: "Connected â€” no models loaded" });
 				}
 			} else {
 				setTestResult({ ok: false, msg: "Connection failed" });
@@ -148,6 +148,7 @@ export function SettingsPage() {
 				<div className="flex items-center gap-3 mb-4">
 					{PROVIDERS.map((p) => (
 						<button
+							type="button"
 							key={p.id}
 							onClick={() => selectProvider(p.id)}
 							className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
@@ -178,10 +179,14 @@ export function SettingsPage() {
 
 				<div className="space-y-4">
 					<div>
-						<label className="text-xs text-slate-500 uppercase tracking-wider">
+						<label
+							htmlFor="fld-settings-base-url"
+							className="text-xs text-slate-500 uppercase tracking-wider"
+						>
 							Base URL
 						</label>
 						<input
+							id="fld-settings-base-url"
 							type="text"
 							value={settings.base_url}
 							onChange={(e) =>
@@ -193,11 +198,15 @@ export function SettingsPage() {
 
 					<div className="flex gap-4">
 						<div className="flex-1">
-							<label className="text-xs text-slate-500 uppercase tracking-wider">
+							<label
+								htmlFor="settings-model"
+								className="text-xs text-slate-500 uppercase tracking-wider"
+							>
 								Model
 							</label>
 							<div className="flex gap-2">
 								<input
+									id="settings-model"
 									type="text"
 									value={settings.model}
 									onChange={(e) =>
@@ -207,6 +216,7 @@ export function SettingsPage() {
 									className="flex-1 mt-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-fleet-500 outline-none"
 								/>
 								<button
+									type="button"
 									onClick={fetchModels}
 									disabled={modelLoading}
 									className="mt-1 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-slate-400 hover:text-white disabled:opacity-50"
@@ -225,7 +235,7 @@ export function SettingsPage() {
 									}
 									className="w-full mt-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:border-fleet-500 outline-none"
 								>
-									<option value="">— select model —</option>
+									<option value="">â€” select model â€”</option>
 									{models.map((m) => (
 										<option key={m.name} value={m.name}>
 											{m.name} ({(m.size / 1e9).toFixed(1)} GB)
@@ -236,10 +246,14 @@ export function SettingsPage() {
 						</div>
 
 						<div className="w-32">
-							<label className="text-xs text-slate-500 uppercase tracking-wider">
+							<label
+								htmlFor="fld-settings-timeout-s"
+								className="text-xs text-slate-500 uppercase tracking-wider"
+							>
 								Timeout (s)
 							</label>
 							<input
+								id="fld-settings-timeout-s"
 								type="number"
 								value={settings.timeout}
 								min={5}
@@ -256,11 +270,15 @@ export function SettingsPage() {
 					</div>
 
 					<div>
-						<label className="text-xs text-slate-500 uppercase tracking-wider">
+						<label
+							htmlFor="settings-api-key"
+							className="text-xs text-slate-500 uppercase tracking-wider"
+						>
 							API Key (for OpenAI-compatible)
 						</label>
 						<div className="flex gap-2 mt-1">
 							<input
+								id="settings-api-key"
 								type={showKey ? "text" : "password"}
 								value={settings.api_key}
 								onChange={(e) =>
@@ -270,6 +288,7 @@ export function SettingsPage() {
 								placeholder="sk-..."
 							/>
 							<button
+								type="button"
 								onClick={() => setShowKey(!showKey)}
 								className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 hover:text-white"
 							>
@@ -287,6 +306,7 @@ export function SettingsPage() {
 			{/* Actions */}
 			<div className="flex gap-3 items-center">
 				<button
+					type="button"
 					onClick={handleSave}
 					disabled={saving}
 					className="flex items-center gap-2 px-4 py-2 bg-fleet-700 hover:bg-fleet-600 text-white rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
@@ -295,6 +315,7 @@ export function SettingsPage() {
 					{saving ? "Saving..." : "Save"}
 				</button>
 				<button
+					type="button"
 					onClick={handleTest}
 					disabled={testing}
 					className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
@@ -326,6 +347,7 @@ export function SettingsPage() {
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
 						{models.map((m) => (
 							<button
+								type="button"
 								key={m.name}
 								onClick={() => setSettings({ ...settings, model: m.name })}
 								className={`text-left px-3 py-2 rounded-lg text-sm border transition-colors ${
