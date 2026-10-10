@@ -1,6 +1,37 @@
 
 # Changelog
 
+## [Unreleased] - pass-2 2026-10-10 (score-lift toward >=60)
+
+### Fixed
+- MCPB manifest now launches stdio (`uv run --directory ${__dirname} python -m
+  fleet_agent --stdio`, entry `src/fleet_agent/server.py`); bundle audit went
+  BROKEN -> WARN -> clean. `python -m fleet_agent_mcp` works as a non-breaking
+  alias (INSTALL.md documented that name but the package dir is `fleet_agent`).
+- NSIS installer registers AI clients (vendored fleet `mcp-clients.nsh` +
+  `install-mcp-clients.ps1`, wired in `hooks.nsh`, vendored by
+  `native/build.ps1`); audit NOREG cleared.
+- `mcpb/pack.ps1` is a thin shim again (was a 272-line vendored copy);
+  `scripts/mcpb-pack.ps1` passes `-RepoRoot` to the central fleet pack script.
+  Full pack green incl. clean-unpack launch check; v0.2.3 release carries the
+  stable `.mcpb` + `install.ps1` (README/INSTALL one-liners resolve).
+- New `GET /api/inbox` (hub poll, hub-down shaped) + `GET /api/skills`
+  (skill memory cards); webapp gains Inbox and Skills pages on live data, and
+  Chat injects learned skills as system preprompt (skill-first).
+- Biome debt to zero (`biome:ci` exit 0, 125 diagnostics fixed: button types,
+  template literals, `node:` protocol, stable keys, label association,
+  keyboard handlers, semantic buttons, documented ignores for intentional
+  patterns); `tsc --noEmit` exit 0; e2e 4/4 green (Playwright dep added,
+  frontend webServer added to the config).
+- `justfile` gains `build-native` + `certify`; `cua-nsis-test` /
+  `cua-webapp-test` confirmed present via the `fleet.just` import.
+- `docs/` set complete: CONFIGURATION, DEVELOPMENT, TOOLS (registry-generated
+  via `scripts/generate_tools_doc.py`), TROUBLESHOOTING, ONBOARDING.
+- `examples.json` regenerated from the registry (134 entries, 4 stale tool
+  names dropped, full 104-tool coverage).
+- `config.py` honors `MCP_PORT` as the port fallback (pack launch-check
+  contract); `FLEET_AGENT_PORT` still wins.
+
 ## [Unreleased] - assfix 2026-10-09
 
 ### Security

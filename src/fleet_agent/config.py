@@ -1,8 +1,24 @@
 """Configuration via pydantic-settings."""
 
+import os
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _default_port() -> int:
+    """Port default: MCP_PORT fallback, then 10996.
+
+    The central MCPB pack script probes the packaged bundle with
+    MCP_PORT=<high free port> so the launch check never collides with a live
+    dev server. Honoring it here is what makes that contract hold.
+    FLEET_AGENT_PORT still wins (pydantic-settings env beats the default).
+    """
+    try:
+        return int(os.environ.get("MCP_PORT", "10996"))
+    except ValueError:
+        return 10996
 
 
 class Settings(BaseSettings):
@@ -13,7 +29,7 @@ class Settings(BaseSettings):
     )
 
     host: str = "127.0.0.1"
-    port: int = 10996
+    port: int = Field(default_factory=_default_port)
     transport: str = "http"
 
     # Paths

@@ -21,6 +21,21 @@ Self-evolving AI agent (Fritz) — state machine, task management, coworker work
 - `workflows/morning_brief.yaml` — WF-001 intel → ViLife → MemOps
 - `pyproject.toml` — build config and entry points
 
+## Daemon & transports (read before launching anything)
+
+- **Ports**: backend 10996 (REST + `/mcp`), webapp 10997 (vite), Intel Hub 11027.
+- **Do not start a second backend on 10996.** A steady-state Fritz instance
+  normally owns it; a second bind fails with `Errno 10048`. Check
+  `GET /api/health` first; scratch backends go on another port
+  (`--port 13996`) and shut down via `POST /api/shutdown`.
+- **Transports**: `--http` serves; `--stdio` probes `FLEET_AGENT_MCP_API_URL`
+  (`http://127.0.0.1:10996/mcp`) for a live daemon and proxies to it,
+  otherwise runs the registry in-process. Claude Desktop bundle entry:
+  `python -m fleet_agent --stdio` (`fleet_agent_mcp` is an alias).
+- **State**: `~/.fleet-agent/fleet-agent.db` (single writer assumed).
+- **No NSSM service ships with this repo**; if one is registered externally,
+  restart it with `sc.exe stop/start`, never by killing the child process.
+
 ## Quick Ref
 
 ```powershell

@@ -13,8 +13,7 @@ start:
 
 # Start backend only (no webapp)
 start-backend:
-    Set-Location '{{justfile_directory()}}'
-    .\.venv\Scripts\python.exe -m fleet_agent.server --http --port 10996
+    Set-Location '{{justfile_directory()}}'; .\.venv\Scripts\python.exe -m fleet_agent.server --http --port 10996
 
 # Start webapp dev server only
 start-webapp:
@@ -22,11 +21,7 @@ start-webapp:
 
 # Force rebuild: reinstall editable, clear pycache, restart
 rebuild:
-    Set-Location '{{justfile_directory()}}'
-    uv sync
-    .\.venv\Scripts\python.exe -m pip install -e . --quiet --no-input 2>&1 | Out-Null
-    Get-ChildItem -Path src -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
-    Write-Host "Rebuild complete. Run 'just start' to launch."
+    Set-Location '{{justfile_directory()}}'; uv sync; .\.venv\Scripts\python.exe -m pip install -e . --quiet --no-input 2>&1 | Out-Null; Get-ChildItem -Path src -Recurse -Directory -Filter __pycache__ | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue; Write-Host "Rebuild complete. Run 'just start' to launch."
 
 # Build webapp for production
 build-webapp:
@@ -34,16 +29,14 @@ build-webapp:
 
 # Run tests
 test:
-    Set-Location '{{justfile_directory()}}'
-    & "$env:USERPROFILE\.local\bin\uv.exe" run pytest tests/ -v
+    Set-Location '{{justfile_directory()}}'; & "$env:USERPROFILE\.local\bin\uv.exe" run pytest tests/ -v
 
 e2e:
     powershell.exe -NoProfile -NoProfile -ExecutionPolicy Bypass -File "D:\Dev\repos\mcp-central-docs\scripts\playwright-audit.ps1" -RepoPath "{{justfile_directory()}}"
 
 # Lint
 lint:
-    Set-Location '{{justfile_directory()}}'
-    & "$env:APPDATA\Python\Python313\Scripts\ruff.exe" check src/ tests/
+    Set-Location '{{justfile_directory()}}'; & "$env:APPDATA\Python\Python313\Scripts\ruff.exe" check src/ tests/
 
 # --- Intel Reports Hub  iPad  Tailscale port 11027 ---
 intel-hub:
@@ -51,14 +44,11 @@ intel-hub:
 
 # Start with stdio transport (for Cursor/Claude Desktop)
 start-stdio:
-    Set-Location '{{justfile_directory()}}'
-    & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --stdio
+    Set-Location '{{justfile_directory()}}'; & "$env:USERPROFILE\.local\bin\uv.exe" run -m fleet_agent.server --stdio
 
 # Bootstrap: install dev deps + pre-commit hook
 bootstrap:
-    uv sync --group dev
-    uv run pre-commit install
-    Write-Host "Pre-commit hooks installed." -ForegroundColor Green
+    uv sync --group dev; uv run pre-commit install; Write-Host "Pre-commit hooks installed." -ForegroundColor Green
 
 # Standard fleet aliases (assfix 2026-10-09: justfile gate requires serve/fmt)
 serve:
@@ -67,15 +57,16 @@ serve:
 fmt:
     & "$env:USERPROFILE\.local\bin\uv.exe" run ruff format src/ tests/
 
-mcpb-pack:
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\scripts\mcpb-pack.ps1"
+# mcpb-pack, cua-nsis-test, cua-webapp-test come from the fleet.just import
+# above (mcpb/pack.ps1 is a shim into scripts/mcpb-pack.ps1 -> central fleet
+# pack script). Do NOT redefine them here (duplicate recipe = just fails).
 
-# Build Tauri native desktop app (Rust + WebView2); cua-nsis-test and
-# cua-webapp-test come from the fleet.just import above (scripts/just/*.ps1).
+# Build Tauri native desktop app (Rust + WebView2)
 build-native:
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "{{justfile_directory()}}\native\build.ps1"
 
-# Full certification gate: style + types + behavior + webapp (single-line body;
-# just runs each recipe line as its own process, so no bare Set-Location lines).
+# Full certification gate: style + types + behavior + webapp
+# (single-line body; just runs each recipe line as its own process, so no
+# bare Set-Location lines)
 certify: lint
     & "$env:USERPROFILE\.local\bin\uv.exe" run pyright src/; & "$env:USERPROFILE\.local\bin\uv.exe" run pytest tests/ -q; Set-Location '{{justfile_directory()}}\webapp'; & "$env:USERPROFILE\.bun\bin\bun.exe" run typecheck; & "$env:USERPROFILE\.bun\bin\bun.exe" run biome:ci
