@@ -5,10 +5,12 @@ import { ContributionsPage } from "@/pages/contributions";
 import { Dashboard } from "@/pages/dashboard";
 import { Evolution } from "@/pages/evolution";
 import { Help } from "@/pages/help";
+import { InboxPage } from "@/pages/inbox";
 import { LoggerPage } from "@/pages/logger";
 import { Memory } from "@/pages/memory";
 import { ScriptsPage } from "@/pages/scripts";
 import { SettingsPage } from "@/pages/settings";
+import { SkillsPage } from "@/pages/skills";
 import { Status } from "@/pages/status";
 import { Tasks } from "@/pages/tasks";
 import { Tools } from "@/pages/tools";
@@ -35,6 +37,8 @@ function App() {
 					<Route path="/status" element={<Status />} />
 					<Route path="/contributions" element={<ContributionsPage />} />
 					<Route path="/memory" element={<Memory />} />
+					<Route path="/inbox" element={<InboxPage />} />
+					<Route path="/skills" element={<SkillsPage />} />
 					<Route path="/evolution" element={<Evolution />} />
 					<Route path="/tasks" element={<Tasks />} />
 					<Route path="*" element={<Navigate to="/" replace />} />

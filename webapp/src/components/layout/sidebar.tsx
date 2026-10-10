@@ -9,10 +9,12 @@ import {
 	GitBranch,
 	GitPullRequest,
 	HelpCircle,
+	Inbox,
 	LayoutDashboard,
 	ListChecks,
 	Network,
 	Settings2,
+	Sparkles,
 	Terminal,
 	TrendingUp,
 } from "lucide-react";
@@ -28,9 +30,11 @@ const navItems = [
 	{ href: "/automaton", label: "Automaton", icon: Network },
 	{ href: "/chat", label: "Chat", icon: Bot },
 	{ href: "/tasks", label: "Tasks", icon: ListChecks },
+	{ href: "/inbox", label: "Inbox", icon: Inbox },
 	{ href: "/contributions", label: "PRs", icon: GitPullRequest },
 	{ href: "/scripts", label: "Scripts", icon: Code },
 	{ href: "/memory", label: "Memory", icon: Brain },
+	{ href: "/skills", label: "Skills", icon: Sparkles },
 	{ href: "/evolution", label: "Evolution", icon: TrendingUp },
 	{ href: "/help", label: "Help", icon: HelpCircle },
 	{ href: "/tools", label: "Tools", icon: GitBranch },
@@ -68,7 +72,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 					className="shrink-0 rounded-md p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
 					title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
 				>
-					{collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+					{collapsed ? (
+						<ChevronRight className="h-4 w-4" />
+					) : (
+						<ChevronLeft className="h-4 w-4" />
+					)}
 				</button>
 			</div>
 

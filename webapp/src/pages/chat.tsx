@@ -1,6 +1,6 @@
+import { API_BASE } from "@/lib/api";
 import { Bot, Download, Send, Terminal, Trash2, User } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE } from "@/lib/api";
 
 interface Message {
 	role: "user" | "assistant" | "system";
@@ -42,10 +42,16 @@ const PERSONALITIES: { id: string; name: string; prompt: string }[] = [
 
 const EXAMPLE_PROMPTS = [
 	{ label: "Fleet Pulse", text: "Run the morning fleet pulse report" },
-	{ label: "Workflows", text: "List all registered workflows and their status" },
+	{
+		label: "Workflows",
+		text: "List all registered workflows and their status",
+	},
 	{ label: "Tasks", text: "Show my pending high-priority tasks" },
 	{ label: "Knowledge", text: "Search memory cards for FastMCP patterns" },
-	{ label: "Evolution", text: "Show me recent corrections from the evolution log" },
+	{
+		label: "Evolution",
+		text: "Show me recent corrections from the evolution log",
+	},
 	{ label: "Health", text: "Check the arxiv + aiwatcher pipeline health" },
 ];
 
@@ -77,9 +83,11 @@ function buildSystemPrompt(
 	personalityId: string,
 	personalityPrompt: string,
 	customPrompt: string,
+	skillPreprompt: string,
 ): string {
-	if (personalityId === "custom") return customPrompt || "You are Fritz, a fleet conductor agent.";
-	return `You are a fleet conductor agent assisting Sandra with her MCP server fleet.\n\n---\n\n## Role\n${personalityPrompt}`;
+	if (personalityId === "custom")
+		return `${customPrompt || "You are Fritz, a fleet conductor agent."}${skillPreprompt}`;
+	return `You are a fleet conductor agent assisting Sandra with her MCP server fleet.\n\n---\n\n## Role\n${personalityPrompt}${skillPreprompt}`;
 }
 
 export function ChatPage() {
@@ -90,6 +98,8 @@ export function ChatPage() {
 	const [models, setModels] = useState<string[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [providerOk, setProviderOk] = useState<boolean | null>(null);
+	const [skillPreprompt, setSkillPreprompt] = useState("");
+	const [skillCount, setSkillCount] = useState<number | null>(null);
 	const [personalityId, setPersonalityId] = useState(() => {
 		try {
 			return localStorage.getItem(PERSONALITY_KEY) || "fritz";
@@ -101,7 +111,8 @@ export function ChatPage() {
 	const bottomRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
-	const personality = PERSONALITIES.find((p) => p.id === personalityId) || PERSONALITIES[0];
+	const personality =
+		PERSONALITIES.find((p) => p.id === personalityId) || PERSONALITIES[0];
 
 	useEffect(() => {
 		try {
@@ -126,6 +137,26 @@ export function ChatPage() {
 				setProviderOk(true);
 			})
 			.catch(() => setProviderOk(null));
+		// Skill-first: load learned skill cards as system preprompt (GET /api/skills).
+		fetch(`${API_BASE}/api/skills`)
+			.then((r) => r.json())
+			.then((d) => {
+				const list = (d.skills ?? []) as {
+					title?: string;
+					id: string;
+					content: string;
+				}[];
+				setSkillCount(list.length);
+				if (list.length === 0) return;
+				const section = list
+					.slice(0, 10)
+					.map(
+						(s) => `- ${s.title || s.id}: ${(s.content || "").slice(0, 300)}`,
+					)
+					.join("\n");
+				setSkillPreprompt(`\n\n---\n\n## Learned skills\n${section}`);
+			})
+			.catch(() => setSkillCount(null));
 	}, []);
 
 	useEffect(() => {
@@ -138,7 +169,11 @@ export function ChatPage() {
 		setInput("");
 		setError(null);
 
-		const userMsg: Message = { role: "user", content: text, ts: new Date().toISOString() };
+		const userMsg: Message = {
+			role: "user",
+			content: text,
+			ts: new Date().toISOString(),
+		};
 		const updated = [...messages, userMsg];
 		setMessages(updated);
 		saveMessages(updated);
@@ -147,17 +182,19 @@ export function ChatPage() {
 		const assistantMsg: Message = { role: "assistant", content: "" };
 		setMessages((prev) => [...prev, assistantMsg]);
 
-		const systemPrompt = buildSystemPrompt(personalityId, personality.prompt, customPrompt);
+		const systemPrompt = buildSystemPrompt(
+			personalityId,
+			personality.prompt,
+			customPrompt,
+			skillPreprompt,
+		);
 
 		try {
 			const res = await fetch(`${API_BASE}/api/chat`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					messages: [
-						{ role: "system", content: systemPrompt },
-						...updated,
-					],
+					messages: [{ role: "system", content: systemPrompt }, ...updated],
 					model: model || undefined,
 				}),
 			});
@@ -219,7 +256,16 @@ export function ChatPage() {
 			setError(errMsg);
 			setStreaming(false);
 		}
-	}, [input, streaming, messages, model, personalityId, personality, customPrompt]);
+	}, [
+		input,
+		streaming,
+		messages,
+		model,
+		personalityId,
+		personality,
+		customPrompt,
+		skillPreprompt,
+	]);
 
 	const handleSend = () => sendMessage();
 
@@ -268,19 +314,38 @@ export function ChatPage() {
 				? "Offline"
 				: "Detecting...";
 
-	const providerColor = providerOk === true ? "text-emerald-400" : providerOk === false ? "text-red-400" : "text-amber-400";
+	const providerColor =
+		providerOk === true
+			? "text-emerald-400"
+			: providerOk === false
+				? "text-red-400"
+				: "text-amber-400";
 
 	return (
 		<div className="flex flex-col h-[calc(100vh-7rem)]" data-testid="chat-page">
 			{/* Controls bar */}
-			<div className="flex items-center gap-3 mb-4 shrink-0 flex-wrap" data-testid="chat-controls">
+			<div
+				className="flex items-center gap-3 mb-4 shrink-0 flex-wrap"
+				data-testid="chat-controls"
+			>
 				<Bot className="w-6 h-6 text-fleet-400" />
 				<h2 className="text-xl font-bold text-white">Chat</h2>
 				<div className="flex-1" />
 
 				{/* Provider status */}
-				<span className={`text-xs font-mono ${providerColor}`} data-testid="provider-status">
+				<span
+					className={`text-xs font-mono ${providerColor}`}
+					data-testid="provider-status"
+				>
 					{providerLabel}
+				</span>
+
+				{/* Learned-skills indicator (skill-first preprompt) */}
+				<span
+					className="text-xs font-mono text-slate-500"
+					data-testid="chat-skills"
+				>
+					{skillCount === null ? "skills: ?" : `skills: ${skillCount}`}
 				</span>
 
 				{/* Model select */}
@@ -355,7 +420,10 @@ export function ChatPage() {
 			)}
 
 			{/* Messages */}
-			<div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2" data-testid="chat-messages">
+			<div
+				className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2"
+				data-testid="chat-messages"
+			>
 				{messages.length === 0 && (
 					<div className="flex flex-col items-center justify-center h-full text-slate-500">
 						<Bot className="w-12 h-12 mb-3 text-slate-700" />
@@ -413,7 +481,10 @@ export function ChatPage() {
 
 				{/* Example prompts (shown when no messages) */}
 				{messages.length === 0 && (
-					<div data-testid="example-prompts" className="flex flex-wrap gap-2 justify-center mt-4">
+					<div
+						data-testid="example-prompts"
+						className="flex flex-wrap gap-2 justify-center mt-4"
+					>
 						{EXAMPLE_PROMPTS.map((p) => (
 							<button
 								key={p.label}
