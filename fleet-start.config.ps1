@@ -7,10 +7,13 @@
     HealthPath   = '/api/whoami'
     WebRoot      = 'webapp'
     Backend = @{
-        Kind       = 'module-serve'
-        Module     = 'fleet_agent'
-        ServeArgs  = @('--http', '--port', '10996')
-        SyncExtras = @('dev')
+        # 'nssm', not 'module-serve' -- this backend runs as a persistent NSSM
+        # Windows service ('fleet-agent-mcp', = Name, so no NssmService
+        # override needed). Verified live 2026-10-10: PID chain
+        # nssm(6180) -> python(8372) -> listener(8848) owns :10996,
+        # GET /api/whoami 200. With module-serve the launcher treats the
+        # healthy service-held port as blocked (BUG-033 class).
+        Kind       = 'nssm'
         SyncOnStart  = $true
     }
     Frontend = @{
