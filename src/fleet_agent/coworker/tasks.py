@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import UTC, datetime
 from typing import Any
@@ -100,7 +101,7 @@ async def execute_recurring_task(task: dict[str, Any]) -> dict[str, Any]:
                     {"role": "user", "content": task["task"]},
                 ]
             )
-            _call("arxiv", "search_papers", {"query": query, "limit": 3})
+            await asyncio.to_thread(_call, "arxiv", "search_papers", {"query": query, "limit": 3})
             return {"handler": "arxiv", "success": True, "message": f"Searched arxiv: {query}"}
 
         if any(k in task_lower for k in ("speak", "sonnet", "say", "tts")):
@@ -115,15 +116,17 @@ async def execute_recurring_task(task: dict[str, Any]) -> dict[str, Any]:
                     {"role": "user", "content": task["task"]},
                 ]
             )
-            _call("speech", "speech_say", {"text": text})
+            await asyncio.to_thread(_call, "speech", "speech_say", {"text": text})
             return {"handler": "speech", "success": True, "message": "Speech dispatched"}
 
         if any(k in task_lower for k in ("yahboom", "robot", "car", "patrol")):
-            _call("yahboom", "yahboom_patrol", {"enable": True})
+            await asyncio.to_thread(_call, "yahboom", "yahboom_patrol", {"enable": True})
             return {"handler": "yahboom", "success": True, "message": "Patrol dispatched"}
 
         if any(k in task_lower for k in ("browser", "chrome", "website", "tab")):
-            _call("browser", "browser_open", {"urls": task.get("urls", [])})
+            await asyncio.to_thread(
+                _call, "browser", "browser_open", {"urls": task.get("urls", [])}
+            )
             return {"handler": "browser", "success": True, "message": "Browser dispatched"}
 
         from ..llm_client import chat_completion

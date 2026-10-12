@@ -69,9 +69,9 @@ async def github_create_branch(
     {"success": bool, "branch": str, "message": str}
     """
     try:
-        _git(repo_path, "checkout", base_branch)
-        _git(repo_path, "pull", "origin", base_branch)
-        _git(repo_path, "checkout", "-b", branch_name)
+        await asyncio.to_thread(_git, repo_path, "checkout", base_branch)
+        await asyncio.to_thread(_git, repo_path, "pull", "origin", base_branch)
+        await asyncio.to_thread(_git, repo_path, "checkout", "-b", branch_name)
         msg = f"Created branch {branch_name} from {base_branch}"
         return {"success": True, "branch": branch_name, "message": msg}
     except RuntimeError as e:
@@ -93,13 +93,17 @@ async def github_commit(
     """
     try:
         if files:
-            _git(repo_path, "add", *files)
+            await asyncio.to_thread(_git, repo_path, "add", *files)
         else:
-            _git(repo_path, "add", "-A")
-        _git(repo_path, "commit", "-m", message)
-        sha = _git(repo_path, "rev-parse", "HEAD")
+            await asyncio.to_thread(_git, repo_path, "add", "-A")
+        await asyncio.to_thread(_git, repo_path, "commit", "-m", message)
+        sha = await asyncio.to_thread(_git, repo_path, "rev-parse", "HEAD")
         count = (
-            len(_git(repo_path, "diff", "--cached", "--name-only").splitlines())
+            len(
+                (
+                    await asyncio.to_thread(_git, repo_path, "diff", "--cached", "--name-only")
+                ).splitlines()
+            )
             if not files
             else len(files)
         )
@@ -127,7 +131,7 @@ async def github_push(
             args.append(branch)
         if force:
             args.append("--force")
-        _git(repo_path, *args)
+        await asyncio.to_thread(_git, repo_path, *args)
         return {"success": True, "message": f"Pushed to {remote}/{branch or 'current'}"}
     except RuntimeError as e:
         return {"success": False, "message": str(e)}
@@ -409,8 +413,8 @@ async def github_status(
     {"success": bool, "branch": str, "changes": int, "ahead": int, "message": str}
     """
     try:
-        branch = _git(repo_path, "rev-parse", "--abbrev-ref", "HEAD")
-        status_output = _git(repo_path, "status", "--porcelain")
+        branch = await asyncio.to_thread(_git, repo_path, "rev-parse", "--abbrev-ref", "HEAD")
+        status_output = await asyncio.to_thread(_git, repo_path, "status", "--porcelain")
         lines = [x for x in status_output.splitlines() if x.strip()]
         changes = len(lines)
         msg = f"On {branch}, {changes} uncommitted changes"

@@ -6,6 +6,7 @@ One tool that orchestrates the full pipeline:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import subprocess
@@ -213,8 +214,8 @@ async def fritz_contribute(
 
     # 1. Clone
     step("clone", f"Cloning {repo_url}")
-    _sh_shell(f"rmdir /s /q {work_dir} 2>nul")
-    clone_out = _sh(["git", "clone", repo_url, str(work_dir)], timeout=120)
+    await asyncio.to_thread(_sh_shell, f"rmdir /s /q {work_dir} 2>nul")
+    clone_out = await asyncio.to_thread(_sh, ["git", "clone", repo_url, str(work_dir)], timeout=120)
     if not work_dir.is_dir():
         step("clone failed", clone_out)
         return {"success": False, "steps": steps, "message": f"Clone failed: {clone_out}"}
@@ -222,7 +223,8 @@ async def fritz_contribute(
 
     # 2. Run ruff to find issues
     step("ruff", "Scanning for lint errors...")
-    out = _sh(
+    out = await asyncio.to_thread(
+        _sh,
         [
             RUFF_EXE,
             "check",
@@ -312,7 +314,8 @@ async def fritz_contribute(
         return {"success": False, "steps": steps, "message": "LLM returned incomplete fix spec"}
 
     # 5. File issue via gh
-    issue_url = _sh(
+    issue_url = await asyncio.to_thread(
+        _sh,
         [
             "gh",
             "issue",
@@ -332,7 +335,7 @@ async def fritz_contribute(
 
     # 6. Create branch
     branch = f"fix/{code.lower()}"
-    _sh(["git", "checkout", "-b", branch], cwd=str(work_dir))
+    await asyncio.to_thread(_sh, ["git", "checkout", "-b", branch], cwd=str(work_dir))
     step("branch", branch)
 
     # 7. Apply fix directly (not via MCP - avoids self-call timeout)
@@ -362,20 +365,23 @@ async def fritz_contribute(
         step("fix", verified)
 
     # 8. Commit
-    _sh(["git", "add", "-A"], cwd=str(work_dir))
-    _sh(["git", "commit", "-m", title[:72]], cwd=str(work_dir))
+    await asyncio.to_thread(_sh, ["git", "add", "-A"], cwd=str(work_dir))
+    await asyncio.to_thread(_sh, ["git", "commit", "-m", title[:72]], cwd=str(work_dir))
     step("committed", "ok")
 
     # 9. Push - directly to origin for own repos (skip the fork dance entirely),
     # fork-based flow only for repos we don't own.
     own_repo = owner.lower() == _own_gh_user().lower()
     if own_repo:
-        _sh(["git", "push", "origin", branch, "--force"], cwd=str(work_dir), timeout=30)
+        await asyncio.to_thread(
+            _sh, ["git", "push", "origin", branch, "--force"], cwd=str(work_dir), timeout=30
+        )
         step("pushed", f"{branch} (own repo, direct to origin)")
         pr_head = branch
     else:
-        _sh(["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
-        _sh(
+        await asyncio.to_thread(_sh, ["gh", "repo", "fork", repo_url, "--clone=false"], timeout=15)
+        await asyncio.to_thread(
+            _sh,
             [
                 "git",
                 "remote",
@@ -385,13 +391,16 @@ async def fritz_contribute(
             ],
             cwd=str(work_dir),
         )
-        _sh(["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30)
+        await asyncio.to_thread(
+            _sh, ["git", "push", "fork", branch, "--force"], cwd=str(work_dir), timeout=30
+        )
         step("pushed", f"{branch} (fork)")
         pr_head = f"{_own_gh_user()}:{branch}"
 
     # 10. PR
     if not dry_run:
-        pr_url = _sh(
+        pr_url = await asyncio.to_thread(
+            _sh,
             [
                 "gh",
                 "pr",
@@ -469,7 +478,8 @@ async def fritz_find_contributions(
     fritz_find_contributions(query="user:sandraschi label:help-wanted")
     """
     try:
-        result = _sh(
+        result = await asyncio.to_thread(
+            _sh,
             [
                 "gh",
                 "search",
@@ -551,7 +561,7 @@ async def gogetajob_scan(
     ## Return Format
     {"success": bool, "issues": list, "count": int, "raw": str}
     """
-    out = _gogetajob(["scan", repo])
+    out = await asyncio.to_thread(_gogetajob, ["scan", repo])
     if out.startswith("<error"):
         return {"success": False, "message": out, "issues": [], "count": 0}
     try:
@@ -576,7 +586,7 @@ async def gogetajob_feed() -> dict[str, Any]:
     ## Return Format
     {"success": bool, "jobs": list, "count": int, "raw": str}
     """
-    out = _gogetajob(["feed"])
+    out = await asyncio.to_thread(_gogetajob, ["feed"])
     if out.startswith("<error"):
         return {"success": False, "message": out, "jobs": [], "count": 0}
     try:
@@ -603,7 +613,7 @@ async def gogetajob_start(
     ## Return Format
     {"success": bool, "message": str, "raw": str}
     """
-    out = _gogetajob(["start", ref])
+    out = await asyncio.to_thread(_gogetajob, ["start", ref])
     if out.startswith("<error"):
         return {"success": False, "message": out}
     return {"success": True, "message": f"Started job {ref}", "raw": out[:500]}
@@ -628,7 +638,7 @@ async def gogetajob_submit(
     args = ["submit", ref]
     if tokens:
         args.extend(["--tokens", str(tokens)])
-    out = _gogetajob(args)
+    out = await asyncio.to_thread(_gogetajob, args)
     if out.startswith("<error"):
         return {"success": False, "message": out}
 
@@ -666,7 +676,7 @@ async def gogetajob_stats() -> dict[str, Any]:
     ## Return Format
     {"success": bool, "stats": dict, "raw": str}
     """
-    out = _gogetajob(["stats"])
+    out = await asyncio.to_thread(_gogetajob, ["stats"])
     if out.startswith("<error"):
         return {"success": False, "message": out}
     try:
@@ -686,7 +696,7 @@ async def gogetajob_sync() -> dict[str, Any]:
     ## Return Format
     {"success": bool, "message": str, "raw": str}
     """
-    out = _gogetajob(["sync"])
+    out = await asyncio.to_thread(_gogetajob, ["sync"])
     if out.startswith("<error"):
         return {"success": False, "message": out}
     return {"success": True, "message": "Sync complete", "raw": out[:500]}

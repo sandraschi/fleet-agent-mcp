@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import datetime
 from pathlib import Path
@@ -67,7 +68,7 @@ async def run_board_pack(
 
     repos_root = Path(store_settings.get("fleet_repos_root", "D:/Dev/repos"))
     watched = store_settings.get("fleet_pulse_repos") or ["fleet-agent-mcp", "mcp-central-docs"]
-    git_rows = _git_snapshot(repos_root, list(watched))
+    git_rows = await asyncio.to_thread(_git_snapshot, repos_root, list(watched))
 
     from ..mcp.tools.fleet_bridge import fleet_discover
     from ..mcp.tools.heartbeat import heartbeat_status

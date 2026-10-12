@@ -235,7 +235,7 @@ async def _handle_workflow_tick() -> None:
             logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
             from ..session_log import log_workflow_completed
 
-            log_workflow_completed(workflow_name, current_node)
+            await asyncio.to_thread(log_workflow_completed, workflow_name, current_node)
     elif node_type == "agent":
         # SFB reasoning step: cline-mcp real session API (start/status/stop),
         # not a one-shot blocking call - see agent_step.py's module docstring
@@ -293,7 +293,7 @@ async def _handle_workflow_tick() -> None:
                 logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
                 from ..session_log import log_workflow_completed
 
-                log_workflow_completed(workflow_name, current_node)
+                await asyncio.to_thread(log_workflow_completed, workflow_name, current_node)
             return
 
         # phase in ("failed", "timeout"): real failure, not a silent advance -
@@ -312,7 +312,7 @@ async def _handle_workflow_tick() -> None:
             logs.add("info", f"Workflow '{workflow_name}' completed", "agentic")
             from ..session_log import log_workflow_completed
 
-            log_workflow_completed(workflow_name, current_node)
+            await asyncio.to_thread(log_workflow_completed, workflow_name, current_node)
         else:
             logs.add("info", f"Exec node '{current_node}' advanced", "agentic")
 

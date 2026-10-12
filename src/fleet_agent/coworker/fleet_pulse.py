@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import subprocess
 from datetime import UTC, datetime
@@ -225,7 +226,7 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
         "fleet-agent-mcp",
         "mcp-central-docs",
     ]
-    git_rows = _git_snapshot(repos_root, list(watched))
+    git_rows = await asyncio.to_thread(_git_snapshot, repos_root, list(watched))
 
     report = format_fleet_pulse_report(
         pulse_date=pulse_date,

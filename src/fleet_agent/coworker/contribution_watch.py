@@ -8,6 +8,7 @@ Real issues/PRs are created; a human reviews and merges (or doesn't).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import subprocess
 from datetime import UTC, datetime
@@ -76,7 +77,7 @@ async def run_contribution_dogfood(*, deliver: bool = True) -> dict[str, Any]:
     from ..settings_store import get_settings_store
 
     settings = get_settings_store()
-    repos = _own_repo_urls()
+    repos = await asyncio.to_thread(_own_repo_urls)
     results: list[dict[str, Any]] = []
     prs_opened: list[str] = []
     errors = 0

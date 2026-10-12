@@ -27,6 +27,7 @@ Design principles (2026-09-08, Sandra's explicit calls):
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from datetime import UTC, datetime, timedelta
@@ -383,8 +384,10 @@ async def fritz_analyze_repo(
     owner = repo_url.rstrip("/").split("/")[-2]
     work_dir = REPOS_ROOT / f"{repo_name}-analyze"
 
-    _sh_shell(f"rmdir /s /q {work_dir} 2>nul")
-    clone_out = _sh(["git", "clone", "--depth", "50", repo_url, str(work_dir)], timeout=120)
+    await asyncio.to_thread(_sh_shell, f"rmdir /s /q {work_dir} 2>nul")
+    clone_out = await asyncio.to_thread(
+        _sh, ["git", "clone", "--depth", "50", repo_url, str(work_dir)], timeout=120
+    )
     if not work_dir.is_dir():
         return {
             "success": False,
@@ -399,7 +402,8 @@ async def fritz_analyze_repo(
 
     # Existing open issues, LLM-analyzed
     existing_analyzed: list[dict[str, Any]] = []
-    issue_list_raw = _sh(
+    issue_list_raw = await asyncio.to_thread(
+        _sh,
         [
             "gh",
             "issue",
@@ -422,7 +426,8 @@ async def fritz_analyze_repo(
 
     for summary in issue_summaries:
         number = summary.get("number")
-        detail_raw = _sh(
+        detail_raw = await asyncio.to_thread(
+            _sh,
             [
                 "gh",
                 "issue",
@@ -485,7 +490,7 @@ async def fritz_analyze_repo(
                 recommendation="issue_only",
             )
 
-    _sh_shell(f"rmdir /s /q {work_dir} 2>nul")
+    await asyncio.to_thread(_sh_shell, f"rmdir /s /q {work_dir} 2>nul")
 
     return {
         "success": True,
@@ -665,7 +670,8 @@ async def fritz_act_on_finding(
     body = await friendly_issue_body(summary)
     title = summary[:80]
 
-    issue_url = _sh(
+    issue_url = await asyncio.to_thread(
+        _sh,
         [
             "gh",
             "issue",
