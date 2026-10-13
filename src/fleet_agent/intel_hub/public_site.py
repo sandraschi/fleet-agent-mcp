@@ -50,7 +50,7 @@ def _github_token() -> str:
     token = os.environ.get("GH_TOKEN", "").strip() or os.environ.get("GITHUB_TOKEN", "").strip()
     if token:
         return token
-    token_file = os.environ.get("GH_TOKEN_FILE", r"C:\Users\sandr\.fleet-intel\.gh_token")
+    token_file = os.environ.get("GH_TOKEN_FILE", str(Path.home() / ".fleet-intel" / ".gh_token"))
     try:
         return Path(token_file).read_text(encoding="utf-8").strip()
     except OSError:
