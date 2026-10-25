@@ -24,5 +24,22 @@ body {
 	@apply text-fleet-400 border-b-2 border-fleet-400 bg-slate-800/50;
 }
 .tab-inactive {
-	@apply text-slate-400 border-b-2 border-transparent hover:text-slate-200 hover:border-slate-600;
+	@apply text-slate-300 border-b-2 border-transparent hover:text-white hover:border-slate-500;
+}
+
+/* Accessibility: boost low-contrast muted text on dark slate-950.
+   slate-500 (#64748b) and slate-600 (#475569) fail WCAG AA on #020617.
+   Remap the most common muted utilities to readable tones without
+   touching every page. */
+@layer utilities {
+	.text-slate-500 {
+		color: #94a3b8 !important; /* slate-400 */
+	}
+	.text-slate-600 {
+		color: #94a3b8 !important; /* slate-400, was unreadable */
+	}
+	.text-\[10px\] {
+		font-size: 11px !important;
+		line-height: 1.4 !important;
+	}
 }
