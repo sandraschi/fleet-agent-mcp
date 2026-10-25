@@ -60,6 +60,7 @@ def format_fleet_pulse_report(
     discovery: dict[str, Any],
     git_rows: list[dict[str, Any]],
     pipeline: dict[str, Any] | None = None,
+    prev_stats: dict[str, Any] | None = None,
 ) -> str:
     """Build markdown report from gathered data."""
     lines = [
@@ -79,23 +80,58 @@ def format_fleet_pulse_report(
 
     servers = (discovery.get("data") or {}).get("servers") or []
     online = sum(1 for s in servers if s.get("online"))
+    daemons = [s for s in servers if s.get("daemon", False)]
+    on_demand = [s for s in servers if not s.get("daemon", False)]
+    daemons_online = sum(1 for s in daemons if s.get("online"))
+    on_demand_online = sum(1 for s in on_demand if s.get("online"))
+    on_demand_down_names = [s.get("alias", "?") for s in on_demand if not s.get("online")]
     lines.extend(
         [
             "## MCP fleet",
             "",
-            f"- Online: **{online}/{len(servers)}**",
+            f"- Online: **{online}/{len(servers)}**"
+            f" (daemons {daemons_online}/{len(daemons)},"
+            f" on-demand {on_demand_online}/{len(on_demand)})",
             "",
         ]
     )
-    for server in servers:
+    if prev_stats:
+        try:
+            prev_online = set(prev_stats.get("online_aliases") or [])
+            cur_online = {s.get("alias") for s in servers if s.get("online")}
+            went_down = sorted(set(prev_online) - cur_online)
+            came_up = sorted(cur_online - set(prev_online))
+            if went_down or came_up:
+                lines.append(
+                    f"- Delta vs last pulse:"
+                    f" down: {', '.join(went_down) if went_down else 'none'};"
+                    f" up: {', '.join(came_up) if came_up else 'none'}"
+                )
+                lines.append("")
+        except Exception:
+            pass
+    lines.append("### Daemons (must be up)")
+    lines.append("")
+    for server in daemons:
         mark = "up" if server.get("online") else "down"
         alias = server.get("alias", "?")
         err = server.get("error")
-        on_demand = "" if server.get("daemon", False) else " (on-demand/stdio)"
         suffix = f" - {err[:80]}" if err and not server.get("online") else ""
         lines.append(
-            f"- `{alias}`: **{mark}**{on_demand} ({server.get('tool_count', 0)} tools){suffix}"
+            f"- `{alias}`: **{mark}** ({server.get('tool_count', 0)} tools){suffix}"
         )
+    lines.append("")
+    on_demand_up_names = [s.get("alias", "?") for s in on_demand if s.get("online")]
+    lines.append(
+        f"On-demand (stdio, expected down unless a session needs them):"
+        f" {on_demand_online}/{len(on_demand)} up"
+        + (f" - up: {', '.join(on_demand_up_names)}" if on_demand_up_names else "")
+        + (
+            f" - down: {', '.join(on_demand_down_names)}"
+            if on_demand_down_names
+            else " - all up"
+        )
+    )
     lines.append("")
 
     if pipeline is not None:
@@ -228,13 +264,39 @@ async def run_fleet_pulse(*, deliver: bool = True) -> dict[str, Any]:
     ]
     git_rows = await asyncio.to_thread(_git_snapshot, repos_root, list(watched))
 
+    import json as _json
+
+    _last_path = settings.data_dir / "fleet-pulse-last.json"
+    prev_stats: dict[str, Any] | None = None
+    try:
+        if _last_path.is_file():
+            prev_stats = _json.loads(_last_path.read_text(encoding="utf-8"))
+    except Exception:
+        prev_stats = None
+
     report = format_fleet_pulse_report(
         pulse_date=pulse_date,
         health=health,
         discovery=discovery,
         git_rows=git_rows,
         pipeline=pipeline,
+        prev_stats=prev_stats,
     )
+
+    try:
+        _servers = (discovery.get("data") or {}).get("servers") or []
+        _aliases = sorted(s.get("alias", "?") for s in _servers if s.get("online"))
+        _last_path.write_text(
+            _json.dumps(
+                {
+                    "online_aliases": _aliases,
+                    "date": pulse_date,
+                }
+            ),
+            encoding="utf-8",
+        )
+    except Exception:
+        pass
 
     artifacts_dir = settings.data_dir / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)

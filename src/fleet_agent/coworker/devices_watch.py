@@ -188,7 +188,12 @@ def _ago(iso: str | None, now: datetime | None = None) -> str:
         return ""
 
 
-def format_devices_report(payload: dict[str, Any], *, new_incidents: list[dict[str, Any]]) -> str:
+def format_devices_report(
+    payload: dict[str, Any],
+    *,
+    new_incidents: list[dict[str, Any]],
+    reminder_incidents: list[dict[str, Any]] | None = None,
+) -> str:
     scanned = payload.get("timestamp") or payload.get("scanned_at") or "?"
     lines = [
         "# Devices Priority Watch",
@@ -205,10 +210,23 @@ def format_devices_report(payload: dict[str, Any], *, new_incidents: list[dict[s
         lines.append("")
         for inc in new_incidents:
             title = str(inc.get("title", "?"))
-            kind = str(inc.get("kind", "?"))
-            src = str(inc.get("source", "?"))
+            kind = str(inc.get("kind", "?")).replace("`", "'")
+            src = str(inc.get("source", "?")).replace("`", "'")
             urgency = str(inc.get("urgency", "?"))
-            lines.append(f"- **[{urgency}]** {title} (`{kind}` / {src})")
+            lines.append(f"- **[{urgency}]** {title} (`{kind}` / `{src}`)")
+            if inc.get("description"):
+                lines.append(f"  {inc['description'][:200]}")
+        lines.append("")
+
+    if reminder_incidents:
+        lines.append("## Still open (reminder, >24h)")
+        lines.append("")
+        for inc in reminder_incidents:
+            title = str(inc.get("title", "?"))
+            kind = str(inc.get("kind", "?")).replace("`", "'")
+            src = str(inc.get("source", "?")).replace("`", "'")
+            urgency = str(inc.get("urgency", "?"))
+            lines.append(f"- **[{urgency}]** {title} (`{kind}` / `{src}`)")
             if inc.get("description"):
                 lines.append(f"  {inc['description'][:200]}")
         lines.append("")
@@ -227,10 +245,10 @@ def format_devices_report(payload: dict[str, Any], *, new_incidents: list[dict[s
             if shown >= 12:
                 break
             shown += 1
-            kind = str(inc.get("kind", ""))
-            src = str(inc.get("source", ""))
+            kind = str(inc.get("kind", "")).replace("`", "'")
+            src = str(inc.get("source", "")).replace("`", "'")
             desc = str(inc.get("description", "") or "")[:120]
-            meta = f" ({kind} / {src})" if kind or src else ""
+            meta = f" (`{kind}` / `{src}`)" if kind or src else ""
             lines.append(f"- **[{inc.get('urgency', '?')}]** {title}{meta}")
             if desc:
                 lines.append(f"  {desc}")
@@ -288,7 +306,8 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
         return {"success": False, "message": payload.get("error", "scan failed")}
 
     incidents = payload.get("incidents") or []
-    new_incidents = []
+    new_incidents: list[dict[str, Any]] = []
+    reminder_incidents: list[dict[str, Any]] = []
     for i in incidents:
         inc_id = i.get("id")
         if inc_id and inc_id in seen:
@@ -298,19 +317,34 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
         age = _iso_age_seconds(last_reported, now)
         if age is not None and age <= _REPORT_WINDOW_SECONDS:
             continue  # same incident already reported within the window
-        new_incidents.append(i)
+        if last_reported is None:
+            new_incidents.append(i)
+        else:
+            reminder_incidents.append(i)
+    notify_incidents = new_incidents + reminder_incidents
     threshold = urgent_threshold()
     critical_new = [
-        i for i in new_incidents if i.get("critical") or float(i.get("urgency") or 0) >= threshold
+        i
+        for i in notify_incidents
+        if i.get("critical") or float(i.get("urgency") or 0) >= threshold
     ]
 
-    report = format_devices_report(payload, new_incidents=new_incidents)
+    report = format_devices_report(
+        payload, new_incidents=new_incidents, reminder_incidents=reminder_incidents
+    )
     hub_result: dict[str, Any] = {}
     urgent_result: dict[str, Any] = {}
     ingest_results: list[dict[str, Any]] = []
 
-    if new_incidents and deliver:
+    if notify_incidents and deliver:
         title = f"Devices Alert - {len(new_incidents)} new"
+        if reminder_incidents and not new_incidents:
+            title = f"Devices Alert - {len(reminder_incidents)} still open"
+        elif reminder_incidents:
+            title = (
+                f"Devices Alert - {len(new_incidents)} new,"
+                f" {len(reminder_incidents)} still open"
+            )
         if critical_new:
             title = f"[URGENT] Devices - {len(critical_new)} critical"
 
@@ -357,7 +391,7 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
         except Exception as exc:
             logger.info("AIWatcher ingest for devices skipped: %s", exc)
 
-    for inc in new_incidents:
+    for inc in notify_incidents:
         if inc.get("id"):
             seen.add(inc["id"])
         reported_keys[_incident_key(inc)] = now.isoformat()
@@ -369,13 +403,15 @@ async def run_devices_watch(*, deliver: bool = True) -> dict[str, Any]:
         "success": True,
         "message": (
             f"Devices watch: {payload.get('incident_count', 0)} active, "
-            f"{len(new_incidents)} new, {len(critical_new)} critical new"
+            f"{len(new_incidents)} new, {len(reminder_incidents)} reminders,"
+            f" {len(critical_new)} critical new"
         ),
         "report": report,
         "stats": {
             "incident_count": payload.get("incident_count", 0),
             "critical_count": payload.get("critical_count", 0),
             "new_count": len(new_incidents),
+            "reminder_count": len(reminder_incidents),
             "critical_new_count": len(critical_new),
             "sources": payload.get("sources", {}),
         },
