@@ -69,10 +69,35 @@ Fleet standard with the full reasoning: `mcp-central-docs/standards/MULTI_AGENT_
 - Before committing run `git diff --cached --stat` and check every file is yours.
 - A manifest (`Cargo.toml`, `package.json`, `pyproject.toml`) and the files it points at go in the
   same commit. Never commit a manifest that names something not in the commit.
-- Do not tag or release from a dirty tree, or from a `WIP-Auto` commit made by the nightly sweep.
-  Before tagging, a clean clone of the exact commit must build and pass tests.
+- Do not tag or release from a dirty tree. Before tagging, a clean clone of the exact commit must
+  build and pass tests.
 - Do not move or delete a published tag; add a new one. Do not force-push a shared branch.
 - Do not push another agent's commits you did not read.
+- The nightly job only writes snapshots to `refs/wip/*`; it never commits to a branch. Your
+  uncommitted work is backed up, but that is not a substitute for committing it.
+
+### Line endings: LF only
+
+CRLF/LF mismatches make hooks fail and burn tokens in fix-retry loops. Rules:
+
+- Source, config, docs and scripts are LF, UTF-8 without BOM. `.bat` and `.cmd` may be CRLF.
+  Shell scripts, `.githooks/*`, Dockerfiles and anything with a `#!` line must be LF always.
+- Editing an existing file: keep the line endings it already has. Use a targeted replace; never
+  read the whole file and rewrite it with different endings.
+- PowerShell 5.1: do not write source files with `Set-Content`, `Out-File` or `>` (they add CRLF,
+  a BOM or UTF-16). Use `[System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding $false))`
+  and join lines with `"`n"`. Prefer the Edit/Write tools, which do not touch endings.
+- The `fileops` `write_file` tool on Goliath writes CRLF, and git here has `core.autocrlf=true`. After writing
+  any file with it, run `D:\Dev\repos\mcp-central-docs\scripts\Set-LfEndings.ps1 -Path <files>` (or `-Changed`)
+  before committing. Hook scripts and `#!` files with CRLF fail outright.
+- `warning: LF will be replaced by CRLF` is noise, not an error. Do not convert files to silence it.
+- If a hook (end-of-file-fixer, mixed-line-ending, formatters) rewrites files and fails, run
+  `git add <your paths>` and commit once more. If it fails a second time, stop and report the hook
+  output. Do not loop.
+- If the repo has no `.gitattributes` with `* text=auto eol=lf`, tell the user. Do not run
+  `git add --renormalize` on your own: it touches every file.
+- Machine setting (owner): `git config --global core.autocrlf input` (commit LF, never convert on checkout)
+  and `git config --global core.safecrlf false`.
 
 ### Hooks
 
