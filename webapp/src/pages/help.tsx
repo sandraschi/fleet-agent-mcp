@@ -6,6 +6,7 @@
 	GitBranch,
 	Info,
 	ListChecks,
+	Network,
 	Newspaper,
 	Package,
 	TrendingUp,
@@ -23,7 +24,8 @@ type Tab =
 	| "evolution"
 	| "heartbeat"
 	| "coworker"
-	| "intel";
+	| "intel"
+	| "r11n";
 
 const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
 	{ id: "overview", label: "Overview", icon: Info },
@@ -36,6 +38,7 @@ const TABS: { id: Tab; label: string; icon: typeof Info }[] = [
 	{ id: "heartbeat", label: "Heartbeat", icon: Activity },
 	{ id: "coworker", label: "Coworker", icon: Briefcase },
 	{ id: "intel", label: "Intel Hub", icon: Newspaper },
+	{ id: "r11n", label: "Swarm & r11n", icon: Network },
 ];
 
 const TAB_SUBS: Record<Tab, string> = {
@@ -48,7 +51,8 @@ const TAB_SUBS: Record<Tab, string> = {
 	evolution: "3 tools â€” mistake log, correction, lesson extraction",
 	heartbeat: "3 tools â€” cron wake-up, health monitoring",
 	coworker: "11 tools â€” scheduled office + fleet flows",
-	intel: "3 tools â€” HTML reports hub + AIWatcher ingest",
+	intel: "3 tools — HTML reports hub + AIWatcher ingest",
+	r11n: "4 tools — Stigmergic swarm, .r11n leases, WSL2 micro-sandboxes",
 };
 
 function mdToHtml(md: string): string {
@@ -544,6 +548,46 @@ Settings: \`urgent_email_enabled\`, \`urgent_email_threshold\` (default 8.0)
 
 Full doc: \`docs/INTEL_REPORTS_HUB.md\``;
 
+
+const R11N = `# Stigmergic Swarm & Reconciliation (r11n)
+
+Decentralized multi-agent coordination mediated by the environment, backed by space-efficient WSL2 micro-sandboxes.
+
+## 1. What is Stigmergy?
+
+Rather than a monolithic coordinator pushing tasks through a rigid in-memory state machine (FlowForge), agents coordinate **stigmergically**:
+- Agents observe repository state (failing tests, missing docs, dead ports).
+- An agent claims a local lease marker (\`.r11n/claim.json\`).
+- It executes a declarative invariant loop (\`Observe -> Diff -> Act -> Verify\`).
+- Once verified, it records environmental traces and releases the lease.
+
+## 2. Space-Efficient WSL2 Sandboxing (No Big VMs!)
+
+Traditional per-agent VMs consume 15-30 GB disk and lock 4GB+ RAM each. Fritz solves this with **WSL2 copy-on-write micro-sandboxes**:
+- **Shared Microkernel**: All agents share WSL2's sub-second Hyper-V utility VM.
+- **Dynamic Memory Reclaim**: \`autoMemoryReclaim=gradual\` releases memory to Windows as soon as tasks exit.
+- **Sparse VHDX**: \`wsl --manage <distro> --set-sparse true\` auto-trims unallocated blocks back to NTFS.
+- **OverlayFS Scratch**: Read-only shared toolchain base + ephemeral RAM tmpfs upperdir.
+- **Git Worktree Zero-Clone**: Isolated worktree via \`git worktree add\` in <50ms with zero object duplication.
+
+## 3. FastMCP Tools (4 Tools)
+
+- \`r11n_claim(target_dir, task_id, worker_id, ttl_seconds, invariant)\` — Claim atomic lease
+- \`r11n_status(target_dir)\` — Inspect active lease and claim metadata
+- \`r11n_release(target_dir, worker_id, task_id)\` — Release claim upon task completion
+- \`r11n_check(target_dir, invariant_type, argument)\` — Evaluate test/lint/file/port invariants
+
+## 4. CLI Runner
+
+\`\`\`powershell
+uv run python -m fleet_agent.r11n.runner \\
+  --target D:/Dev/repos/fritz-test \\
+  --invariant test \\
+  --argument "uv run --with pytest pytest -o pythonpath=src" \\
+  --json
+\`\`\`
+`;
+
 const CONTENT: Record<Tab, string> = {
 	overview: OVERVIEW,
 	flowforge: FLOWFORGE,
@@ -555,6 +599,7 @@ const CONTENT: Record<Tab, string> = {
 	heartbeat: HEARTBEAT,
 	coworker: COWORKER,
 	intel: INTEL,
+	r11n: R11N,
 };
 
 export function Help() {

@@ -124,6 +124,18 @@ Two layers: `contribute.py` (the acting/execution layer) and `job_finder.py` (th
 
 Explicit safety posture (Sandra, 2026-09-08): analysis never auto-acts; PR attempts are own-repo-only; max 1 self-found issue filed per repo per pass; local LLM only, no cloud provider ever in the chain. Two real dogfood PRs landed this session (own repo + a fixture repo built for exactly this kind of testing), both fully automated end-to-end, neither merged.
 
+### 3.8 Stigmergic Swarm & Reconciliation (r11n) Engine (v0.3.0 Design Spec)
+
+*Added 2026-11-02 based on Google Drive architecture specification (`H:\My Drive\Stigmergic Swarm Architecture & r11n Specification.gdoc`) and `docs/STIGMERGIC_SWARM_R11N.md`.*
+
+Addresses the structural limits of single-coordinator FlowForge execution:
+- **Decentralized Coordination**: Agents coordinate stigmergically via the shared filesystem and Git repositories rather than an in-memory orchestrator queue.
+- **Declarative Reconciliation (`r11n`)**: Moves from procedural node-hopping to continuous invariant enforcement:
+  Desired Invariant - Observed State -> Action
+- **Atomic Lease & Claims**: Task-scoped claims stored in `.r11n/claim.json` with TTL-based orphan recovery.
+- **Pheromone Decay & Circuit Breaking**: Exponential backoff and maximum retry limits prevent runaways and VRAM contention; dead traces evaporate automatically after 24 hours.
+- **Space-Efficient WSL2 Sandboxing**: Ephemeral workers run in lightweight WSL2 micro-sandboxes with OverlayFS, sparse VHDX, dynamic memory reclaim (`autoMemoryReclaim=gradual`), and Git worktrees (`git worktree add`) instead of heavy, storage-eating standalone VMs.
+
 ## 4. Data Persistence
 
 ```
@@ -401,7 +413,12 @@ See the mcp-central-docs project page for the current flow list (16 as of 2026-0
 - [x] Webapp: Tasks filters/export, Automaton stats-bug fix + schedule board filters, sidebar chevron relocation, Contributions "Find Work" panel
 - [ ] **Aspirational**: land a real merged PR on `kovidgoyal/calibre`; scope a contribution path to `mixxxdj/mixxx` for video support (deferred — needs more fleet testing first, see CHANGELOG)
 
-### v0.3.0 (planned)
+### v0.3.0 (planned — Stigmergic Swarm & r11n Release)
+- [ ] **Stigmergic Swarm Core (`r11n`)**: Ephemeral worker loop replacing monolithic FlowForge runner (see `docs/STIGMERGIC_SWARM_R11N.md`)
+- [ ] **Filesystem Blackboard & Leases**: `.r11n/claim.json` atomic lock and TTL orphan cleanup
+- [ ] **Pilot 3 Migration**: Port `fritz-test` contribution ship to autonomous reconciliation loop
+- [ ] **Fleet Doc-Drift Reconciler**: Automated `AGENTS.md` and standards verification
+- [ ] **Swarm Board on Intel Hub**: Live claim and trace visualization on port 11027
 - [ ] Multi-agent collaboration (Moltbook-style social)
 - [ ] Agent Behavioral Type Indicator (ABTI equivalent)
 - [ ] Lobster-post style agent-to-agent letters

@@ -245,6 +245,14 @@ Remaining gap: the contribution workflow YAML is defined, but the heartbeat wake
 4. **Persistence > Context** — SQLite survives restarts. Markdown survives context resets.
 5. **Sub-agent isolation** — Main session = dispatch. Sub-agents = actual work.
 
+### Next Evolution: Stigmergic Swarm & Reconciliation (r11n)
+
+Moving from Kagura's centralized state machine toward an autonomous **Stigmergic Swarm**:
+- **Blackboard Substrate**: Coordination via filesystem markers (`.r11n/claim.json`), git diffs, and health probes rather than a single database orchestrator.
+- **Declarative Reconciliation (`r11n`)**: Agents observe environment state, diff against declared invariants, and continuously converge (Observe -> Diff -> Act).
+- **Decoupled Ephemeral Workers**: Ephemeral workers claim local leases with TTLs, preventing single-point queue stalls and VRAM exhaustion.
+- Detailed architecture and roadmap: [`docs/STIGMERGIC_SWARM_R11N.md`](docs/STIGMERGIC_SWARM_R11N.md).
+
 ## Standards
 
 - [FastMCP 3.2 Tool Registration](https://github.com/jlowin/fastmcp)

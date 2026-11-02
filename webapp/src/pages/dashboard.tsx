@@ -6,6 +6,7 @@ import {
 	GitBranch,
 	GitPullRequest,
 	ListChecks,
+	Network,
 	TrendingUp,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -87,8 +88,8 @@ export function Dashboard() {
 		{
 			icon: GitBranch,
 			label: "Subsystems",
-			value: "15",
-			sub: "flowforge, pulse, memory, identity, teleport, evolution, heartbeat, fleet_bridge, codegen, github, contribute, notify, coworker, intel_hub, voice",
+			value: "16",
+			sub: "flowforge, pulse, memory, identity, teleport, evolution, heartbeat, fleet_bridge, codegen, github, contribute, notify, coworker, intel_hub, voice, r11n",
 			route: "/tools",
 		},
 		{
@@ -122,6 +123,14 @@ export function Dashboard() {
 			sub: "since last restart",
 			route: "/status",
 			testid: "kpi-uptime",
+		},
+		{
+			icon: Network,
+			label: "Stigmergy",
+			value: "r11n",
+			sub: "WSL2 CoW sandboxes",
+			route: "/help",
+			testid: "kpi-r11n",
 		},
 		{
 			icon: TrendingUp,
@@ -194,6 +203,32 @@ export function Dashboard() {
 					</p>
 				</div>
 			)}
+
+			
+			{/* Stigmergic Swarm & r11n Hero Banner */}
+			<div className="border border-indigo-800/40 rounded-xl bg-gradient-to-r from-indigo-950/40 via-purple-950/20 to-slate-900/60 p-5 shadow-lg">
+				<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+					<div className="space-y-1">
+						<div className="flex items-center gap-2">
+							<span className="px-2 py-0.5 text-xs font-semibold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+								v0.3.0 Stigmergic Swarm
+							</span>
+							<span className="text-xs text-slate-400">WSL2 CoW Micro-Sandboxes Active</span>
+						</div>
+						<h3 className="text-lg font-semibold text-white">Decentralized Invariant Reconciliation (r11n)</h3>
+						<p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+							Local agents coordinate via filesystem pheromones (<code>.r11n/claim.json</code>) without central queue bottlenecks. Ephemeral workers run in space-efficient WSL2 micro-sandboxes with OverlayFS, sparse VHDX, and Git Worktrees (zero VM bloat).
+						</p>
+					</div>
+					<button
+						type="button"
+						onClick={() => navigate("/help")}
+						className="px-4 py-2 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors flex items-center gap-2 shadow whitespace-nowrap cursor-pointer"
+					>
+						View Swarm Docs &rarr;
+					</button>
+				</div>
+			</div>
 
 			{/* Stats grid */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
