@@ -1,6 +1,28 @@
 
 # Changelog
 
+## [0.3.0] - 2026-11-02
+
+### Added
+- **Stigmergic Swarm Reconciliation Engine (`src/fleet_agent/r11n/`)**:
+  - `lease.py`: Atomic filesystem-backed advisory leases with auto-expiration and heartbeat extension.
+  - `invariants.py`: Declarative invariant checkers verifying clean git status, zero lint errors, test suite completion, and lockfile synchronization.
+  - `reconciler.py`: Core convergence loop detecting drifts, claiming repos, executing targeted repairs, and validating post-repair invariants.
+  - `runner.py`: Continuous background daemon driving multi-repo autonomous fleet supervision.
+- **FastMCP Stigmergic Tools (`src/fleet_agent/mcp/tools/r11n.py`)**:
+  - `r11n_claim`: Atomically claim exclusive reconciliation lease on a repo.
+  - `r11n_status`: Query active leases and repair status across the fleet.
+  - `r11n_release`: Release an acquired lease or clear expired ones.
+  - `r11n_check`: Evaluate invariant health for a repository.
+- **Space-Efficient WSL2 Sandboxing**:
+  - Micro-sandboxing architecture documented in `docs/STIGMERGIC_SWARM_R11N.md` utilizing shared microkernels, `autoMemoryReclaim=gradual`, sparse VHDX, OverlayFS CoW scratch, and git worktrees.
+- **Autonomous Bug Repair (Pilot 3)**:
+  - Validated self-healing on `fritz-test` fixture with zero manual intervention.
+- **Fritz Webapp Dashboard & Help**:
+  - Added Stigmergic Swarm hero banner, live KPI card, and dedicated `r11n` documentation tab.
+- **Test Suite**:
+  - 149/149 unit tests passing (including 13/13 `test_r11n.py`).
+
 ## [Unreleased] - pass-2 2026-10-10 (score-lift toward >=60)
 
 ### Fixed
@@ -195,6 +217,28 @@
 - Ctrl+scroll zoom (`useZoom`) in root layout
 - `@tauri-apps/api` in package.json for Tauri backend-status events
 # Changelog
+
+## [0.3.0] - 2026-11-02
+
+### Added
+- **Stigmergic Swarm Reconciliation Engine (`src/fleet_agent/r11n/`)**:
+  - `lease.py`: Atomic filesystem-backed advisory leases with auto-expiration and heartbeat extension.
+  - `invariants.py`: Declarative invariant checkers verifying clean git status, zero lint errors, test suite completion, and lockfile synchronization.
+  - `reconciler.py`: Core convergence loop detecting drifts, claiming repos, executing targeted repairs, and validating post-repair invariants.
+  - `runner.py`: Continuous background daemon driving multi-repo autonomous fleet supervision.
+- **FastMCP Stigmergic Tools (`src/fleet_agent/mcp/tools/r11n.py`)**:
+  - `r11n_claim`: Atomically claim exclusive reconciliation lease on a repo.
+  - `r11n_status`: Query active leases and repair status across the fleet.
+  - `r11n_release`: Release an acquired lease or clear expired ones.
+  - `r11n_check`: Evaluate invariant health for a repository.
+- **Space-Efficient WSL2 Sandboxing**:
+  - Micro-sandboxing architecture documented in `docs/STIGMERGIC_SWARM_R11N.md` utilizing shared microkernels, `autoMemoryReclaim=gradual`, sparse VHDX, OverlayFS CoW scratch, and git worktrees.
+- **Autonomous Bug Repair (Pilot 3)**:
+  - Validated self-healing on `fritz-test` fixture with zero manual intervention.
+- **Fritz Webapp Dashboard & Help**:
+  - Added Stigmergic Swarm hero banner, live KPI card, and dedicated `r11n` documentation tab.
+- **Test Suite**:
+  - 149/149 unit tests passing (including 13/13 `test_r11n.py`).
 
 ## 0.2.1-pre (2026-06-07) — Intel Hub, AIWatcher ingest, home safety watch
 

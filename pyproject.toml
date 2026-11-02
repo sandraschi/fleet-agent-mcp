@@ -1,6 +1,6 @@
 [project]
 name = "fleet-agent-mcp"
-version = "0.2.3"
+version = "0.3.0"
 description = "Self-evolving AI agent: task orchestration, persistent memory, workflows, identity"
 requires-python = ">=3.12"
 dependencies = [
