@@ -1,0 +1,33 @@
+#!/bin/sh
+# pre-commit: refuse a commit whose Cargo manifests name members or path dependencies that
+# are not tracked (in the index). Born from a release that referenced an uncommitted crate.
+# Pure sh + git + grep/sed; no cargo needed, so it is fast. Bypass is --no-verify, which the
+# repo's AGENTS.md forbids.
+
+fail=0
+for manifest in $(git diff --cached --name-only --diff-filter=ACMR | grep -E '(^|/)Cargo\.toml$'); do
+  dir=$(dirname "$manifest")
+  [ "$dir" = "." ] && dir=""
+  # workspace members: quoted strings inside members = [ ... ]
+  members=$(sed -n '/^[[:space:]]*members[[:space:]]*=[[:space:]]*\[/,/\]/p' "$manifest" \
+            | grep -oE '"[^"]+"' | tr -d '"')
+  # path dependencies: path = "..."; [lib]/[[bin]]/[[test]] paths point at .rs files, skip those
+  paths=$(grep -oE 'path[[:space:]]*=[[:space:]]*"[^"]+"' "$manifest" \
+          | sed -E 's/.*"([^"]+)"/\1/' | grep -vE '\.rs$')
+  for rel in $members $paths; do
+    case "$rel" in *\**|"") continue ;; esac
+    if [ -n "$dir" ]; then target="$dir/$rel"; else target="$rel"; fi
+    target=$(printf '%s' "$target" | sed -E ':a;s#[^/]+/\.\./##;ta;s#^\./##')
+    if ! git ls-files --cached --error-unmatch -- "$target/Cargo.toml" >/dev/null 2>&1; then
+      echo "pre-commit: $manifest refers to '$rel' but $target/Cargo.toml is not tracked."
+      echo "            Add that crate to this commit, or remove the reference."
+      fail=1
+    fi
+  done
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: commit blocked (see AGENTS.md). Do not use --no-verify."
+  exit 1
+fi
+exit 0
