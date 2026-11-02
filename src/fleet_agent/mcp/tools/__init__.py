@@ -27,6 +27,7 @@ from . import (
     scripts,
     surveil,
     teleport,
+    r11n,
     voice,
 )
 
@@ -53,4 +54,5 @@ __all__ = [
     "scripts",
     "dev",
     "assist",
+    "r11n",
 ]
