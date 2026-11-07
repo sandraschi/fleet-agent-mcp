@@ -112,4 +112,9 @@ Do not bypass it with `--no-verify`. If it blocks you, the commit really is brok
 
 - Commit messages say what and why. Agent commits end with the tool's own trailer.
 - Long-running work: note it in the repo's worklog or plan file so the next agent sees it.
+- Name yourself as the author so history shows who did what. All agents share one git identity, so
+  without this every commit reads "Sandra Schipal". Set it per session or per command, never in the
+  repo config (that would rename everyone): `git -c user.name="Sandra Schipal (<tool>)" commit ...`,
+  or `$env:GIT_AUTHOR_NAME` and `$env:GIT_COMMITTER_NAME` for the session. Keep the same email. The
+  author name names the tool; the `Co-Authored-By` trailer names the model.
 - At the end of a session, say what you left uncommitted and whose it appears to be.
