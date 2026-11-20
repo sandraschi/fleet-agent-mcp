@@ -33,7 +33,7 @@ if (-not (Test-Path -LiteralPath $uv)) {
 }
 
 $env:INTEL_REPORTS_HUB_PORT = "$Port"
-$env:INTEL_REPORTS_HUB_HOST = if ($env:INTEL_REPORTS_HUB_HOST) { $env:INTEL_REPORTS_HUB_HOST } else { "0.0.0.0" }
+$env:INTEL_REPORTS_HUB_HOST = if ($env:INTEL_REPORTS_HUB_HOST) { $env:INTEL_REPORTS_HUB_HOST } else { "127.0.0.1" }
 # HTTP Basic auth credentials (public funnel requires auth on everything except
 # /public and /health). Override via env before launching if you want different
 # values. Without these the hub logs a WARNING and serves unauthenticated.

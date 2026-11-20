@@ -21,7 +21,7 @@ from .store import get_report_html, hub_meta, list_reports, publish_report
 logger = logging.getLogger(__name__)
 
 DEFAULT_PORT = 11027
-DEFAULT_HOST = "0.0.0.0"
+DEFAULT_HOST = "127.0.0.1"
 
 # Paths reachable without credentials. /health stays open for the watchdog and
 # fleet probes; /public is the deliberately harmless page for public funnel
