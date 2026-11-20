@@ -152,7 +152,7 @@ async def file_edit(
     ## Examples
     file_edit(
         path="D:/Dev/repos/myproject/src/main.py",
-        old_string='host="0.0.0.0"',
+        old_string='host="0.0.0.0"',  # fleet-gate: allow-sec (docstring example)
         new_string='host="127.0.0.1"',
     )
     """

@@ -62,7 +62,7 @@ if "127.0.0.1" in content and "0.0.0.0" not in content:
     log("  OK: 0.0.0.0 changed to 127.0.0.1")
 else:
     log("  codegen missed it, writing directly...")
-    content = content.replace('host="0.0.0.0"', 'host="127.0.0.1"')
+    content = content.replace('host="0.0.0.0"', 'host="127.0.0.1"')  # fleet-gate: allow-sec (remediation pattern)
     (WORK / "src" / "discord_mcp" / "server.py").write_text(content)
     log("  Direct fix applied")
 
